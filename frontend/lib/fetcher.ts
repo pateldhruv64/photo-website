@@ -1,11 +1,17 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const getApiUrl = () => {
+  if (typeof window === 'undefined') {
+    return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+  }
+  const hostname = window.location.hostname;
+  return `http://${hostname}:5000/api`;
+};
 
 /**
  * SWR fetcher with error handling.
  * All API calls go through this — ensures consistency.
  */
 export const fetcher = async (url: string) => {
-  const fullUrl = url.startsWith('http') ? url : `${API_URL}${url}`;
+  const fullUrl = url.startsWith('http') ? url : `${getApiUrl()}${url}`;
   
   const res = await fetch(fullUrl, {
     credentials: 'include', // Send cookies for auth
@@ -36,7 +42,7 @@ export const apiRequest = async (
   method: string = 'GET',
   body?: Record<string, unknown>
 ) => {
-  const fullUrl = endpoint.startsWith('http') ? endpoint : `${API_URL}${endpoint}`;
+  const fullUrl = endpoint.startsWith('http') ? endpoint : `${getApiUrl()}${endpoint}`;
   
   const options: RequestInit = {
     method,
