@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import Image from 'next/image';
 import { fullUrl } from '@/lib/cloudinary';
 import type { Photo } from '@/lib/types';
@@ -14,6 +15,7 @@ interface LightboxProps {
 
 export default function Lightbox({ photos, currentIndex, onClose, onNavigate }: LightboxProps) {
   const [loaded, setLoaded] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const photo = photos[currentIndex];
 
   const goNext = useCallback(() => {
@@ -32,6 +34,7 @@ export default function Lightbox({ photos, currentIndex, onClose, onNavigate }: 
 
   // Keyboard navigation
   useEffect(() => {
+    setMounted(true);
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
       if (e.key === 'ArrowRight') goNext();
@@ -42,14 +45,15 @@ export default function Lightbox({ photos, currentIndex, onClose, onNavigate }: 
     document.body.style.overflow = 'hidden';
 
     return () => {
+      setMounted(false);
       document.removeEventListener('keydown', handleKeyDown);
       document.body.style.overflow = '';
     };
   }, [onClose, goNext, goPrev]);
 
-  if (!photo) return null;
+  if (!mounted || !photo) return null;
 
-  return (
+  return createPortal(
     <div className="lightbox-overlay" onClick={onClose}>
       <div
         className="relative w-full h-full flex items-center justify-center p-4 md:p-8"
@@ -113,16 +117,13 @@ export default function Lightbox({ photos, currentIndex, onClose, onNavigate }: 
               <div className="w-8 h-8 border-2 border-white/30 border-t-white rounded-full animate-spin" />
             </div>
           )}
-          <Image
+          <img
             src={fullUrl(photo.public_id)}
             alt={photo.title || 'Photo'}
-            width={photo.width}
-            height={photo.height}
-            className={`max-h-[85vh] w-auto h-auto object-contain transition-opacity duration-500 ${
+            className={`max-h-[85vh] w-auto h-auto object-contain transition-opacity duration-300 ${
               loaded ? 'opacity-100' : 'opacity-0'
             }`}
             onLoad={() => setLoaded(true)}
-            priority
           />
         </div>
 
@@ -136,6 +137,7 @@ export default function Lightbox({ photos, currentIndex, onClose, onNavigate }: 
           </p>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

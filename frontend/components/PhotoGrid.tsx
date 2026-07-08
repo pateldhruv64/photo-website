@@ -22,27 +22,55 @@ export default function PhotoGrid({ photos, onPhotoClick }: PhotoGridProps) {
   useEffect(() => {
     if (!photos || photos.length === 0) return;
 
-    // Wait 1.5 seconds to ensure the main page load is completed and browser is free
-    const timer = setTimeout(() => {
-      const preloadCount = Math.min(20, photos.length);
-      const topPhotos = photos.slice(0, preloadCount);
+    let active = true;
+    let timeoutId: NodeJS.Timeout;
 
-      const preloadImages = () => {
-        topPhotos.forEach((photo) => {
+    const preloadBatches = async () => {
+      // Wait 1.5s initially to let the main page load completely
+      await new Promise((resolve) => {
+        timeoutId = setTimeout(resolve, 1500);
+      });
+      if (!active) return;
+
+      // Batch 1: First 20 photos (likely what user will view first)
+      const batch1 = photos.slice(0, 20);
+      preloadPhotos(batch1);
+
+      // Remaining batches: 10 photos each, spaced 5 seconds apart
+      let currentIndex = 20;
+      while (currentIndex < photos.length && active) {
+        await new Promise((resolve) => {
+          timeoutId = setTimeout(resolve, 5000);
+        });
+        if (!active) return;
+
+        const nextBatch = photos.slice(currentIndex, currentIndex + 10);
+        preloadPhotos(nextBatch);
+        currentIndex += 10;
+      }
+    };
+
+    const preloadPhotos = (photoBatch: Photo[]) => {
+      const loadImg = () => {
+        photoBatch.forEach((photo) => {
           const img = new window.Image();
           img.src = fullUrl(photo.public_id);
         });
       };
 
-      // Use requestIdleCallback if available, so preloading happens only when the browser is idle
       if ('requestIdleCallback' in window) {
-        (window as any).requestIdleCallback(preloadImages, { timeout: 4000 });
+        (window as any).requestIdleCallback(loadImg, { timeout: 4000 });
       } else {
-        preloadImages();
+        loadImg();
       }
-    }, 1500);
+    };
 
-    return () => clearTimeout(timer);
+    preloadBatches();
+
+    return () => {
+      active = false;
+      clearTimeout(timeoutId);
+    };
   }, [photos]);
 
   if (!photos || photos.length === 0) {
