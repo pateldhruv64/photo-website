@@ -53,6 +53,17 @@ const configUpdateSchema = z.object({
     facebook: z.string().optional(),
     youtube: z.string().optional()
   }).optional(),
+  studio_logo: z.object({
+    public_id: z.string(),
+    secure_url: z.string()
+  }).nullable().optional(),
+  studio_name: z.string().optional(),
+  studio_phone: z.string().optional(),
+  studio_website: z.string().optional(),
+  studio_services: z.array(z.string()).optional(),
+  studio_description: z.string().optional(),
+  studio_whatsapp: z.string().optional(),
+  studio_location_url: z.string().optional(),
   navbar_links: z.array(z.object({
     label: z.string(),
     url: z.string(),

@@ -31,6 +31,17 @@ const siteConfigSchema = new mongoose.Schema({
     facebook: { type: String, default: '' },
     youtube: { type: String, default: '' }
   },
+  studio_logo: {
+    public_id: { type: String, default: '' },
+    secure_url: { type: String, default: '' }
+  },
+  studio_name: { type: String, default: '' },
+  studio_phone: { type: String, default: '' },
+  studio_website: { type: String, default: '' },
+  studio_services: { type: [String], default: [] },
+  studio_description: { type: String, default: '' },
+  studio_whatsapp: { type: String, default: '' },
+  studio_location_url: { type: String, default: '' },
   navbar_links: [{
     label: { type: String, required: true },
     url: { type: String, required: true },

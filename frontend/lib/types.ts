@@ -40,6 +40,17 @@ export interface SiteConfig {
     youtube: string;
   };
   navbar_links: NavbarLink[];
+  studio_logo?: {
+    public_id: string;
+    secure_url: string;
+  } | null;
+  studio_name?: string;
+  studio_phone?: string;
+  studio_website?: string;
+  studio_services?: string[];
+  studio_description?: string;
+  studio_whatsapp?: string;
+  studio_location_url?: string;
 }
 
 export interface NavbarLink {

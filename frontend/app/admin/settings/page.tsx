@@ -33,11 +33,44 @@ export default function SettingsPage() {
     contact_email: '',
     social_links: { instagram: '', facebook: '', youtube: '' },
     navbar_links: [] as { label: string; url: string; order: number }[],
+    studio_logo: null as { public_id: string; secure_url: string } | null,
+    studio_name: '',
+    studio_phone: '',
+    studio_website: '',
+    studio_services_text: '',
+    studio_description: '',
+    studio_whatsapp: '',
+    studio_location_url: '',
   });
 
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingLogo(true);
+    try {
+      const signature = await apiRequest('/admin/cloudinary-signature');
+      const result = await uploadToCloudinary(file, signature);
+
+      setForm((prev) => ({
+        ...prev,
+        studio_logo: {
+          public_id: result.public_id as string,
+          secure_url: result.secure_url as string,
+        },
+      }));
+    } catch (err) {
+      console.error(err);
+      alert('Failed to upload studio logo. Please try again.');
+    } finally {
+      setUploadingLogo(false);
+    }
+  };
 
   const uploadToCloudinary = async (file: File, signature: CloudinarySignature): Promise<Record<string, unknown>> => {
     const formData = new FormData();
@@ -109,6 +142,14 @@ export default function SettingsPage() {
           youtube: config.social_links?.youtube || '',
         },
         navbar_links: config.navbar_links || [],
+        studio_logo: config.studio_logo || null,
+        studio_name: config.studio_name || '',
+        studio_phone: config.studio_phone || '',
+        studio_website: config.studio_website || '',
+        studio_services_text: config.studio_services?.join(', ') || '',
+        studio_description: config.studio_description || '',
+        studio_whatsapp: config.studio_whatsapp || '',
+        studio_location_url: config.studio_location_url || '',
       });
     }
   }, [config]);
@@ -117,10 +158,14 @@ export default function SettingsPage() {
     setSaving(true);
     setSaved(false);
     try {
-      const payload = {
-        ...form,
-        hero_photo: form.hero_photo || null,
-      };
+      const payload = { ...form } as Record<string, unknown>;
+      delete payload.studio_services_text;
+      
+      payload.hero_photo = form.hero_photo || null;
+      payload.studio_services = form.studio_services_text
+        ? form.studio_services_text.split(',').map((s) => s.trim()).filter(Boolean)
+        : [];
+
       await apiRequest('/admin/config', 'PUT', payload as unknown as Record<string, unknown>);
       mutate();
       setSaved(true);
@@ -335,6 +380,142 @@ export default function SettingsPage() {
                   />
                 </div>
               ))}
+            </div>
+          </section>
+
+          {/* Studio Details Box (Lightbox Overlay) */}
+          <section className="bg-white border border-border rounded-sm p-6">
+            <h2 className="font-body text-sm font-medium text-text-primary mb-4">Studio Details Box (Lightbox Overlay)</h2>
+            <div className="space-y-4">
+              <div>
+                <label className="block font-body text-xs tracking-wider uppercase text-text-muted mb-1.5">
+                  Studio Logo
+                </label>
+                <div className="flex items-center gap-4">
+                  {form.studio_logo?.secure_url ? (
+                    <div className="relative w-16 h-16 rounded-full overflow-hidden border border-border bg-[#F5F5F5] flex items-center justify-center flex-shrink-0">
+                      <img
+                        src={form.studio_logo.secure_url}
+                        alt="Studio Logo"
+                        className="object-cover w-full h-full"
+                      />
+                    </div>
+                  ) : (
+                    <div className="w-16 h-16 rounded-full bg-hover-surface border border-border border-dashed flex items-center justify-center text-text-muted font-body text-[10px] flex-shrink-0">
+                      No Logo
+                    </div>
+                  )}
+
+                  <label className={`cursor-pointer flex items-center justify-center gap-2 px-4 py-2 border border-text-primary text-text-primary rounded-sm font-body text-sm hover:bg-gray-50 transition-colors h-10 ${uploadingLogo ? 'opacity-50 pointer-events-none' : ''}`}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                      <polyline points="17 8 12 3 7 8" />
+                      <line x1="12" y1="3" x2="12" y2="15" />
+                    </svg>
+                    {uploadingLogo ? 'Uploading...' : 'Upload Logo'}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleLogoUpload}
+                      className="hidden"
+                      disabled={uploadingLogo}
+                    />
+                  </label>
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-body text-xs tracking-wider uppercase text-text-muted mb-1.5">
+                  Studio/Business Name
+                </label>
+                <input
+                  type="text"
+                  value={form.studio_name}
+                  onChange={(e) => updateField('studio_name', e.target.value)}
+                  placeholder="e.g. Digital Photography"
+                  className="w-full px-3 py-2 border border-border rounded-sm font-body text-sm focus:outline-none focus:border-text-primary"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block font-body text-xs tracking-wider uppercase text-text-muted mb-1.5">
+                    Phone Number
+                  </label>
+                  <input
+                    type="text"
+                    value={form.studio_phone}
+                    onChange={(e) => updateField('studio_phone', e.target.value)}
+                    placeholder="e.g. +91 9999999999"
+                    className="w-full px-3 py-2 border border-border rounded-sm font-body text-sm focus:outline-none focus:border-text-primary"
+                  />
+                </div>
+                <div>
+                  <label className="block font-body text-xs tracking-wider uppercase text-text-muted mb-1.5">
+                    Website URL
+                  </label>
+                  <input
+                    type="url"
+                    value={form.studio_website}
+                    onChange={(e) => updateField('studio_website', e.target.value)}
+                    placeholder="https://yourwebsite.com"
+                    className="w-full px-3 py-2 border border-border rounded-sm font-body text-sm focus:outline-none focus:border-text-primary"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-body text-xs tracking-wider uppercase text-text-muted mb-1.5">
+                  Services Offered (Comma separated)
+                </label>
+                <input
+                  type="text"
+                  value={form.studio_services_text}
+                  onChange={(e) => updateField('studio_services_text', e.target.value)}
+                  placeholder="Wedding Shoot, Pre Wedding Shoot, Candid Shoot"
+                  className="w-full px-3 py-2 border border-border rounded-sm font-body text-sm focus:outline-none focus:border-text-primary"
+                />
+              </div>
+
+              <div>
+                <label className="block font-body text-xs tracking-wider uppercase text-text-muted mb-1.5">
+                  Description / Subtext
+                </label>
+                <textarea
+                  value={form.studio_description}
+                  onChange={(e) => updateField('studio_description', e.target.value)}
+                  placeholder="All Type Of Photography & Videography"
+                  rows={2}
+                  className="w-full px-3 py-2 border border-border rounded-sm font-body text-sm focus:outline-none focus:border-text-primary resize-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block font-body text-xs tracking-wider uppercase text-text-muted mb-1.5">
+                    WhatsApp Link/Number
+                  </label>
+                  <input
+                    type="text"
+                    value={form.studio_whatsapp}
+                    onChange={(e) => updateField('studio_whatsapp', e.target.value)}
+                    placeholder="WhatsApp chat link or phone number"
+                    className="w-full px-3 py-2 border border-border rounded-sm font-body text-sm focus:outline-none focus:border-text-primary"
+                  />
+                </div>
+                <div>
+                  <label className="block font-body text-xs tracking-wider uppercase text-text-muted mb-1.5">
+                    Google Maps Location URL
+                  </label>
+                  <input
+                    type="url"
+                    value={form.studio_location_url}
+                    onChange={(e) => updateField('studio_location_url', e.target.value)}
+                    placeholder="https://maps.google.com/?q=..."
+                    className="w-full px-3 py-2 border border-border rounded-sm font-body text-sm focus:outline-none focus:border-text-primary"
+                  />
+                </div>
+              </div>
             </div>
           </section>
 

@@ -3,8 +3,11 @@
 import { useCallback, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Image from 'next/image';
+import useSWR from 'swr';
+import { fetcher } from '@/lib/fetcher';
 import { fullUrl } from '@/lib/cloudinary';
-import type { Photo } from '@/lib/types';
+import type { Photo, SiteConfig } from '@/lib/types';
+import StudioCard from '@/components/StudioCard';
 
 interface LightboxProps {
   photos: Photo[];
@@ -16,6 +19,13 @@ interface LightboxProps {
 export default function Lightbox({ photos, currentIndex, onClose, onNavigate }: LightboxProps) {
   const [loaded, setLoaded] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [studioCardOpen, setStudioCardOpen] = useState(false);
+
+  const { data: config } = useSWR<SiteConfig>('/config', fetcher, {
+    revalidateOnFocus: false,
+    dedupingInterval: 3600000,
+  });
+
   const photo = photos[currentIndex];
 
   const goNext = useCallback(() => {
@@ -72,6 +82,33 @@ export default function Lightbox({ photos, currentIndex, onClose, onNavigate }: 
             <line x1="6" y1="6" x2="18" y2="18" />
           </svg>
         </button>
+
+        {/* Top Center Brand Logo Circular Button */}
+        <div className={`absolute top-10 md:top-12 left-1/2 -translate-x-1/2 z-50 transition-all duration-300 ${
+          studioCardOpen ? 'opacity-0 scale-75 pointer-events-none' : 'opacity-100 scale-100'
+        }`}>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setStudioCardOpen(true);
+            }}
+            className="w-16 h-16 rounded-full bg-white border border-[#E6E4DD] shadow-lg flex items-center justify-center overflow-hidden active:scale-95 transition-transform"
+            title="Open Studio Info"
+          >
+            {config?.studio_logo?.secure_url ? (
+              <img
+                src={config.studio_logo.secure_url}
+                alt="Studio Logo"
+                className="object-cover w-full h-full"
+              />
+            ) : (
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#7A7A7A" strokeWidth="2">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2 2z" />
+                <circle cx="12" cy="13" r="4" />
+              </svg>
+            )}
+          </button>
+        </div>
 
         {/* Prev Button */}
         {currentIndex > 0 && (
@@ -139,6 +176,14 @@ export default function Lightbox({ photos, currentIndex, onClose, onNavigate }: 
             {currentIndex + 1} / {photos.length}
           </p>
         </div>
+
+        {config && (
+          <StudioCard
+            config={config}
+            isOpen={studioCardOpen}
+            onClose={() => setStudioCardOpen(false)}
+          />
+        )}
       </div>
     </div>,
     document.body
