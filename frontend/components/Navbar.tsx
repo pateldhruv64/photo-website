@@ -253,13 +253,13 @@ export default function Navbar() {
       </nav>
 
       {/* Floating Social Icons Bar (Bottom Left) — Persistent floating bar on mobile only */}
-      <div className="fixed left-3 bottom-24 z-40 hidden max-md:flex flex-col gap-2">
+      <div className="fixed left-2 bottom-24 z-40 hidden max-md:flex flex-col items-center gap-2.5 bg-black/30 backdrop-blur-md py-3 px-1.5 rounded-full shadow-[0_4px_12px_rgba(0,0,0,0.15)] border border-white/5">
         {config?.social_links?.facebook && (
           <a
             href={config.social_links.facebook}
             target="_blank"
             rel="noopener noreferrer"
-            className="w-8 h-8 rounded-full bg-white/80 backdrop-blur-md text-[#1A1A1A] hover:bg-white flex items-center justify-center shadow-[0_2px_8px_rgba(0,0,0,0.15)] transition-all duration-200 hover:scale-105 active:scale-95"
+            className="w-8 h-8 rounded-full bg-white text-[#1A1A1A] flex items-center justify-center transition-all duration-200 active:scale-90"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
               <path d="M9 8h-3v4h3v12h5v-12h3.642l.358-4h-4v-1.667c0-.955.192-1.333 1.115-1.333h2.885v-5h-3.808c-3.596 0-5.192 1.583-5.192 4.615v3.385z" />
@@ -271,7 +271,7 @@ export default function Navbar() {
             href={config.social_links.instagram}
             target="_blank"
             rel="noopener noreferrer"
-            className="w-8 h-8 rounded-full bg-white/80 backdrop-blur-md text-[#1A1A1A] hover:bg-white flex items-center justify-center shadow-[0_2px_8px_rgba(0,0,0,0.15)] transition-all duration-200 hover:scale-105 active:scale-95"
+            className="w-8 h-8 rounded-full bg-white text-[#1A1A1A] flex items-center justify-center transition-all duration-200 active:scale-90"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
               <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
@@ -285,7 +285,7 @@ export default function Navbar() {
             href={config.social_links.youtube}
             target="_blank"
             rel="noopener noreferrer"
-            className="w-8 h-8 rounded-full bg-white/80 backdrop-blur-md text-[#1A1A1A] hover:bg-white flex items-center justify-center shadow-[0_2px_8px_rgba(0,0,0,0.15)] transition-all duration-200 hover:scale-105 active:scale-95"
+            className="w-8 h-8 rounded-full bg-white text-[#1A1A1A] flex items-center justify-center transition-all duration-200 active:scale-90"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
               <path d="M23.498 6.163c-.272-1.016-1.071-1.815-2.087-2.087C19.565 3.5 12 3.5 12 3.5s-7.565 0-9.411.576c-1.016.272-1.815 1.071-2.087 2.087C0 8.01 0 12 0 12s0 3.99.502 5.837c.272 1.016 1.071 1.815 2.087 2.087C4.435 20.5 12 20.5 12 20.5s7.565 0 9.411-.576c1.016-.272 1.815-1.071 2.087-2.087C24 15.99 24 12 24 12s0-3.99-.502-5.837zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
