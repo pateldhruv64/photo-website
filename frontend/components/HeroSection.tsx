@@ -13,8 +13,8 @@ export default function HeroSection({ config }: HeroSectionProps) {
 
   return (
     <div className="sticky top-0 z-0">
-      <section className="relative h-screen w-full flex items-center justify-center overflow-hidden">
-        {/* Background Image */}
+      <section className="relative h-[65vh] md:h-screen w-full flex items-center justify-center overflow-hidden">
+        {/* Background Image — Fully covers the hero container with no gaps */}
         {hasHeroPhoto ? (
           <Image
             src={heroUrl(config.hero_photo!.public_id)}
@@ -31,10 +31,10 @@ export default function HeroSection({ config }: HeroSectionProps) {
         )}
 
         {/* Dark Overlay — makes background image rich and text readable */}
-        <div className="absolute inset-0 bg-black/30" />
+        <div className="absolute inset-0 bg-black/35" />
 
         {/* Content — pushed down slightly to avoid navbar */}
-        <div className="relative z-10 text-center px-4 max-w-4xl pt-28">
+        <div className="relative z-10 text-center px-4 max-w-4xl pt-20 md:pt-28">
           <h1 className="font-display text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-light text-white tracking-wide animate-fade-in drop-shadow-[0_2px_15px_rgba(0,0,0,0.5)]">
             {config?.hero_title || 'Capturing Moments'}
           </h1>
@@ -48,8 +48,8 @@ export default function HeroSection({ config }: HeroSectionProps) {
           </p>
         </div>
 
-        {/* Scroll Down Indicator */}
-        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 cursor-pointer opacity-75 hover:opacity-100 transition-opacity duration-300">
+        {/* Scroll Down Indicator (Desktop Only) */}
+        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 hidden md:flex flex-col items-center gap-2 cursor-pointer opacity-75 hover:opacity-100 transition-opacity duration-300">
           <span className="font-body text-[9px] tracking-[0.3em] uppercase text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.5)]">Scroll</span>
           <div className="w-[18px] h-[30px] border-[1.5px] border-white rounded-full flex justify-center p-[3px] shadow-sm">
             <div className="w-[2.5px] h-[5px] bg-white rounded-full scroll-wheel-dot" />
