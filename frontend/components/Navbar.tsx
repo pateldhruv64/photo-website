@@ -118,7 +118,7 @@ export default function Navbar() {
                 <div className="ml-4 flex items-center gap-4">
                   <a
                     href={`mailto:${config.contact_email}`}
-                    className="px-5 py-2 text-sm font-body bg-text-primary text-white rounded-sm hover:bg-gray-800 transition-colors duration-200"
+                    className="px-5 py-2 text-sm font-body bg-text-primary text-white rounded-md hover:bg-gray-800 transition-colors duration-200"
                   >
                     Book Now
                   </a>
@@ -191,7 +191,7 @@ export default function Navbar() {
                   key={cat._id}
                   href={`/${cat.slug}`}
                   onClick={() => setMobileOpen(false)}
-                  className="block px-4 py-3 text-sm font-body text-text-muted hover:text-text-primary hover:bg-hover-surface rounded-sm transition-all duration-200"
+                  className="block px-4 py-3 text-sm font-body font-medium text-[#1A1A1A] hover:bg-black/5 rounded-sm transition-all duration-200"
                 >
                   {cat.name}
                 </Link>
@@ -204,7 +204,7 @@ export default function Navbar() {
                   key={i}
                   href={link.url}
                   onClick={() => setMobileOpen(false)}
-                  className="block px-4 py-3 text-sm font-body text-text-muted hover:text-text-primary hover:bg-hover-surface rounded-sm transition-all duration-200"
+                  className="block px-4 py-3 text-sm font-body font-medium text-[#1A1A1A] hover:bg-black/5 rounded-sm transition-all duration-200"
                 >
                   {link.label}
                 </Link>
@@ -214,7 +214,7 @@ export default function Navbar() {
               <div className="mx-4 mt-4 flex flex-col gap-3">
                 <a
                   href={`mailto:${config.contact_email}`}
-                  className="block px-5 py-3 text-sm font-body bg-text-primary text-white text-center rounded-sm"
+                  className="block px-5 py-3 text-sm font-body bg-text-primary text-white text-center rounded-md"
                 >
                   Book Now
                 </a>
