@@ -1,5 +1,7 @@
 'use client';
 
+/* eslint-disable @next/next/no-img-element */
+
 import { useState, useEffect } from 'react';
 import useSWR from 'swr';
 import AdminLayoutClient from '@/components/admin/AdminLayout';

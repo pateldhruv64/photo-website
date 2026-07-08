@@ -117,9 +117,12 @@ export default function Lightbox({ photos, currentIndex, onClose, onNavigate }: 
               <div className="w-8 h-8 border-2 border-white/30 border-t-white rounded-full animate-spin" />
             </div>
           )}
-          <img
+          <Image
             src={fullUrl(photo.public_id)}
             alt={photo.title || 'Photo'}
+            width={photo.width}
+            height={photo.height}
+            unoptimized
             className={`max-h-[85vh] w-auto h-auto object-contain transition-opacity duration-300 ${
               loaded ? 'opacity-100' : 'opacity-0'
             }`}

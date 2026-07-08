@@ -59,7 +59,7 @@ export default function PhotoGrid({ photos, onPhotoClick }: PhotoGridProps) {
       };
 
       if ('requestIdleCallback' in window) {
-        (window as any).requestIdleCallback(loadImg, { timeout: 4000 });
+        (window as Window & { requestIdleCallback?: (cb: () => void, options?: { timeout: number }) => void }).requestIdleCallback?.(loadImg, { timeout: 4000 });
       } else {
         loadImg();
       }
