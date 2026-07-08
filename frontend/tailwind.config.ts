@@ -18,8 +18,8 @@ const config: Config = {
         'hover-surface': '#F0F0F0',
       },
       fontFamily: {
-        display: ['var(--font-cormorant)', 'Georgia', 'serif'],
-        body: ['var(--font-dm-sans)', 'system-ui', 'sans-serif'],
+        display: ['var(--font-raleway)', 'sans-serif'],
+        body: ['var(--font-raleway)', 'sans-serif'],
       },
       animation: {
         'fade-in': 'fadeIn 0.6s ease-out forwards',

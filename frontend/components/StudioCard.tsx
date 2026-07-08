@@ -144,7 +144,7 @@ export default function StudioCard({ config, isOpen, onClose }: StudioCardProps)
               href={getWhatsappLink(whatsapp)} 
               target="_blank" 
               rel="noopener noreferrer" 
-              className="w-9 h-9 rounded-full bg-neutral-50 border border-neutral-100 flex items-center justify-center text-[#25D366] hover:bg-neutral-100 hover:scale-105 active:scale-95 transition-all shadow-xs"
+              className="w-9 h-9 rounded-full bg-neutral-50 border border-neutral-100 flex items-center justify-center text-neutral-800 hover:text-[#25D366] hover:bg-neutral-100 hover:scale-105 active:scale-95 transition-all shadow-xs"
               title="WhatsApp"
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
@@ -157,7 +157,7 @@ export default function StudioCard({ config, isOpen, onClose }: StudioCardProps)
               href={facebook} 
               target="_blank" 
               rel="noopener noreferrer" 
-              className="w-9 h-9 rounded-full bg-neutral-50 border border-neutral-100 flex items-center justify-center text-[#1877F2] hover:bg-neutral-100 hover:scale-105 active:scale-95 transition-all shadow-xs"
+              className="w-9 h-9 rounded-full bg-neutral-50 border border-neutral-100 flex items-center justify-center text-neutral-800 hover:text-[#1877F2] hover:bg-neutral-100 hover:scale-105 active:scale-95 transition-all shadow-xs"
               title="Facebook"
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
@@ -170,7 +170,7 @@ export default function StudioCard({ config, isOpen, onClose }: StudioCardProps)
               href={instagram} 
               target="_blank" 
               rel="noopener noreferrer" 
-              className="w-9 h-9 rounded-full bg-neutral-50 border border-neutral-100 flex items-center justify-center text-[#E1306C] hover:bg-neutral-100 hover:scale-105 active:scale-95 transition-all shadow-xs"
+              className="w-9 h-9 rounded-full bg-neutral-50 border border-neutral-100 flex items-center justify-center text-neutral-800 hover:text-[#E1306C] hover:bg-neutral-100 hover:scale-105 active:scale-95 transition-all shadow-xs"
               title="Instagram"
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -185,7 +185,7 @@ export default function StudioCard({ config, isOpen, onClose }: StudioCardProps)
               href={youtube} 
               target="_blank" 
               rel="noopener noreferrer" 
-              className="w-9 h-9 rounded-full bg-neutral-50 border border-neutral-100 flex items-center justify-center text-[#FF0000] hover:bg-neutral-100 hover:scale-105 active:scale-95 transition-all shadow-xs"
+              className="w-9 h-9 rounded-full bg-neutral-50 border border-neutral-100 flex items-center justify-center text-neutral-800 hover:text-[#FF0000] hover:bg-neutral-100 hover:scale-105 active:scale-95 transition-all shadow-xs"
               title="YouTube"
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
@@ -198,7 +198,7 @@ export default function StudioCard({ config, isOpen, onClose }: StudioCardProps)
               href={locationUrl} 
               target="_blank" 
               rel="noopener noreferrer" 
-              className="w-9 h-9 rounded-full bg-neutral-50 border border-neutral-100 flex items-center justify-center text-[#EA4335] hover:bg-neutral-100 hover:scale-105 active:scale-95 transition-all shadow-xs"
+              className="w-9 h-9 rounded-full bg-neutral-50 border border-neutral-100 flex items-center justify-center text-neutral-800 hover:text-[#EA4335] hover:bg-neutral-100 hover:scale-105 active:scale-95 transition-all shadow-xs"
               title="Google Maps Location"
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

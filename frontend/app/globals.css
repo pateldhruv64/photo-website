@@ -14,7 +14,7 @@ html {
 }
 
 body {
-  font-family: var(--font-dm-sans), system-ui, sans-serif;
+  font-family: var(--font-raleway), system-ui, sans-serif;
   color: #1A1A1A;
   background: #FFFFFF;
   -webkit-font-smoothing: antialiased;
