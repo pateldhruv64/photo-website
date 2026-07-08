@@ -48,13 +48,22 @@ body {
 /* ─── Masonry Grid ────────────────────────────────────────────────── */
 .masonry-grid {
   display: flex;
-  margin-left: -16px;
+  margin-left: -4px; /* 4px gap on mobile */
   width: auto;
 }
 
 .masonry-grid-column {
-  padding-left: 16px;
+  padding-left: 4px; /* 4px gap on mobile */
   background-clip: padding-box;
+}
+
+@media (min-width: 768px) {
+  .masonry-grid {
+    margin-left: -16px;
+  }
+  .masonry-grid-column {
+    padding-left: 16px;
+  }
 }
 
 /* ─── Photo Hover Effect ──────────────────────────────────────────── */
@@ -103,6 +112,22 @@ body {
 .marquee-content-reverse {
   display: inline-flex;
   animation: marqueeReverse 25s linear infinite;
+}
+
+.marquee-item {
+  position: relative;
+  height: 120px;
+  aspect-ratio: var(--aspect-ratio);
+  margin-left: 4px;
+  margin-right: 4px;
+}
+
+@media (min-width: 768px) {
+  .marquee-item {
+    height: 200px;
+    margin-left: 8px;
+    margin-right: 8px;
+  }
 }
 
 
@@ -238,4 +263,14 @@ body {
   );
   background-size: 200% 100%;
   animation: shimmer 2s ease-in-out infinite;
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+/* Hide scrollbar for IE, Edge and Firefox */
+.scrollbar-none {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
 }

@@ -13,9 +13,8 @@ interface PhotoGridProps {
 
 const breakpointColumns = {
   default: 4,
-  1280: 3,
-  768: 2,
-  640: 1,
+  1024: 3,
+  768: 3, // Mobile screens will display 3 columns of photos, making them compact
 };
 
 export default function PhotoGrid({ photos, onPhotoClick }: PhotoGridProps) {

@@ -54,7 +54,7 @@ export default function Lightbox({ photos, currentIndex, onClose, onNavigate }: 
   if (!mounted || !photo) return null;
 
   return createPortal(
-    <div className="lightbox-overlay" onClick={onClose}>
+    <div className="lightbox-overlay z-[9999]" onClick={onClose}>
       <div
         className="relative w-full h-full flex items-center justify-center p-4 md:p-8"
       >

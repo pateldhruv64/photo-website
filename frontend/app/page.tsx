@@ -80,15 +80,15 @@ export default async function HomePage() {
       <div className="relative z-10 bg-white">
         {/* Marquee of featured photos */}
         {featuredPhotos.length > 0 && (
-          <div className="py-12 md:py-16 bg-surface">
-            <div className="max-w-7xl mx-auto px-4 mb-8">
+          <div className="py-6 md:py-8 bg-surface">
+            <div className="max-w-7xl mx-auto px-4 mb-4">
               <p className="font-body text-xs tracking-[0.3em] uppercase text-text-muted text-center">
                 Featured Work
               </p>
             </div>
             <Marquee photos={featuredPhotos} reverse speed={40} />
             {featuredPhotos.length > 4 && (
-              <div className="mt-4">
+              <div className="mt-2">
                 <Marquee photos={featuredPhotos.slice().reverse()} speed={35} />
               </div>
             )}

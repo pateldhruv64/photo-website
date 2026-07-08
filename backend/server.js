@@ -20,7 +20,7 @@ app.use(helmet({
 
 // ─── CORS ────────────────────────────────────────────────────────────
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: true, // Reflexively allow requesting origin (localhost, IP address, etc.) for easy local network testing
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']

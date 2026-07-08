@@ -11,7 +11,7 @@ interface PhotoCardProps {
 
 export default function PhotoCard({ photo, onClick }: PhotoCardProps) {
   return (
-    <div className="mb-4 break-inside-avoid">
+    <div className="mb-1 md:mb-4 break-inside-avoid">
       <div
         className="photo-card rounded-sm"
         style={{ aspectRatio: `${photo.width}/${photo.height}` }}

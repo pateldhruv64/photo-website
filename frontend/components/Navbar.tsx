@@ -38,76 +38,192 @@ export default function Navbar() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // Close mobile menu when clicking anywhere outside of the navbar
+  useEffect(() => {
+    if (!mobileOpen) return;
+
+    const handleOutsideClick = (e: Event) => {
+      const navElement = document.getElementById('main-navbar');
+      if (navElement && !navElement.contains(e.target as Node)) {
+        setMobileOpen(false);
+      }
+    };
+
+    const timer = setTimeout(() => {
+      document.addEventListener('click', handleOutsideClick, { capture: true });
+      document.addEventListener('touchstart', handleOutsideClick, { capture: true });
+    }, 0);
+
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener('click', handleOutsideClick, { capture: true });
+      document.removeEventListener('touchstart', handleOutsideClick, { capture: true });
+    };
+  }, [mobileOpen]);
+
   return (
     <>
       <nav
+        id="main-navbar"
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-          scrolled
-            ? 'bg-white/70 backdrop-blur-3xl shadow-sm border-b border-border/40'
+          scrolled || mobileOpen
+            ? 'bg-white/40 backdrop-blur-3xl shadow-sm border-b border-border/20'
             : 'bg-transparent border-b border-transparent'
         }`}
       >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-14 md:h-16">
-          {/* Logo / Name */}
-          <Link href="/" className="flex-shrink-0">
-            <span className={`font-display text-xl md:text-2xl font-semibold tracking-wide transition-colors duration-300 ${scrolled ? 'text-text-primary' : 'text-white'}`}>
-              {config?.photographer_name || 'Portfolio'}
-            </span>
-          </Link>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-14 md:h-16">
+            {/* Logo / Name */}
+            <Link href="/" className="flex-shrink-0">
+              <span className={`font-display text-xl md:text-2xl font-semibold tracking-wide transition-colors duration-300 ${scrolled ? 'text-text-primary' : 'text-white'}`}>
+                {config?.photographer_name || 'Portfolio'}
+              </span>
+            </Link>
 
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-1">
+            {/* Desktop Navigation */}
+            <div className="hidden md:flex items-center gap-1">
+              {navCategories
+                .sort((a, b) => a.navbar_order - b.navbar_order)
+                .map((cat) => (
+                  <Link
+                    key={cat._id}
+                    href={`/${cat.slug}`}
+                    className={`px-4 py-2 text-sm font-body transition-colors duration-300 relative group ${scrolled ? 'text-text-muted hover:text-text-primary' : 'text-white/80 hover:text-white'
+                      }`}
+                  >
+                    {cat.name}
+                    <span className={`absolute bottom-0 left-1/2 -translate-x-1/2 w-0 h-[1.5px] transition-all duration-300 group-hover:w-3/4 ${scrolled ? 'bg-text-primary' : 'bg-white'
+                      }`} />
+                  </Link>
+                ))}
+
+              {/* Custom navbar links from config */}
+              {config?.navbar_links
+                ?.sort((a, b) => a.order - b.order)
+                .map((link, i) => (
+                  <Link
+                    key={i}
+                    href={link.url}
+                    className={`px-4 py-2 text-sm font-body transition-colors duration-300 relative group ${scrolled ? 'text-text-muted hover:text-text-primary' : 'text-white/80 hover:text-white'
+                      }`}
+                  >
+                    {link.label}
+                    <span className={`absolute bottom-0 left-1/2 -translate-x-1/2 w-0 h-[1.5px] transition-all duration-300 group-hover:w-3/4 ${scrolled ? 'bg-text-primary' : 'bg-white'
+                      }`} />
+                  </Link>
+                ))}
+
+              {/* Book Now CTA & Social Links */}
+              {config?.contact_email && (
+                <div className="ml-4 flex items-center gap-4">
+                  <a
+                    href={`mailto:${config.contact_email}`}
+                    className="px-5 py-2 text-sm font-body bg-text-primary text-white rounded-sm hover:bg-gray-800 transition-colors duration-200"
+                  >
+                    Book Now
+                  </a>
+
+                  {/* Social Icons on the right side */}
+                  <div className="flex items-center gap-3">
+                    {config?.social_links?.instagram && (
+                      <a href={config.social_links.instagram} target="_blank" rel="noopener noreferrer" className="transition-transform duration-150 hover:scale-110">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={scrolled ? "#E1306C" : "#FFFFFF"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+                          <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+                          <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
+                        </svg>
+                      </a>
+                    )}
+                    {config?.social_links?.facebook && (
+                      <a href={config.social_links.facebook} target="_blank" rel="noopener noreferrer" className="transition-transform duration-150 hover:scale-110">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={scrolled ? "#1877F2" : "#FFFFFF"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />
+                        </svg>
+                      </a>
+                    )}
+                    {config?.social_links?.youtube && (
+                      <a href={config.social_links.youtube} target="_blank" rel="noopener noreferrer" className="transition-transform duration-150 hover:scale-110">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={scrolled ? "#FF0000" : "#FFFFFF"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19.13C5.12 19.56 12 19.56 12 19.56s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.25 29 29 0 0 0-.46-5.43z" />
+                          <polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02" />
+                        </svg>
+                      </a>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Mobile Hamburger */}
+            <button
+              onClick={() => setMobileOpen(!mobileOpen)}
+              className={`md:hidden p-2 transition-colors duration-300 ${scrolled ? 'text-text-primary' : 'text-white'}`}
+              aria-label="Toggle menu"
+            >
+              <div className="w-6 h-5 relative flex flex-col justify-between">
+                <span
+                  className={`w-full h-[1.5px] transition-all duration-300 origin-center ${scrolled ? 'bg-text-primary' : 'bg-white'} ${mobileOpen ? 'rotate-45 translate-y-[7px]' : ''
+                    }`}
+                />
+                <span
+                  className={`w-full h-[1.5px] transition-all duration-300 ${scrolled ? 'bg-text-primary' : 'bg-white'} ${mobileOpen ? 'opacity-0 scale-0' : ''
+                    }`}
+                />
+                <span
+                  className={`w-full h-[1.5px] transition-all duration-300 origin-center ${scrolled ? 'bg-text-primary' : 'bg-white'} ${mobileOpen ? '-rotate-45 -translate-y-[7px]' : ''
+                    }`}
+                />
+              </div>
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile Menu */}
+        <div
+          className={`md:hidden overflow-hidden transition-all duration-300 bg-transparent ${mobileOpen ? 'max-h-[400px] border-b border-border/10' : 'max-h-0'
+            }`}
+        >
+          <div className="px-4 py-4 space-y-1 animate-slide-down">
             {navCategories
               .sort((a, b) => a.navbar_order - b.navbar_order)
               .map((cat) => (
                 <Link
                   key={cat._id}
                   href={`/${cat.slug}`}
-                  className={`px-4 py-2 text-sm font-body transition-colors duration-300 relative group ${
-                    scrolled ? 'text-text-muted hover:text-text-primary' : 'text-white/80 hover:text-white'
-                  }`}
+                  onClick={() => setMobileOpen(false)}
+                  className="block px-4 py-3 text-sm font-body text-text-muted hover:text-text-primary hover:bg-hover-surface rounded-sm transition-all duration-200"
                 >
                   {cat.name}
-                  <span className={`absolute bottom-0 left-1/2 -translate-x-1/2 w-0 h-[1.5px] transition-all duration-300 group-hover:w-3/4 ${
-                    scrolled ? 'bg-text-primary' : 'bg-white'
-                  }`} />
                 </Link>
               ))}
-            
-            {/* Custom navbar links from config */}
+
             {config?.navbar_links
               ?.sort((a, b) => a.order - b.order)
               .map((link, i) => (
                 <Link
                   key={i}
                   href={link.url}
-                  className={`px-4 py-2 text-sm font-body transition-colors duration-300 relative group ${
-                    scrolled ? 'text-text-muted hover:text-text-primary' : 'text-white/80 hover:text-white'
-                  }`}
+                  onClick={() => setMobileOpen(false)}
+                  className="block px-4 py-3 text-sm font-body text-text-muted hover:text-text-primary hover:bg-hover-surface rounded-sm transition-all duration-200"
                 >
                   {link.label}
-                  <span className={`absolute bottom-0 left-1/2 -translate-x-1/2 w-0 h-[1.5px] transition-all duration-300 group-hover:w-3/4 ${
-                    scrolled ? 'bg-text-primary' : 'bg-white'
-                  }`} />
                 </Link>
               ))}
 
-            {/* Book Now CTA & Social Links */}
             {config?.contact_email && (
-              <div className="ml-4 flex items-center gap-4">
+              <div className="mx-4 mt-4 flex flex-col gap-3">
                 <a
                   href={`mailto:${config.contact_email}`}
-                  className="px-5 py-2 text-sm font-body bg-text-primary text-white rounded-sm hover:bg-gray-800 transition-colors duration-200"
+                  className="block px-5 py-3 text-sm font-body bg-text-primary text-white text-center rounded-sm"
                 >
                   Book Now
                 </a>
-                
-                {/* Social Icons on the right side */}
-                <div className="flex items-center gap-3">
+
+                {/* Mobile Social Links */}
+                <div className="flex items-center justify-center gap-8 mt-4 mb-2">
                   {config?.social_links?.instagram && (
-                    <a href={config.social_links.instagram} target="_blank" rel="noopener noreferrer" className="transition-transform duration-150 hover:scale-110">
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={scrolled ? "#E1306C" : "#FFFFFF"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <a href={config.social_links.instagram} target="_blank" rel="noopener noreferrer" className="transition-transform duration-200 active:scale-90 hover:scale-105">
+                      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#E1306C" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
                         <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
                         <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
@@ -115,15 +231,15 @@ export default function Navbar() {
                     </a>
                   )}
                   {config?.social_links?.facebook && (
-                    <a href={config.social_links.facebook} target="_blank" rel="noopener noreferrer" className="transition-transform duration-150 hover:scale-110">
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={scrolled ? "#1877F2" : "#FFFFFF"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <a href={config.social_links.facebook} target="_blank" rel="noopener noreferrer" className="transition-transform duration-200 active:scale-90 hover:scale-105">
+                      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#1877F2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />
                       </svg>
                     </a>
                   )}
                   {config?.social_links?.youtube && (
-                    <a href={config.social_links.youtube} target="_blank" rel="noopener noreferrer" className="transition-transform duration-150 hover:scale-110">
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={scrolled ? "#FF0000" : "#FFFFFF"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <a href={config.social_links.youtube} target="_blank" rel="noopener noreferrer" className="transition-transform duration-200 active:scale-90 hover:scale-105">
+                      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#FF0000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19.13C5.12 19.56 12 19.56 12 19.56s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.25 29 29 0 0 0-.46-5.43z" />
                         <polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02" />
                       </svg>
@@ -133,108 +249,50 @@ export default function Navbar() {
               </div>
             )}
           </div>
+        </div>
+      </nav>
 
-          {/* Mobile Hamburger */}
-          <button
-            onClick={() => setMobileOpen(!mobileOpen)}
-            className={`md:hidden p-2 transition-colors duration-300 ${scrolled ? 'text-text-primary' : 'text-white'}`}
-            aria-label="Toggle menu"
+      {/* Floating Social Icons Bar (Bottom Left) — Persistent floating bar on mobile only */}
+      <div className="fixed left-3 bottom-24 z-40 hidden max-md:flex flex-col gap-2">
+        {config?.social_links?.facebook && (
+          <a
+            href={config.social_links.facebook}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-8 h-8 rounded-full bg-white/80 backdrop-blur-md text-[#1A1A1A] hover:bg-white flex items-center justify-center shadow-[0_2px_8px_rgba(0,0,0,0.15)] transition-all duration-200 hover:scale-105 active:scale-95"
           >
-            <div className="w-6 h-5 relative flex flex-col justify-between">
-              <span
-                className={`w-full h-[1.5px] transition-all duration-300 origin-center ${scrolled ? 'bg-text-primary' : 'bg-white'} ${
-                  mobileOpen ? 'rotate-45 translate-y-[7px]' : ''
-                }`}
-              />
-              <span
-                className={`w-full h-[1.5px] transition-all duration-300 ${scrolled ? 'bg-text-primary' : 'bg-white'} ${
-                  mobileOpen ? 'opacity-0 scale-0' : ''
-                }`}
-              />
-              <span
-                className={`w-full h-[1.5px] transition-all duration-300 origin-center ${scrolled ? 'bg-text-primary' : 'bg-white'} ${
-                  mobileOpen ? '-rotate-45 -translate-y-[7px]' : ''
-                }`}
-              />
-            </div>
-          </button>
-        </div>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M9 8h-3v4h3v12h5v-12h3.642l.358-4h-4v-1.667c0-.955.192-1.333 1.115-1.333h2.885v-5h-3.808c-3.596 0-5.192 1.583-5.192 4.615v3.385z" />
+            </svg>
+          </a>
+        )}
+        {config?.social_links?.instagram && (
+          <a
+            href={config.social_links.instagram}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-8 h-8 rounded-full bg-white/80 backdrop-blur-md text-[#1A1A1A] hover:bg-white flex items-center justify-center shadow-[0_2px_8px_rgba(0,0,0,0.15)] transition-all duration-200 hover:scale-105 active:scale-95"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+              <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+              <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
+            </svg>
+          </a>
+        )}
+        {config?.social_links?.youtube && (
+          <a
+            href={config.social_links.youtube}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-8 h-8 rounded-full bg-white/80 backdrop-blur-md text-[#1A1A1A] hover:bg-white flex items-center justify-center shadow-[0_2px_8px_rgba(0,0,0,0.15)] transition-all duration-200 hover:scale-105 active:scale-95"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M23.498 6.163c-.272-1.016-1.071-1.815-2.087-2.087C19.565 3.5 12 3.5 12 3.5s-7.565 0-9.411.576c-1.016.272-1.815 1.071-2.087 2.087C0 8.01 0 12 0 12s0 3.99.502 5.837c.272 1.016 1.071 1.815 2.087 2.087C4.435 20.5 12 20.5 12 20.5s7.565 0 9.411-.576c1.016-.272 1.815-1.071 2.087-2.087C24 15.99 24 12 24 12s0-3.99-.502-5.837zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+            </svg>
+          </a>
+        )}
       </div>
-
-      {/* Mobile Menu */}
-      <div
-        className={`md:hidden overflow-hidden transition-all duration-300 bg-white ${
-          mobileOpen ? 'max-h-[400px] border-b border-border' : 'max-h-0'
-        }`}
-      >
-        <div className="px-4 py-4 space-y-1 animate-slide-down">
-          {navCategories
-            .sort((a, b) => a.navbar_order - b.navbar_order)
-            .map((cat) => (
-              <Link
-                key={cat._id}
-                href={`/${cat.slug}`}
-                onClick={() => setMobileOpen(false)}
-                className="block px-4 py-3 text-sm font-body text-text-muted hover:text-text-primary hover:bg-hover-surface rounded-sm transition-all duration-200"
-              >
-                {cat.name}
-              </Link>
-            ))}
-          
-          {config?.navbar_links
-            ?.sort((a, b) => a.order - b.order)
-            .map((link, i) => (
-              <Link
-                key={i}
-                href={link.url}
-                onClick={() => setMobileOpen(false)}
-                className="block px-4 py-3 text-sm font-body text-text-muted hover:text-text-primary hover:bg-hover-surface rounded-sm transition-all duration-200"
-              >
-                {link.label}
-              </Link>
-            ))}
-
-          {config?.contact_email && (
-            <div className="mx-4 mt-4 flex flex-col gap-3">
-              <a
-                href={`mailto:${config.contact_email}`}
-                className="block px-5 py-3 text-sm font-body bg-text-primary text-white text-center rounded-sm"
-              >
-                Book Now
-              </a>
-              
-              {/* Mobile Social Links */}
-              <div className="flex items-center justify-center gap-8 mt-4 mb-2">
-                {config?.social_links?.instagram && (
-                  <a href={config.social_links.instagram} target="_blank" rel="noopener noreferrer" className="transition-transform duration-200 active:scale-90 hover:scale-105">
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#E1306C" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
-                      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
-                      <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
-                    </svg>
-                  </a>
-                )}
-                {config?.social_links?.facebook && (
-                  <a href={config.social_links.facebook} target="_blank" rel="noopener noreferrer" className="transition-transform duration-200 active:scale-90 hover:scale-105">
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#1877F2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />
-                    </svg>
-                  </a>
-                )}
-                {config?.social_links?.youtube && (
-                  <a href={config.social_links.youtube} target="_blank" rel="noopener noreferrer" className="transition-transform duration-200 active:scale-90 hover:scale-105">
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#FF0000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19.13C5.12 19.56 12 19.56 12 19.56s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.25 29 29 0 0 0-.46-5.43z" />
-                      <polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02" />
-                    </svg>
-                  </a>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    </nav>
     </>
   );
 }

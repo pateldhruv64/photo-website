@@ -54,26 +54,26 @@ export default function HomeGallery({ categories, initialPhotos = [] }: Props) {
   };
 
   return (
-    <div className="py-12 md:py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="pt-4 pb-12 md:pt-8 md:pb-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       {/* Category Tabs */}
-      <div className="flex flex-wrap items-center justify-center gap-3 md:gap-6 mb-12">
+      <div className="flex items-center justify-start md:justify-center gap-3 md:gap-6 mb-10 overflow-x-auto whitespace-nowrap scrollbar-none px-4 md:px-0 -mx-4 md:mx-0">
         <button
           onClick={() => setActiveCategory('all')}
-          className={`font-body text-xs md:text-sm tracking-widest uppercase transition-colors px-4 py-2 rounded-full border ${
+          className={`font-body text-xs tracking-[0.2em] uppercase transition-all px-4 py-2 rounded-full border ${
             activeCategory === 'all'
-              ? 'bg-text-primary text-white border-text-primary'
+              ? 'bg-[#EAEAEA] text-text-primary border-[#EAEAEA] font-medium'
               : 'bg-transparent text-text-muted border-transparent hover:border-border hover:text-text-primary'
           }`}
         >
-          All Photos
+          All
         </button>
         {categories.map((cat) => (
           <button
             key={cat._id}
             onClick={() => setActiveCategory(cat._id)}
-            className={`font-body text-xs md:text-sm tracking-widest uppercase transition-colors px-4 py-2 rounded-full border ${
+            className={`font-body text-xs tracking-[0.2em] uppercase transition-all px-4 py-2 rounded-full border ${
               activeCategory === cat._id
-                ? 'bg-text-primary text-white border-text-primary'
+                ? 'bg-[#EAEAEA] text-text-primary border-[#EAEAEA] font-medium'
                 : 'bg-transparent text-text-muted border-transparent hover:border-border hover:text-text-primary'
             }`}
           >

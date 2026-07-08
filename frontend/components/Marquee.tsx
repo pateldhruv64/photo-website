@@ -20,7 +20,7 @@ export default function Marquee({ photos, reverse = false, speed = 30 }: Marquee
   const duplicated = Array(evenRepeatCount).fill(photos).flat();
 
   return (
-    <div className="marquee-container py-2 overflow-hidden">
+    <div className="marquee-container py-0.5 overflow-hidden">
       <div
         className={reverse ? 'marquee-content-reverse' : 'marquee-content'}
         style={{ animationDuration: `${speed}s` }}
@@ -28,20 +28,19 @@ export default function Marquee({ photos, reverse = false, speed = 30 }: Marquee
         {duplicated.map((photo, i) => (
           <div
             key={`${photo._id}-${i}`}
-            className="flex-shrink-0 mx-2 rounded-sm overflow-hidden"
+            className="marquee-item flex-shrink-0 rounded-sm overflow-hidden"
             style={{
-              width: `${Math.round((photo.width / photo.height) * 200)}px`,
-              height: '200px',
-            }}
+              ['--aspect-ratio']: photo.width / photo.height,
+            } as React.CSSProperties}
           >
             <Image
               src={thumbnailUrl(photo.public_id, 400)}
               alt={photo.title || 'Photo'}
-              width={Math.round((photo.width / photo.height) * 200)}
-              height={200}
+              fill
+              sizes="(max-width: 768px) 180px, 300px"
               placeholder="blur"
               blurDataURL={blurUrl(photo.public_id)}
-              className="object-cover w-full h-full"
+              className="object-cover"
             />
           </div>
         ))}
