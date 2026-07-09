@@ -1,5 +1,22 @@
+import Cookies from 'js-cookie';
+
 const getApiUrl = () => {
   return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+};
+
+const getAuthHeaders = (): Record<string, string> => {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+  
+  if (typeof window !== 'undefined') {
+    const token = localStorage.getItem('admin_token') || Cookies.get('token');
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+  }
+  
+  return headers;
 };
 
 /**
@@ -11,9 +28,7 @@ export const fetcher = async (url: string) => {
   
   const res = await fetch(fullUrl, {
     credentials: 'include', // Send cookies for auth
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers: getAuthHeaders(),
   });
   
   if (!res.ok) {
@@ -44,9 +59,7 @@ export const apiRequest = async (
   const options: RequestInit = {
     method,
     credentials: 'include',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers: getAuthHeaders(),
   };
   
   if (body) {

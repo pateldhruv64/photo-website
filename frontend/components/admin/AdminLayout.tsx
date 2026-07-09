@@ -70,6 +70,7 @@ export default function AdminLayoutClient({ children }: AdminLayoutProps) {
     } catch {
       // Continue with redirect even if API fails
     }
+    localStorage.removeItem('admin_token');
     router.push('/admin/login');
   };
 

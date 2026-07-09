@@ -17,7 +17,10 @@ export default function AdminLoginPage() {
     setLoading(true);
 
     try {
-      await apiRequest('/admin/login', 'POST', { username, password });
+      const res = await apiRequest('/admin/login', 'POST', { username, password });
+      if (res.token) {
+        localStorage.setItem('admin_token', res.token);
+      }
       router.push('/admin/dashboard');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed');

@@ -123,7 +123,7 @@ exports.login = async (req, res) => {
   maxAge: 7 * 24 * 60 * 60 * 1000
 });
 
-    res.json({ message: 'Login successful', admin: admin.toJSON() });
+    res.json({ message: 'Login successful', token, admin: admin.toJSON() });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: error.errors[0].message });
