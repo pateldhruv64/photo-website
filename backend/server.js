@@ -20,10 +20,10 @@ app.use(helmet({
 
 // ─── CORS ────────────────────────────────────────────────────────────
 app.use(cors({
-  origin: true, // Reflexively allow requesting origin (localhost, IP address, etc.) for easy local network testing
+  origin: "https://photo-website-livid.vercel.app",
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"]
 }));
 
 // ─── Compression ─────────────────────────────────────────────────────
