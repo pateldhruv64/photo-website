@@ -95,15 +95,8 @@ export default function Navbar() {
                 .map((cat) => (
                   <Link
                     key={cat._id}
-                    href={`/?cat=${cat.slug}#gallery-section`}
-                    onClick={(e) => {
-                      if (window.location.pathname === '/') {
-                        e.preventDefault();
-                        window.history.pushState({}, '', `/?cat=${cat.slug}`);
-                        window.dispatchEvent(new CustomEvent('categoryChange', { detail: cat._id }));
-                        document.getElementById('gallery-section')?.scrollIntoView({ behavior: 'smooth' });
-                      }
-                    }}
+                    href={`/${cat.slug}`}
+                    prefetch={false}
                     className={`px-4 py-2 text-sm font-body transition-colors duration-300 relative group ${shouldBeWhite ? 'text-[#1A1A1A] hover:text-black font-semibold' : 'text-white hover:text-white/80 font-semibold'
                       }`}
                   >
@@ -218,16 +211,9 @@ export default function Navbar() {
               .map((cat) => (
                 <Link
                   key={cat._id}
-                  href={`/?cat=${cat.slug}#gallery-section`}
-                  onClick={(e) => {
-                    setMobileOpen(false);
-                    if (window.location.pathname === '/') {
-                      e.preventDefault();
-                      window.history.pushState({}, '', `/?cat=${cat.slug}`);
-                      window.dispatchEvent(new CustomEvent('categoryChange', { detail: cat._id }));
-                      document.getElementById('gallery-section')?.scrollIntoView({ behavior: 'smooth' });
-                    }
-                  }}
+                  href={`/${cat.slug}`}
+                  prefetch={false}
+                  onClick={() => setMobileOpen(false)}
                   className="block px-4 py-3 text-sm font-body font-medium text-[#1A1A1A] hover:bg-black/5 rounded-sm transition-all duration-200"
                 >
                   {cat.name}

@@ -8,6 +8,7 @@ import VideoCard from './VideoCard';
 import VideoLightbox from './VideoLightbox';
 import InfiniteScroll from './InfiniteScroll';
 import { fetcher } from '@/lib/fetcher';
+import { setPreloadedCategoryPhotos } from '@/lib/preloadedStore';
 import type { Category, Photo, VideoItem } from '@/lib/types';
 
 interface Props {
@@ -36,6 +37,19 @@ export default function HomeGallery({ categories, initialPhotos = [], initialVid
 
   const latestPhotos = bulkData?.photos || initialPhotos;
   const latestVideos = bulkData?.videos || initialVideos;
+
+  useEffect(() => {
+    if (!latestPhotos || latestPhotos.length === 0) return;
+    
+    categories.forEach((cat) => {
+      const catPhotos = latestPhotos.filter((p) => {
+        if (!p.category) return false;
+        if (typeof p.category === 'string') return p.category === cat._id;
+        return p.category._id === cat._id;
+      });
+      setPreloadedCategoryPhotos(cat.slug, catPhotos);
+    });
+  }, [latestPhotos, categories]);
 
   // In-memory pagination visible limit
   const [visibleLimit, setVisibleLimit] = useState(20);
