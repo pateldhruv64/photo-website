@@ -21,6 +21,66 @@ export default function Lightbox({ photos, currentIndex, onClose, onNavigate }: 
   const [mounted, setMounted] = useState(false);
   const [studioCardOpen, setStudioCardOpen] = useState(false);
 
+  // Draggable button state
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const dragRef = useRef<{ startX: number; startY: number; posX: number; posY: number; moved: boolean } | null>(null);
+
+  const handleDragStart = (e: React.MouseEvent | React.TouchEvent) => {
+    e.stopPropagation();
+    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+    dragRef.current = {
+      startX: clientX,
+      startY: clientY,
+      posX: position.x,
+      posY: position.y,
+      moved: false,
+    };
+  };
+
+  const handleDragMove = useCallback((e: MouseEvent | TouchEvent) => {
+    if (!dragRef.current) return;
+    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+    
+    const dx = clientX - dragRef.current.startX;
+    const dy = clientY - dragRef.current.startY;
+    
+    if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
+      dragRef.current.moved = true;
+    }
+    
+    setPosition(() => ({
+      x: dragRef.current!.posX + dx,
+      y: dragRef.current!.posY + dy,
+    }));
+  }, []);
+
+  const handleDragEnd = useCallback(() => {
+    dragRef.current = null;
+  }, []);
+
+  useEffect(() => {
+    const handleMove = (e: MouseEvent | TouchEvent) => {
+      if (dragRef.current) handleDragMove(e);
+    };
+    const handleEnd = () => {
+      if (dragRef.current) handleDragEnd();
+    };
+
+    window.addEventListener('mousemove', handleMove);
+    window.addEventListener('mouseup', handleEnd);
+    window.addEventListener('touchmove', handleMove, { passive: false });
+    window.addEventListener('touchend', handleEnd);
+
+    return () => {
+      window.removeEventListener('mousemove', handleMove);
+      window.removeEventListener('mouseup', handleEnd);
+      window.removeEventListener('touchmove', handleMove);
+      window.removeEventListener('touchend', handleEnd);
+    };
+  }, [handleDragMove, handleDragEnd]);
+
   // Touch swipe state
   const touchStartX = useRef<number>(0);
   const touchStartY = useRef<number>(0);
@@ -112,13 +172,19 @@ export default function Lightbox({ photos, currentIndex, onClose, onNavigate }: 
           </svg>
         </button>
 
-        {/* Top Center Brand Logo Circular Button */}
-        <div className={`absolute top-10 md:top-12 left-1/2 -translate-x-1/2 z-50 transition-all duration-300 ${
-          studioCardOpen ? 'opacity-0 scale-75 pointer-events-none' : 'opacity-100 scale-100'
-        }`}>
+        {/* Top Center Brand Logo Circular Button (Draggable) */}
+        <div 
+          className={`absolute top-10 md:top-12 left-1/2 z-50 transition-opacity duration-300 cursor-grab active:cursor-grabbing ${
+            studioCardOpen ? 'opacity-0 scale-75 pointer-events-none' : 'opacity-100 scale-100'
+          }`}
+          style={{ transform: `translate(calc(-50% + ${position.x}px), ${position.y}px)` }}
+          onMouseDown={handleDragStart}
+          onTouchStart={handleDragStart}
+        >
           <button
             onClick={(e) => {
               e.stopPropagation();
+              if (dragRef.current?.moved) return;
               setStudioCardOpen(true);
             }}
             className="w-16 h-16 rounded-full bg-white border border-[#E6E4DD] shadow-lg flex items-center justify-center overflow-hidden active:scale-95 transition-transform"
@@ -128,11 +194,11 @@ export default function Lightbox({ photos, currentIndex, onClose, onNavigate }: 
               <img
                 src={config.studio_logo.secure_url}
                 alt="Studio Logo"
-                className="object-cover w-full h-full"
+                className="object-cover w-full h-full pointer-events-none"
               />
             ) : (
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#7A7A7A" strokeWidth="2">
-                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2 2z" />
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#7A7A7A" strokeWidth="2" className="pointer-events-none">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
                 <circle cx="12" cy="13" r="4" />
               </svg>
             )}

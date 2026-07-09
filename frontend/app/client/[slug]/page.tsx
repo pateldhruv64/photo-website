@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import Masonry from 'react-masonry-css';
 import ClientLightbox from '@/components/ClientLightbox';
@@ -116,21 +116,57 @@ export default function ClientGalleryPage({ params }: { params: { slug: string }
   };
 
   // Convert gallery photos to Photo type for ClientLightbox
-  const lightboxPhotos: (Photo & { original_format: string })[] = gallery?.photos
-    ?.sort((a, b) => a.order - b.order)
-    .map((p) => ({
-      _id: p._id,
-      public_id: p.public_id,
-      width: p.width,
-      height: p.height,
-      title: p.title,
-      aspect_ratio: p.width / p.height,
-      is_featured: false,
-      order: p.order,
-      original_format: p.original_format || 'jpg',
-      category: null as unknown as import('@/lib/types').Category,
-      created_at: '',
-    })) || [];
+  const lightboxPhotos: (Photo & { original_format: string })[] = useMemo(() => {
+    return gallery?.photos
+      ?.slice()
+      .sort((a, b) => a.order - b.order)
+      .map((p) => ({
+        _id: p._id,
+        public_id: p.public_id,
+        width: p.width,
+        height: p.height,
+        title: p.title,
+        aspect_ratio: p.width / p.height,
+        is_featured: false,
+        order: p.order,
+        original_format: p.original_format || 'jpg',
+        category: null as unknown as import('@/lib/types').Category,
+        created_at: '',
+      })) || [];
+  }, [gallery]);
+
+  // Preload lightbox images in the background for instant opening
+  useEffect(() => {
+    if (lightboxPhotos.length === 0) return;
+    
+    const preload = (photosToLoad: typeof lightboxPhotos) => {
+      photosToLoad.forEach((p) => {
+        const img = new window.Image();
+        img.src = `https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload/q_auto,f_auto/${p.public_id}`;
+      });
+    };
+    
+    // Immediately preload first 15 images
+    preload(lightboxPhotos.slice(0, 15));
+    
+    // Preload remaining in batches of 15 every 3 seconds
+    let active = true;
+    const loadRemaining = async () => {
+      let currentIndex = 15;
+      while (currentIndex < lightboxPhotos.length && active) {
+        await new Promise((resolve) => setTimeout(resolve, 3000));
+        if (!active) return;
+        preload(lightboxPhotos.slice(currentIndex, currentIndex + 15));
+        currentIndex += 15;
+      }
+    };
+    
+    loadRemaining();
+    
+    return () => {
+      active = false;
+    };
+  }, [lightboxPhotos]);
 
   const openLightbox = useCallback((index: number) => {
     setLightboxIndex(index);
@@ -345,7 +381,7 @@ export default function ClientGalleryPage({ params }: { params: { slug: string }
                     e.stopPropagation();
                     handlePhotoDownload(gallery!.photos[index], index);
                   }}
-                  className="absolute bottom-2 right-2 z-10 w-8 h-8 bg-black/60 backdrop-blur-sm rounded-full flex items-center justify-center text-white/80 hover:text-white hover:bg-black/80 opacity-0 group-hover:opacity-100 transition-all"
+                  className="absolute bottom-2 right-2 z-10 w-8 h-8 bg-black/60 backdrop-blur-sm rounded-full flex items-center justify-center text-white/80 hover:text-white hover:bg-black/80 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all"
                   title="Download Original"
                 >
                   {downloadingPhotoId === photo._id ? (
