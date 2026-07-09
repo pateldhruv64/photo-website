@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import { Raleway } from 'next/font/google';
 import './globals.css';
+import ServiceWorkerRegister from '@/components/ServiceWorkerRegister';
+import BottomNav from '@/components/BottomNav';
 
 const raleway = Raleway({
   subsets: ['latin'],
@@ -10,10 +12,70 @@ const raleway = Raleway({
   display: 'swap',
 });
 
-export const metadata: Metadata = {
-  title: 'Photographer Portfolio',
-  description: 'Professional photography portfolio showcasing stunning visual storytelling',
-};
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+
+interface ConfigResponse {
+  photographer_name?: string;
+  about_text?: string;
+  hero_photo?: {
+    public_id: string;
+  } | null;
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  let config: ConfigResponse | null = null;
+
+  try {
+    const res = await fetch(`${API_URL}/config`, { next: { revalidate: 300 } });
+    if (res.ok) {
+      config = await res.json();
+    }
+  } catch {
+    // Use fallback values
+  }
+
+  const photographerName = config?.photographer_name || 'Photographer';
+  const title = `${photographerName} | Photography`;
+  const description = config?.about_text
+    ? config.about_text.substring(0, 160)
+    : 'Professional photography portfolio showcasing stunning visual storytelling';
+
+  const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+  const ogImage = config?.hero_photo?.public_id && cloudName
+    ? `https://res.cloudinary.com/${cloudName}/image/upload/w_1200,h_630,c_fill,q_auto,f_auto/${config.hero_photo.public_id}`
+    : undefined;
+
+  return {
+    title,
+    description,
+    metadataBase: new URL(SITE_URL),
+    alternates: {
+      canonical: '/',
+    },
+    openGraph: {
+      title,
+      description,
+      type: 'website',
+      url: SITE_URL,
+      ...(ogImage && {
+        images: [
+          {
+            url: ogImage,
+            width: 1200,
+            height: 630,
+          },
+        ],
+      }),
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      ...(ogImage && { images: [ogImage] }),
+    },
+  };
+}
 
 export default function RootLayout({
   children,
@@ -22,8 +84,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={raleway.variable}>
-      <body className="font-body antialiased">
+      <head>
+        <link rel="apple-touch-icon" href="/icon-192.png" />
+      </head>
+      <body className="font-body antialiased pb-20 md:pb-0">
         {children}
+        <BottomNav />
+        <ServiceWorkerRegister />
       </body>
     </html>
   );

@@ -16,6 +16,7 @@ export default function PhotoCard({ photo, onClick }: PhotoCardProps) {
         className="photo-card rounded-sm"
         style={{ aspectRatio: `${photo.width}/${photo.height}` }}
         onClick={() => onClick(photo)}
+        onContextMenu={(e) => e.preventDefault()}
       >
         <Image
           src={thumbnailUrl(photo.public_id)}
@@ -24,7 +25,8 @@ export default function PhotoCard({ photo, onClick }: PhotoCardProps) {
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
           placeholder="blur"
           blurDataURL={blurUrl(photo.public_id)}
-          className="object-cover"
+          className="object-cover protected-image"
+          draggable={false}
         />
         
         {/* Title overlay on hover */}

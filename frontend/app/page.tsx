@@ -2,13 +2,23 @@ import Navbar from '@/components/Navbar';
 import HeroSection from '@/components/HeroSection';
 import HomeGallery from '@/components/HomeGallery';
 import Marquee from '@/components/Marquee';
-import type { SiteConfig, Category, Photo, PaginatedPhotos } from '@/lib/types';
+import BookingForm from '@/components/BookingForm';
+import TestimonialsSection from '@/components/TestimonialsSection';
+import type { SiteConfig, Category, Photo, VideoItem } from '@/lib/types';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
-async function getConfig(): Promise<SiteConfig | null> {
+interface HomepageData {
+  config: SiteConfig;
+  categories: Category[];
+  featuredPhotos: Photo[];
+  photos: Photo[];
+  videos: VideoItem[];
+}
+
+async function getHomepageData(): Promise<HomepageData | null> {
   try {
-    const res = await fetch(`${API_URL}/config`, { next: { revalidate: 0 } });
+    const res = await fetch(`${API_URL}/homepage`, { next: { revalidate: 60 } });
     if (!res.ok) return null;
     return res.json();
   } catch {
@@ -16,46 +26,14 @@ async function getConfig(): Promise<SiteConfig | null> {
   }
 }
 
-async function getCategories(): Promise<Category[]> {
-  try {
-    const res = await fetch(`${API_URL}/categories`, { next: { revalidate: 0 } });
-    if (!res.ok) return [];
-    return res.json();
-  } catch {
-    return [];
-  }
-}
-
-async function getCategoryPhotos(slug: string): Promise<Photo[]> {
-  try {
-    const res = await fetch(`${API_URL}/photos?category=${slug}&limit=20`, {
-      next: { revalidate: 0 },
-    });
-    if (!res.ok) return [];
-    const data: PaginatedPhotos = await res.json();
-    return data.photos;
-  } catch {
-    return [];
-  }
-}
-
-async function getFeaturedPhotos(): Promise<Photo[]> {
-  try {
-    const res = await fetch(`${API_URL}/photos/featured`, { next: { revalidate: 0 } });
-    if (!res.ok) return [];
-    return res.json();
-  } catch {
-    return [];
-  }
-}
-
 export default async function HomePage() {
-  const [config, categories, featuredPhotos, initialPhotos] = await Promise.all([
-    getConfig(),
-    getCategories(),
-    getFeaturedPhotos(),
-    getCategoryPhotos(''), // empty slug fetches all photos
-  ]);
+  const data = await getHomepageData();
+
+  const config = data?.config || null;
+  const categories = data?.categories || [];
+  const featuredPhotos = data?.featuredPhotos || [];
+  const initialPhotos = data?.photos || [];
+  const initialVideos = data?.videos || [];
 
   const defaultConfig: SiteConfig = {
     _id: '',
@@ -96,7 +74,17 @@ export default async function HomePage() {
         )}
 
         {/* Unified Gallery with Category Tabs */}
-        <HomeGallery categories={categories} initialPhotos={initialPhotos} />
+        <HomeGallery
+          categories={categories}
+          initialPhotos={initialPhotos}
+          initialVideos={initialVideos}
+        />
+
+        {/* Testimonials Section */}
+        <TestimonialsSection />
+
+        {/* Booking Form Section */}
+        <BookingForm />
 
         {/* Footer */}
         <footer className="border-t border-border py-12 md:py-16">

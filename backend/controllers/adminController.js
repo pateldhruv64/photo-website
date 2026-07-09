@@ -4,8 +4,33 @@ const Admin = require('../models/Admin');
 const Photo = require('../models/Photo');
 const Category = require('../models/Category');
 const SiteConfig = require('../models/SiteConfig');
+const Testimonial = require('../models/Testimonial');
+const VideoItem = require('../models/VideoItem');
+const ClientGallery = require('../models/ClientGallery');
 const { getSignedUploadParams, destroyImage } = require('../utils/cloudinary');
 const slugify = require('slugify');
+
+// ─── Revalidation Helper (fire-and-forget) ──────────────────────────
+/**
+ * Triggers on-demand revalidation on the Next.js frontend.
+ * Called after every successful create/update/delete of photos, categories, or config.
+ * NEVER awaited — uses .catch() so admin actions don't fail if frontend is down.
+ */
+const triggerRevalidation = () => {
+  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+  const secret = process.env.REVALIDATE_SECRET;
+
+  if (!secret) {
+    console.warn('REVALIDATE_SECRET not set, skipping revalidation.');
+    return;
+  }
+
+  fetch(`${frontendUrl}/api/revalidate`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ secret })
+  }).catch(err => console.error('Revalidation failed:', err.message));
+};
 
 // ─── Validation Schemas ─────────────────────────────────────────────
 
@@ -151,6 +176,7 @@ exports.uploadPhoto = async (req, res) => {
     const populated = await Photo.findById(photo._id)
       .populate('category', 'name slug');
 
+    triggerRevalidation();
     res.status(201).json(populated);
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -182,7 +208,7 @@ exports.getAllPhotos = async (req, res) => {
 
     const [photos, total] = await Promise.all([
       Photo.find(filter)
-        .sort({ created_at: -1 })
+        .sort({ is_featured: -1, created_at: -1 })
         .skip(skip)
         .limit(limitNum)
         .populate('category', 'name slug')
@@ -223,6 +249,7 @@ exports.updatePhoto = async (req, res) => {
       return res.status(404).json({ error: 'Photo not found.' });
     }
 
+    triggerRevalidation();
     res.json(photo);
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -255,6 +282,7 @@ exports.deletePhoto = async (req, res) => {
     // Delete from MongoDB
     await Photo.findByIdAndDelete(req.params.id);
 
+    triggerRevalidation();
     res.json({ message: 'Photo deleted successfully.' });
   } catch (error) {
     console.error('deletePhoto error:', error);
@@ -283,6 +311,7 @@ exports.createCategory = async (req, res) => {
     }
     await category.save();
 
+    triggerRevalidation();
     res.status(201).json(category);
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -343,6 +372,7 @@ exports.updateCategory = async (req, res) => {
     Object.assign(category, data);
     await category.save();
 
+    triggerRevalidation();
     res.json(category);
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -376,6 +406,7 @@ exports.deleteCategory = async (req, res) => {
     }
 
     await Category.findByIdAndDelete(req.params.id);
+    triggerRevalidation();
     res.json({ message: 'Category deleted successfully.' });
   } catch (error) {
     console.error('deleteCategory error:', error);
@@ -403,6 +434,7 @@ exports.updateConfig = async (req, res) => {
     
     // Return populated version
     config = await SiteConfig.findById(config._id).populate('hero_photo');
+    triggerRevalidation();
     res.json(config);
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -449,5 +481,335 @@ exports.getStats = async (req, res) => {
   } catch (error) {
     console.error('getStats error:', error);
     res.status(500).json({ error: 'Failed to fetch stats.' });
+  }
+};
+
+// ─── Testimonials ────────────────────────────────────────────────────
+
+/**
+ * GET /api/admin/testimonials
+ */
+exports.getTestimonials = async (req, res) => {
+  try {
+    const testimonials = await Testimonial.find()
+      .sort({ created_at: -1 })
+      .lean();
+    res.json(testimonials);
+  } catch (error) {
+    console.error('getTestimonials error:', error);
+    res.status(500).json({ error: 'Failed to fetch testimonials.' });
+  }
+};
+
+/**
+ * POST /api/admin/testimonials
+ */
+exports.createTestimonial = async (req, res) => {
+  try {
+    const { client_name, event_type, review_text, rating, photo_url, is_active } = req.body;
+
+    if (!client_name || !event_type || !review_text) {
+      return res.status(400).json({ error: 'client_name, event_type, and review_text are required.' });
+    }
+
+    const testimonial = await Testimonial.create({
+      client_name,
+      event_type,
+      review_text,
+      rating: rating || 5,
+      photo_url: photo_url || '',
+      is_active: is_active !== undefined ? is_active : true
+    });
+
+    triggerRevalidation();
+    res.status(201).json(testimonial);
+  } catch (error) {
+    console.error('createTestimonial error:', error);
+    res.status(500).json({ error: 'Failed to create testimonial.' });
+  }
+};
+
+/**
+ * PUT /api/admin/testimonials/:id
+ */
+exports.updateTestimonial = async (req, res) => {
+  try {
+    const testimonial = await Testimonial.findByIdAndUpdate(
+      req.params.id,
+      { $set: req.body },
+      { new: true, runValidators: true }
+    );
+
+    if (!testimonial) {
+      return res.status(404).json({ error: 'Testimonial not found.' });
+    }
+
+    triggerRevalidation();
+    res.json(testimonial);
+  } catch (error) {
+    console.error('updateTestimonial error:', error);
+    res.status(500).json({ error: 'Failed to update testimonial.' });
+  }
+};
+
+/**
+ * DELETE /api/admin/testimonials/:id
+ */
+exports.deleteTestimonial = async (req, res) => {
+  try {
+    const testimonial = await Testimonial.findByIdAndDelete(req.params.id);
+    if (!testimonial) {
+      return res.status(404).json({ error: 'Testimonial not found.' });
+    }
+
+    triggerRevalidation();
+    res.json({ message: 'Testimonial deleted successfully.' });
+  } catch (error) {
+    console.error('deleteTestimonial error:', error);
+    res.status(500).json({ error: 'Failed to delete testimonial.' });
+  }
+};
+
+// ─── Videos ──────────────────────────────────────────────────────────
+
+/**
+ * GET /api/admin/videos
+ */
+exports.getVideos = async (req, res) => {
+  try {
+    const videos = await VideoItem.find()
+      .sort({ order: 1, created_at: -1 })
+      .populate('category', 'name slug')
+      .lean();
+    res.json(videos);
+  } catch (error) {
+    console.error('getVideos error:', error);
+    res.status(500).json({ error: 'Failed to fetch videos.' });
+  }
+};
+
+/**
+ * POST /api/admin/videos
+ */
+exports.createVideo = async (req, res) => {
+  try {
+    const { youtube_url, title, category, order, is_active } = req.body;
+
+    if (!youtube_url || !category) {
+      return res.status(400).json({ error: 'youtube_url and category are required.' });
+    }
+
+    const video = new VideoItem({
+      youtube_url,
+      title: title || '',
+      category,
+      order: order || 0,
+      is_active: is_active !== undefined ? is_active : true
+    });
+
+    await video.save();
+    const populated = await VideoItem.findById(video._id).populate('category', 'name slug');
+
+    triggerRevalidation();
+    res.status(201).json(populated);
+  } catch (error) {
+    if (error.code === 11000) {
+      return res.status(409).json({ error: 'This YouTube video has already been added.' });
+    }
+    console.error('createVideo error:', error);
+    res.status(500).json({ error: error.message || 'Failed to create video.' });
+  }
+};
+
+/**
+ * PUT /api/admin/videos/:id
+ */
+exports.updateVideo = async (req, res) => {
+  try {
+    const video = await VideoItem.findById(req.params.id);
+    if (!video) {
+      return res.status(404).json({ error: 'Video not found.' });
+    }
+
+    const { youtube_url, title, category, order, is_active } = req.body;
+
+    if (youtube_url !== undefined) video.youtube_url = youtube_url;
+    if (title !== undefined) video.title = title;
+    if (category !== undefined) video.category = category;
+    if (order !== undefined) video.order = order;
+    if (is_active !== undefined) video.is_active = is_active;
+
+    await video.save();
+    const populated = await VideoItem.findById(video._id).populate('category', 'name slug');
+
+    triggerRevalidation();
+    res.json(populated);
+  } catch (error) {
+    if (error.code === 11000) {
+      return res.status(409).json({ error: 'This YouTube video already exists.' });
+    }
+    console.error('updateVideo error:', error);
+    res.status(500).json({ error: error.message || 'Failed to update video.' });
+  }
+};
+
+/**
+ * DELETE /api/admin/videos/:id
+ */
+exports.deleteVideo = async (req, res) => {
+  try {
+    const video = await VideoItem.findByIdAndDelete(req.params.id);
+    if (!video) {
+      return res.status(404).json({ error: 'Video not found.' });
+    }
+
+    triggerRevalidation();
+    res.json({ message: 'Video deleted successfully.' });
+  } catch (error) {
+    console.error('deleteVideo error:', error);
+    res.status(500).json({ error: 'Failed to delete video.' });
+  }
+};
+
+// ─── Client Galleries ────────────────────────────────────────────────
+
+/**
+ * GET /api/admin/client-galleries
+ */
+exports.getClientGalleries = async (req, res) => {
+  try {
+    const galleries = await ClientGallery.find()
+      .select('-password_hash')
+      .sort({ created_at: -1 })
+      .lean();
+
+    // Add photo count
+    const result = galleries.map(g => ({
+      ...g,
+      photoCount: g.photos?.length || 0
+    }));
+
+    res.json(result);
+  } catch (error) {
+    console.error('getClientGalleries error:', error);
+    res.status(500).json({ error: 'Failed to fetch client galleries.' });
+  }
+};
+
+/**
+ * POST /api/admin/client-galleries
+ */
+exports.createClientGallery = async (req, res) => {
+  try {
+    const { title, slug, password, client_name, event_date, expires_at, is_active } = req.body;
+
+    if (!title || !slug || !password) {
+      return res.status(400).json({ error: 'title, slug, and password are required.' });
+    }
+
+    const gallery = new ClientGallery({
+      title,
+      slug: slugify(slug, { lower: true, strict: true }),
+      password_hash: password,
+      client_name: client_name || '',
+      event_date: event_date || null,
+      expires_at: expires_at || null,
+      is_active: is_active !== undefined ? is_active : true,
+      photos: []
+    });
+
+    await gallery.save();
+
+    const result = gallery.toObject();
+    delete result.password_hash;
+
+    res.status(201).json(result);
+  } catch (error) {
+    if (error.code === 11000) {
+      return res.status(409).json({ error: 'Gallery with this slug already exists.' });
+    }
+    console.error('createClientGallery error:', error);
+    res.status(500).json({ error: 'Failed to create client gallery.' });
+  }
+};
+
+/**
+ * PUT /api/admin/client-galleries/:id
+ */
+exports.updateClientGallery = async (req, res) => {
+  try {
+    const gallery = await ClientGallery.findById(req.params.id);
+    if (!gallery) {
+      return res.status(404).json({ error: 'Gallery not found.' });
+    }
+
+    const { title, slug, password, client_name, event_date, expires_at, is_active, photos } = req.body;
+
+    if (title !== undefined) gallery.title = title;
+    if (slug !== undefined) gallery.slug = slugify(slug, { lower: true, strict: true });
+    if (password) gallery.password_hash = password;
+    if (client_name !== undefined) gallery.client_name = client_name;
+    if (event_date !== undefined) gallery.event_date = event_date;
+    if (expires_at !== undefined) gallery.expires_at = expires_at;
+    if (is_active !== undefined) gallery.is_active = is_active;
+    if (photos !== undefined) gallery.photos = photos;
+
+    await gallery.save();
+
+    const result = gallery.toObject();
+    delete result.password_hash;
+
+    res.json(result);
+  } catch (error) {
+    if (error.code === 11000) {
+      return res.status(409).json({ error: 'Gallery with this slug already exists.' });
+    }
+    console.error('updateClientGallery error:', error);
+    res.status(500).json({ error: 'Failed to update client gallery.' });
+  }
+};
+
+/**
+ * DELETE /api/admin/client-galleries/:id
+ */
+exports.deleteClientGallery = async (req, res) => {
+  try {
+    const gallery = await ClientGallery.findByIdAndDelete(req.params.id);
+    if (!gallery) {
+      return res.status(404).json({ error: 'Gallery not found.' });
+    }
+    res.json({ message: 'Client gallery deleted successfully.' });
+  } catch (error) {
+    console.error('deleteClientGallery error:', error);
+    res.status(500).json({ error: 'Failed to delete client gallery.' });
+  }
+};
+
+/**
+ * POST /api/admin/client-galleries/:id/photos
+ * Add photos to a client gallery
+ */
+exports.addClientGalleryPhotos = async (req, res) => {
+  try {
+    const gallery = await ClientGallery.findById(req.params.id);
+    if (!gallery) {
+      return res.status(404).json({ error: 'Gallery not found.' });
+    }
+
+    const { photos } = req.body;
+    if (!photos || !Array.isArray(photos)) {
+      return res.status(400).json({ error: 'photos array is required.' });
+    }
+
+    gallery.photos.push(...photos);
+    await gallery.save();
+
+    const result = gallery.toObject();
+    delete result.password_hash;
+
+    res.json(result);
+  } catch (error) {
+    console.error('addClientGalleryPhotos error:', error);
+    res.status(500).json({ error: 'Failed to add photos.' });
   }
 };

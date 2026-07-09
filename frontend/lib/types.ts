@@ -85,3 +85,28 @@ export interface CloudinarySignature {
   cloud_name: string;
   api_key: string;
 }
+
+// ─── Video Item ──────────────────────────────────────────────────────
+export interface VideoItem {
+  _id: string;
+  youtube_url: string;
+  youtube_id: string;
+  title: string;
+  thumbnail_url: string;
+  category: Category | string;
+  order: number;
+  is_active: boolean;
+  created_at: string;
+}
+
+// ─── Testimonial ─────────────────────────────────────────────────────
+export interface Testimonial {
+  _id: string;
+  client_name: string;
+  event_type: string;
+  review_text: string;
+  rating: number;
+  photo_url: string;
+  is_active: boolean;
+  created_at: string;
+}

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import useSWR from 'swr';
 import AdminLayoutClient from '@/components/admin/AdminLayout';
+import ConfirmModal from '@/components/admin/ConfirmModal';
 import { fetcher, apiRequest } from '@/lib/fetcher';
 import type { Category } from '@/lib/types';
 
@@ -13,17 +14,23 @@ export default function CategoriesPage() {
 
   const [showForm, setShowForm] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [deleteCategory, setDeleteCategory] = useState<Category | null>(null);
+  const [categoryWarning, setCategoryWarning] = useState<string | null>(null);
 
-  const handleDelete = async (cat: Category) => {
+  const handleDeleteClick = (cat: Category) => {
     if (cat.photoCount && cat.photoCount > 0) {
-      alert(`Cannot delete "${cat.name}" — it has ${cat.photoCount} photo(s). Move or delete photos first.`);
+      setCategoryWarning(`Cannot delete "${cat.name}" — it has <strong>${cat.photoCount}</strong> photo(s). Move or delete photos first.`);
       return;
     }
-    if (!confirm(`Delete category "${cat.name}"?`)) return;
+    setDeleteCategory(cat);
+  };
 
+  const handleDeleteConfirm = async () => {
+    if (!deleteCategory) return;
     try {
-      await apiRequest(`/admin/categories/${cat._id}`, 'DELETE');
+      await apiRequest(`/admin/categories/${deleteCategory._id}`, 'DELETE');
       mutate();
+      setDeleteCategory(null);
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to delete category');
     }
@@ -88,7 +95,7 @@ export default function CategoriesPage() {
                   </svg>
                 </button>
                 <button
-                  onClick={() => handleDelete(cat)}
+                  onClick={() => handleDeleteClick(cat)}
                   className="p-2 text-text-muted hover:text-red-500 transition-colors"
                   title="Delete"
                 >
@@ -129,6 +136,29 @@ export default function CategoriesPage() {
             onClose={() => { setShowForm(false); setEditingCategory(null); }}
           />
         )}
+        {/* Delete Confirmation Modal */}
+        <ConfirmModal
+          isOpen={deleteCategory !== null}
+          title="Delete Category"
+          message={`Are you sure you want to delete category <strong>"${deleteCategory?.name || 'this category'}"</strong>?`}
+          confirmText="Delete"
+          cancelText="Cancel"
+          isDanger={true}
+          onConfirm={handleDeleteConfirm}
+          onClose={() => setDeleteCategory(null)}
+        />
+
+        {/* Warning Alert Modal */}
+        <ConfirmModal
+          isOpen={categoryWarning !== null}
+          title="Cannot Delete Category"
+          message={categoryWarning || ''}
+          confirmText="OK"
+          showCancel={false}
+          isDanger={true}
+          onConfirm={() => setCategoryWarning(null)}
+          onClose={() => setCategoryWarning(null)}
+        />
       </div>
     </AdminLayoutClient>
   );

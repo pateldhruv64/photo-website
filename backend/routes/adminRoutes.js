@@ -34,4 +34,23 @@ router.delete('/categories/:id', adminController.deleteCategory);
 // Site Config
 router.put('/config', adminController.updateConfig);
 
+// Testimonials
+router.get('/testimonials', adminController.getTestimonials);
+router.post('/testimonials', adminController.createTestimonial);
+router.put('/testimonials/:id', adminController.updateTestimonial);
+router.delete('/testimonials/:id', adminController.deleteTestimonial);
+
+// Videos
+router.get('/videos', adminController.getVideos);
+router.post('/videos', adminController.createVideo);
+router.put('/videos/:id', adminController.updateVideo);
+router.delete('/videos/:id', adminController.deleteVideo);
+
+// Client Galleries
+router.get('/client-galleries', adminController.getClientGalleries);
+router.post('/client-galleries', adminController.createClientGallery);
+router.put('/client-galleries/:id', adminController.updateClientGallery);
+router.delete('/client-galleries/:id', adminController.deleteClientGallery);
+router.post('/client-galleries/:id/photos', adminController.addClientGalleryPhotos);
+
 module.exports = router;

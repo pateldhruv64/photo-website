@@ -4,6 +4,7 @@ import { useState } from 'react';
 import useSWR from 'swr';
 import Image from 'next/image';
 import AdminLayoutClient from '@/components/admin/AdminLayout';
+import ConfirmModal from '@/components/admin/ConfirmModal';
 import { fetcher, apiRequest } from '@/lib/fetcher';
 import { thumbnailUrl } from '@/lib/cloudinary';
 import type { Photo, Category, PaginatedPhotos, CloudinarySignature } from '@/lib/types';
@@ -14,9 +15,13 @@ export default function PhotosPage() {
   const [selectedCategory, setSelectedCategory] = useState('');
   const [dragOver, setDragOver] = useState(false);
   const [editingPhoto, setEditingPhoto] = useState<Photo | null>(null);
+  const [deletePhoto, setDeletePhoto] = useState<Photo | null>(null);
+
+  const [page, setPage] = useState(1);
+  const limit = 20;
 
   const { data: photosData, mutate: mutatePhotos } = useSWR<PaginatedPhotos>(
-    `/admin/photos?limit=100${selectedCategory ? `&category=${selectedCategory}` : ''}`,
+    `/admin/photos?page=${page}&limit=${limit}${selectedCategory ? `&category=${selectedCategory}` : ''}`,
     fetcher,
     { revalidateOnFocus: false }
   );
@@ -101,12 +106,13 @@ export default function PhotosPage() {
   };
 
   // Delete photo
-  const handleDelete = async (photo: Photo) => {
-    if (!confirm(`Delete "${photo.title || 'this photo'}"? This will remove it from Cloudinary and the database.`)) return;
+  const handleDeleteConfirm = async () => {
+    if (!deletePhoto) return;
 
     try {
-      await apiRequest(`/admin/photos/${photo._id}`, 'DELETE');
+      await apiRequest(`/admin/photos/${deletePhoto._id}`, 'DELETE');
       mutatePhotos();
+      setDeletePhoto(null);
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to delete photo');
     }
@@ -146,7 +152,10 @@ export default function PhotosPage() {
             {/* Category filter */}
             <select
               value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
+              onChange={(e) => {
+                setSelectedCategory(e.target.value);
+                setPage(1);
+              }}
               className="px-3 py-2 border border-border rounded-sm font-body text-sm text-text-primary focus:outline-none focus:border-text-primary"
             >
               <option value="">All Categories</option>
@@ -240,7 +249,7 @@ export default function PhotosPage() {
                     </svg>
                   </button>
                   <button
-                    onClick={() => handleDelete(photo)}
+                    onClick={() => setDeletePhoto(photo)}
                     className="p-2 bg-white rounded-full text-red-500 hover:bg-red-50 transition-colors"
                     title="Delete"
                   >
@@ -275,6 +284,55 @@ export default function PhotosPage() {
           </div>
         )}
 
+        {/* Pagination Controls */}
+        {photosData?.pagination && photosData.pagination.pages > 1 && (
+          <div className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-border/60 pt-6">
+            <p className="font-body text-xs text-text-muted">
+              Showing {(page - 1) * limit + 1}–{Math.min(page * limit, photosData.pagination.total)} of {photosData.pagination.total} photos
+            </p>
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => setPage(prev => Math.max(1, prev - 1))}
+                disabled={page === 1}
+                className="px-3 py-1.5 font-body text-xs rounded border border-border bg-white text-text-primary hover:bg-surface disabled:opacity-40 disabled:hover:bg-white transition-all"
+              >
+                Previous
+              </button>
+              
+              {/* Page Number Buttons */}
+              {Array.from({ length: photosData.pagination.pages }, (_, i) => i + 1)
+                .filter(p => p === 1 || p === photosData.pagination.pages || Math.abs(p - page) <= 1)
+                .map((p, idx, arr) => {
+                  const prev = arr[idx - 1];
+                  const showEllipsis = prev && p - prev > 1;
+                  return (
+                    <div key={p} className="flex items-center gap-1.5">
+                      {showEllipsis && <span className="text-text-muted px-1 text-xs font-body">...</span>}
+                      <button
+                        onClick={() => setPage(p)}
+                        className={`px-3 py-1.5 font-body text-xs rounded border transition-all ${
+                          page === p
+                            ? 'bg-text-primary text-white border-text-primary font-medium'
+                            : 'bg-white text-text-primary border-border hover:bg-surface'
+                        }`}
+                      >
+                        {p}
+                      </button>
+                    </div>
+                  );
+                })}
+
+              <button
+                onClick={() => setPage(prev => Math.min(photosData.pagination.pages, prev + 1))}
+                disabled={page === photosData.pagination.pages}
+                className="px-3 py-1.5 font-body text-xs rounded border border-border bg-white text-text-primary hover:bg-surface disabled:opacity-40 disabled:hover:bg-white transition-all"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Edit Modal */}
         {editingPhoto && (
           <EditPhotoModal
@@ -284,6 +342,18 @@ export default function PhotosPage() {
             onClose={() => setEditingPhoto(null)}
           />
         )}
+
+        {/* Delete Confirmation Modal */}
+        <ConfirmModal
+          isOpen={deletePhoto !== null}
+          title="Delete Photo"
+          message={`Are you sure you want to delete <strong>"${deletePhoto?.title || 'this photo'}"</strong>? This will permanently remove it from Cloudinary and the database.`}
+          confirmText="Delete"
+          cancelText="Cancel"
+          isDanger={true}
+          onConfirm={handleDeleteConfirm}
+          onClose={() => setDeletePhoto(null)}
+        />
       </div>
     </AdminLayoutClient>
   );

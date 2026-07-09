@@ -1,9 +1,5 @@
 const getApiUrl = () => {
-  if (typeof window === 'undefined') {
-    return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-  }
-  const hostname = window.location.hostname;
-  return `http://${hostname}:5000/api`;
+  return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 };
 
 /**
@@ -40,7 +36,8 @@ export const fetcher = async (url: string) => {
 export const apiRequest = async (
   endpoint: string,
   method: string = 'GET',
-  body?: Record<string, unknown>
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  body?: any
 ) => {
   const fullUrl = endpoint.startsWith('http') ? endpoint : `${getApiUrl()}${endpoint}`;
   

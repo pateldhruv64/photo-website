@@ -1,6 +1,7 @@
 'use client';
 
 import type { SiteConfig } from '@/lib/types';
+import { getWhatsAppNumber } from '@/lib/whatsapp';
 
 interface StudioCardProps {
   config: SiteConfig;
@@ -17,7 +18,7 @@ export default function StudioCard({ config, isOpen, onClose }: StudioCardProps)
   const services = config.studio_services || [];
   const description = config.studio_description || '';
   const logoUrl = config.studio_logo?.secure_url || '';
-  const whatsapp = config.studio_whatsapp || '';
+  const whatsapp = getWhatsAppNumber(config);
   const locationUrl = config.studio_location_url || '';
 
   // Social Links

@@ -15,6 +15,13 @@ export const fullUrl = (publicId: string): string => {
 };
 
 /**
+ * Generate optimized lightbox URL (capped at 1200px wide, auto quality/format)
+ */
+export const lightboxUrl = (publicId: string): string => {
+  return `https://res.cloudinary.com/${CLOUD_NAME}/image/upload/q_auto,f_auto,w_1200/${publicId}`;
+};
+
+/**
  * Generate blur placeholder URL (tiny, heavily blurred)
  */
 export const blurUrl = (publicId: string): string => {

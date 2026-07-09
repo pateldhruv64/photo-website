@@ -214,7 +214,7 @@ export default function SettingsPage() {
   return (
     <AdminLayoutClient>
       <div className="max-w-2xl">
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between gap-4 mb-6">
           <h1 className="font-display text-2xl font-light text-text-primary">Settings</h1>
           <div className="flex items-center gap-3">
             {saved && (
@@ -225,7 +225,7 @@ export default function SettingsPage() {
             <button
               onClick={handleSave}
               disabled={saving}
-              className="px-4 py-2 bg-text-primary text-white font-body text-sm rounded-sm hover:bg-gray-800 transition-colors disabled:opacity-50"
+              className="px-4 py-2 bg-text-primary text-white font-body text-sm rounded-sm hover:bg-gray-800 transition-colors disabled:opacity-50 text-center"
             >
               {saving ? 'Saving...' : 'Save Settings'}
             </button>
@@ -294,11 +294,11 @@ export default function SettingsPage() {
                   Hero Background Photo
                 </label>
                 
-                <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
+                <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
                   <select
                     value={form.hero_photo}
                     onChange={(e) => updateField('hero_photo', e.target.value)}
-                    className="flex-1 px-3 py-2 border border-border rounded-sm font-body text-sm focus:outline-none focus:border-text-primary bg-white h-10"
+                    className="w-full sm:flex-1 px-3 py-2 border border-border rounded-sm font-body text-sm focus:outline-none focus:border-text-primary bg-white h-10"
                   >
                     <option value="">No Background Photo (Use Gradient)</option>
                     {photos.map((photo) => (
@@ -308,7 +308,7 @@ export default function SettingsPage() {
                     ))}
                   </select>
 
-                  <label className={`cursor-pointer flex items-center justify-center gap-2 px-4 py-2 border border-text-primary text-text-primary rounded-sm font-body text-sm hover:bg-gray-50 transition-colors h-10 ${uploading ? 'opacity-50 pointer-events-none' : ''}`}>
+                  <label className={`cursor-pointer flex items-center justify-center gap-2 px-4 py-2 border border-text-primary text-text-primary rounded-sm font-body text-sm hover:bg-gray-50 transition-colors h-10 w-auto flex-shrink-0 ${uploading ? 'opacity-50 pointer-events-none' : ''}`}>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                       <polyline points="17 8 12 3 7 8" />
@@ -391,22 +391,27 @@ export default function SettingsPage() {
                 <label className="block font-body text-xs tracking-wider uppercase text-text-muted mb-1.5">
                   Studio Logo
                 </label>
-                <div className="flex items-center gap-4">
-                  {form.studio_logo?.secure_url ? (
-                    <div className="relative w-16 h-16 rounded-full overflow-hidden border border-border bg-[#F5F5F5] flex items-center justify-center flex-shrink-0">
-                      <img
-                        src={form.studio_logo.secure_url}
-                        alt="Studio Logo"
-                        className="object-cover w-full h-full"
-                      />
-                    </div>
-                  ) : (
-                    <div className="w-16 h-16 rounded-full bg-hover-surface border border-border border-dashed flex items-center justify-center text-text-muted font-body text-[10px] flex-shrink-0">
-                      No Logo
-                    </div>
-                  )}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+                  <div className="flex items-center gap-4">
+                    {form.studio_logo?.secure_url ? (
+                      <div className="relative w-16 h-16 rounded-full overflow-hidden border border-border bg-[#F5F5F5] flex items-center justify-center flex-shrink-0">
+                        <img
+                          src={form.studio_logo.secure_url}
+                          alt="Studio Logo"
+                          className="object-cover w-full h-full"
+                        />
+                      </div>
+                    ) : (
+                      <div className="w-16 h-16 rounded-full bg-hover-surface border border-border border-dashed flex items-center justify-center text-text-muted font-body text-[10px] flex-shrink-0">
+                        No Logo
+                      </div>
+                    )}
+                    <span className="font-body text-xs text-text-muted sm:hidden">
+                      {form.studio_logo ? 'Current Studio Logo' : 'No Logo Uploaded'}
+                    </span>
+                  </div>
 
-                  <label className={`cursor-pointer flex items-center justify-center gap-2 px-4 py-2 border border-text-primary text-text-primary rounded-sm font-body text-sm hover:bg-gray-50 transition-colors h-10 ${uploadingLogo ? 'opacity-50 pointer-events-none' : ''}`}>
+                  <label className={`cursor-pointer flex items-center justify-center gap-2 px-4 py-2 border border-text-primary text-text-primary rounded-sm font-body text-sm hover:bg-gray-50 transition-colors h-10 w-full sm:w-auto ${uploadingLogo ? 'opacity-50 pointer-events-none' : ''}`}>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                       <polyline points="17 8 12 3 7 8" />
@@ -539,8 +544,8 @@ export default function SettingsPage() {
             ) : (
               <div className="space-y-3">
                 {form.navbar_links.map((link, i) => (
-                  <div key={i} className="flex items-start gap-2">
-                    <div className="flex-1 grid grid-cols-2 gap-2">
+                  <div key={i} className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 bg-surface/40 p-3 sm:p-0 rounded-sm border border-border/40 sm:border-none">
+                    <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-2 w-full">
                       <input
                         type="text"
                         value={link.label}
@@ -556,21 +561,26 @@ export default function SettingsPage() {
                         className="px-3 py-2 border border-border rounded-sm font-body text-sm focus:outline-none focus:border-text-primary"
                       />
                     </div>
-                    <input
-                      type="number"
-                      value={link.order}
-                      onChange={(e) => updateNavLink(i, 'order', parseInt(e.target.value) || 0)}
-                      className="w-16 px-2 py-2 border border-border rounded-sm font-body text-sm focus:outline-none focus:border-text-primary"
-                      title="Order"
-                    />
-                    <button
-                      onClick={() => removeNavLink(i)}
-                      className="p-2 text-text-muted hover:text-red-500 transition-colors"
-                    >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-                      </svg>
-                    </button>
+                    <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-start">
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-body text-xs text-text-muted sm:hidden">Order:</span>
+                        <input
+                          type="number"
+                          value={link.order}
+                          onChange={(e) => updateNavLink(i, 'order', parseInt(e.target.value) || 0)}
+                          className="w-16 px-2 py-2 border border-border rounded-sm font-body text-sm focus:outline-none focus:border-text-primary"
+                          title="Order"
+                        />
+                      </div>
+                      <button
+                        onClick={() => removeNavLink(i)}
+                        className="p-2 text-text-muted hover:text-red-500 transition-colors flex items-center justify-center rounded border border-border sm:border-none w-10 sm:w-auto h-9 sm:h-auto"
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                        </svg>
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
