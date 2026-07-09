@@ -3,6 +3,7 @@ import { Raleway } from 'next/font/google';
 import './globals.css';
 import ServiceWorkerRegister from '@/components/ServiceWorkerRegister';
 import BottomNav from '@/components/BottomNav';
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const raleway = Raleway({
   subsets: ['latin'],
@@ -91,6 +92,7 @@ export default function RootLayout({
         {children}
         <BottomNav />
         <ServiceWorkerRegister />
+        <SpeedInsights />
       </body>
     </html>
   );
