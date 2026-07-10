@@ -6,7 +6,7 @@ const VideoItem = require('../models/VideoItem');
 const ClientGallery = require('../models/ClientGallery');
 const jwt = require('jsonwebtoken');
 const axios = require('axios');
-const { ZipArchive } = require('archiver');
+const archiver = require('archiver');
 
 /**
  * Verify client gallery JWT token (separate secret from admin JWT)
@@ -383,7 +383,7 @@ exports.downloadAllPhotosZip = async (req, res) => {
     res.setHeader('Content-Type', 'application/zip');
     res.setHeader('Content-Disposition', `attachment; filename="${galleryName}.zip"`);
 
-    const archive = new ZipArchive({ zlib: { level: 0 } });
+    const archive = archiver('zip', { zlib: { level: 0 } });
     archive.pipe(res);
 
     archive.on('error', (err) => {
@@ -446,7 +446,7 @@ exports.downloadFolderZip = async (req, res) => {
     res.setHeader('Content-Type', 'application/zip');
     res.setHeader('Content-Disposition', `attachment; filename="${galleryName}.zip"`);
 
-    const archive = new ZipArchive({ zlib: { level: 0 } });
+    const archive = archiver('zip', { zlib: { level: 0 } });
     archive.pipe(res);
 
     archive.on('error', (err) => {

@@ -1,4 +1,5 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
+import BackendPing from '@/components/BackendPing';
 import { Raleway } from 'next/font/google';
 import './globals.css';
 import ServiceWorkerRegister from '@/components/ServiceWorkerRegister';
@@ -23,6 +24,13 @@ interface ConfigResponse {
     public_id: string;
   } | null;
 }
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  userScalable: true,
+};
 
 export async function generateMetadata(): Promise<Metadata> {
   let config: ConfigResponse | null = null;
@@ -89,6 +97,7 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/icon-192.png" />
       </head>
       <body className="font-body antialiased pb-20 md:pb-0">
+        <BackendPing />
         {children}
         <BottomNav />
         <ServiceWorkerRegister />

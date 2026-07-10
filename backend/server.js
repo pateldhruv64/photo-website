@@ -20,7 +20,7 @@ app.use(helmet({
 
 // ─── CORS ────────────────────────────────────────────────────────────
 app.use(cors({
-  origin: "https://photo-website-livid.vercel.app",
+  origin: ["https://photo-website-livid.vercel.app", "http://localhost:3000"],
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"]

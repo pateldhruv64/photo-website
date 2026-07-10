@@ -6,7 +6,7 @@ import Image from 'next/image';
 import AdminLayoutClient from '@/components/admin/AdminLayout';
 import ConfirmModal from '@/components/admin/ConfirmModal';
 import { fetcher, apiRequest } from '@/lib/fetcher';
-import { thumbnailUrl } from '@/lib/cloudinary';
+
 import type { Photo, Category, PaginatedPhotos, CloudinarySignature } from '@/lib/types';
 
 export default function PhotosPage() {
@@ -229,7 +229,7 @@ export default function PhotosPage() {
                 style={{ aspectRatio: `${photo.width}/${photo.height}`, maxHeight: '200px' }}
               >
                 <Image
-                  src={thumbnailUrl(photo.public_id, 300)}
+                  src={photo.public_id}
                   alt={photo.title || 'Photo'}
                   fill
                   sizes="200px"

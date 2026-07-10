@@ -813,3 +813,76 @@ exports.addClientGalleryPhotos = async (req, res) => {
     res.status(500).json({ error: 'Failed to add photos.' });
   }
 };
+
+/**
+ * GET /api/admin/analytics
+ * Returns basic site analytics
+ */
+exports.getAnalytics = async (req, res) => {
+  try {
+    const [
+      totalPhotos,
+      totalCategories,
+      featuredPhotos,
+      totalVideos,
+      activeVideos,
+      totalClientGalleries,
+      activeGalleries,
+      totalTestimonials,
+    ] = await Promise.all([
+      Photo.countDocuments(),
+      Category.countDocuments({ is_active: true }),
+      Photo.countDocuments({ is_featured: true }),
+      VideoItem.countDocuments(),
+      VideoItem.countDocuments({ is_active: true }),
+      ClientGallery.countDocuments(),
+      ClientGallery.countDocuments({ is_active: true }),
+      Testimonial.countDocuments({ is_active: true }),
+    ]);
+
+    // Recent uploads (last 7 days)
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const recentUploads = await Photo.countDocuments({
+      created_at: { $gte: sevenDaysAgo }
+    });
+
+    // Photos per category
+    const photosPerCategory = await Photo.aggregate([
+      { $group: { _id: '$category', count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+      { $limit: 10 },
+      {
+        $lookup: {
+          from: 'categories',
+          localField: '_id',
+          foreignField: '_id',
+          as: 'categoryData'
+        }
+      },
+      {
+        $project: {
+          count: 1,
+          name: { $arrayElemAt: ['$categoryData.name', 0] }
+        }
+      }
+    ]);
+
+    res.json({
+      overview: {
+        totalPhotos,
+        totalCategories,
+        featuredPhotos,
+        totalVideos,
+        activeVideos,
+        totalClientGalleries,
+        activeGalleries,
+        totalTestimonials,
+        recentUploads,
+      },
+      photosPerCategory,
+    });
+  } catch (error) {
+    console.error('getAnalytics error:', error);
+    res.status(500).json({ error: 'Failed to fetch analytics.' });
+  }
+};

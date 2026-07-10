@@ -4,7 +4,7 @@ import { useState, useCallback, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import Masonry from 'react-masonry-css';
 import ClientLightbox from '@/components/ClientLightbox';
-import { thumbnailUrl, blurUrl } from '@/lib/cloudinary';
+import { blurUrl } from '@/lib/cloudinary';
 import {
   downloadSinglePhoto,
   downloadAllPhotos,
@@ -365,14 +365,15 @@ export default function ClientGalleryPage({ params }: { params: { slug: string }
                 onClick={() => openLightbox(index)}
               >
                 <Image
-                  src={thumbnailUrl(photo.public_id)}
+                  src={photo.public_id}
                   alt={photo.title || 'Photo'}
                   fill
-                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                  sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
                   placeholder="blur"
                   blurDataURL={blurUrl(photo.public_id)}
-                  className="object-cover"
+                  className="object-cover protected-image"
                   draggable={false}
+                  onContextMenu={(e) => e.preventDefault()}
                 />
 
                 {/* Download button overlay (bottom-right, visible on hover) */}

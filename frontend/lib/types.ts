@@ -71,10 +71,22 @@ export interface PaginatedPhotos {
   };
 }
 
-export interface DashboardStats {
-  totalPhotos: number;
-  totalCategories: number;
-  featuredPhotos: number;
+export interface AnalyticsData {
+  overview: {
+    totalPhotos: number;
+    totalCategories: number;
+    featuredPhotos: number;
+    totalVideos: number;
+    activeVideos: number;
+    totalClientGalleries: number;
+    activeGalleries: number;
+    totalTestimonials: number;
+    recentUploads: number;
+  };
+  photosPerCategory: Array<{
+    count: number;
+    name: string;
+  }>;
 }
 
 // ─── Cloudinary Signature ────────────────────────────────────────────

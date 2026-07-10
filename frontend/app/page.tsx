@@ -4,6 +4,8 @@ import HomeGallery from '@/components/HomeGallery';
 import Marquee from '@/components/Marquee';
 import BookingForm from '@/components/BookingForm';
 import TestimonialsSection from '@/components/TestimonialsSection';
+import StatsSection from '@/components/StatsSection';
+import PricingSection from '@/components/PricingSection';
 import type { SiteConfig, Category, Photo, VideoItem } from '@/lib/types';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
@@ -82,6 +84,9 @@ export default async function HomePage() {
 
         {/* Testimonials Section */}
         <TestimonialsSection />
+
+        <StatsSection />
+        <PricingSection />
 
         {/* Booking Form Section */}
         <BookingForm />

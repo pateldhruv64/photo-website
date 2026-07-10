@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { thumbnailUrl, blurUrl } from '@/lib/cloudinary';
+import { blurUrl } from '@/lib/cloudinary';
 import type { Photo } from '@/lib/types';
 
 interface PhotoCardProps {
@@ -19,10 +19,10 @@ export default function PhotoCard({ photo, onClick }: PhotoCardProps) {
         onContextMenu={(e) => e.preventDefault()}
       >
         <Image
-          src={thumbnailUrl(photo.public_id)}
+          src={photo.public_id}
           alt={photo.title || 'Photo'}
           fill
-          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
           placeholder="blur"
           blurDataURL={blurUrl(photo.public_id)}
           className="object-cover protected-image"

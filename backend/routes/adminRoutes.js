@@ -15,6 +15,7 @@ router.get('/me', adminController.getMe);
 
 // Stats
 router.get('/stats', adminController.getStats);
+router.get('/analytics', adminController.getAnalytics);
 
 // Cloudinary signature
 router.get('/cloudinary-signature', adminController.getCloudinarySignature);

@@ -6,7 +6,7 @@ import { useState, useEffect } from 'react';
 import useSWR from 'swr';
 import AdminLayoutClient from '@/components/admin/AdminLayout';
 import { fetcher, apiRequest } from '@/lib/fetcher';
-import { thumbnailUrl } from '@/lib/cloudinary';
+
 import type { SiteConfig, PaginatedPhotos, Category, CloudinarySignature } from '@/lib/types';
 
 export default function SettingsPage() {
@@ -332,7 +332,7 @@ export default function SettingsPage() {
                       if (selectedPhoto) {
                         return (
                           <img
-                            src={thumbnailUrl(selectedPhoto.public_id, 200)}
+                            src={selectedPhoto.public_id}
                             alt="Selected Hero"
                             className="object-cover w-full h-full"
                           />

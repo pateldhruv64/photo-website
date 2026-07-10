@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { thumbnailUrl, blurUrl } from '@/lib/cloudinary';
+import { blurUrl } from '@/lib/cloudinary';
 import type { Photo } from '@/lib/types';
 
 interface MarqueeProps {
@@ -34,7 +34,7 @@ export default function Marquee({ photos, reverse = false, speed = 30 }: Marquee
             } as React.CSSProperties}
           >
             <Image
-              src={thumbnailUrl(photo.public_id, 400)}
+              src={photo.public_id}
               alt={photo.title || 'Photo'}
               fill
               sizes="(max-width: 768px) 180px, 300px"

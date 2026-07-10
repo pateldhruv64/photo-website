@@ -6,7 +6,7 @@ import Image from 'next/image';
 import AdminLayout from '@/components/admin/AdminLayout';
 import ConfirmModal from '@/components/admin/ConfirmModal';
 import { fetcher, apiRequest } from '@/lib/fetcher';
-import { thumbnailUrl } from '@/lib/cloudinary';
+
 import type { CloudinarySignature } from '@/lib/types';
 
 interface ClientGalleryPhoto {
@@ -340,7 +340,7 @@ export default function AdminClientGalleriesPage() {
                   <div key={photo._id} className="bg-white border border-border rounded-md overflow-hidden group relative">
                     <div className="relative aspect-square">
                       <Image
-                        src={thumbnailUrl(photo.public_id)}
+                        src={photo.public_id}
                         alt={photo.title || 'Client Photo'}
                         fill
                         className="object-cover"

@@ -120,7 +120,7 @@ export default function HomeGallery({ categories, initialPhotos = [], initialVid
   }, []);
 
   const openLightbox = (photo: Photo) => {
-    const index = currentPhotos.findIndex((p) => p._id === photo._id);
+    const index = filteredPhotos.findIndex((p) => p._id === photo._id);
     setLightboxIndex(index >= 0 ? index : 0);
     setLightboxOpen(true);
   };
@@ -192,7 +192,7 @@ export default function HomeGallery({ categories, initialPhotos = [], initialVid
       {/* Photo Lightbox */}
       {lightboxOpen && (
         <Lightbox
-          photos={currentPhotos}
+          photos={filteredPhotos}
           currentIndex={lightboxIndex}
           onClose={() => setLightboxOpen(false)}
           onNavigate={setLightboxIndex}
