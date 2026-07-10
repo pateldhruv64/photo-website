@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import Image from 'next/image';
 import useSWR from 'swr';
 import { fetcher } from '@/lib/fetcher';
 import { lightboxUrl } from '@/lib/cloudinary';
@@ -315,11 +314,9 @@ export default function ClientLightbox({
               <div className="w-8 h-8 border-2 border-white/30 border-t-white rounded-full animate-spin" />
             </div>
           )}
-          <Image
+          <img
             src={lightboxUrl(photo.public_id)}
             alt={photo.title || 'Photo'}
-            width={photo.width}
-            height={photo.height}
             className={`max-h-[85vh] w-auto h-auto object-contain transition-opacity duration-300 ${
               loaded ? 'opacity-100' : 'opacity-0'
             }`}

@@ -7,9 +7,11 @@ import Navbar from '@/components/Navbar';
 import PhotoGrid from '@/components/PhotoGrid';
 import Lightbox from '@/components/Lightbox';
 import InfiniteScroll from '@/components/InfiniteScroll';
+import VideoCard from '@/components/VideoCard';
+import VideoLightbox from '@/components/VideoLightbox';
 import { fetcher } from '@/lib/fetcher';
 import { getPreloadedCategoryPhotos } from '@/lib/preloadedStore';
-import type { Photo, Category, PaginatedPhotos } from '@/lib/types';
+import type { Photo, Category, PaginatedPhotos, VideoItem } from '@/lib/types';
 
 interface Props {
   categorySlug: string;
@@ -18,6 +20,13 @@ interface Props {
 export default function CategoryPageClient({ categorySlug }: Props) {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
+  const [videoLightbox, setVideoLightbox] = useState<VideoItem | null>(null);
+
+  // Fetch videos for this category
+  const { data: videos } = useSWR<VideoItem[]>(categorySlug ? `/videos?category=${categorySlug}` : null, fetcher, {
+    revalidateOnFocus: false,
+    dedupingInterval: 3600000,
+  });
 
   // Load categories list on the client side. Since SWR caches globally, this resolves instantly.
   const { data: categories } = useSWR<Category[]>('/categories', fetcher, {
@@ -94,6 +103,24 @@ export default function CategoryPageClient({ categorySlug }: Props) {
         >
           <PhotoGrid photos={allPhotos} onPhotoClick={openLightbox} />
         </InfiniteScroll>
+
+        {/* Videos Section Below Photos */}
+        {videos && videos.length > 0 && (
+          <div className="mt-16 pt-10 border-t border-border/20 flex flex-col items-center md:items-start">
+            <p className="eyebrow justify-center md:justify-start">
+              Videos
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-6 w-full">
+              {videos.map((video) => (
+                <VideoCard
+                  key={video._id}
+                  video={video}
+                  onClick={(v) => setVideoLightbox(v)}
+                />
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Lightbox */}
@@ -103,6 +130,16 @@ export default function CategoryPageClient({ categorySlug }: Props) {
           currentIndex={lightboxIndex}
           onClose={() => setLightboxOpen(false)}
           onNavigate={setLightboxIndex}
+        />
+      )}
+
+      {/* Video Lightbox */}
+      {videoLightbox && (
+        <VideoLightbox
+          youtubeId={videoLightbox.youtube_id}
+          platform={videoLightbox.platform}
+          title={videoLightbox.title}
+          onClose={() => setVideoLightbox(null)}
         />
       )}
     </main>

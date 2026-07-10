@@ -332,7 +332,7 @@ export default function SettingsPage() {
                       if (selectedPhoto) {
                         return (
                           <img
-                            src={selectedPhoto.public_id}
+                            src={`https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload/${selectedPhoto.public_id}`}
                             alt="Selected Hero"
                             className="object-cover w-full h-full"
                           />

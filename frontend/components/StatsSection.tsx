@@ -17,23 +17,22 @@ const STATS: Stat[] = [
 
 function CountUp({ target, suffix, start }: { target: number; suffix: string; start: boolean }) {
   const [count, setCount] = useState(0);
+  const frameRef = useRef<number>(0);
 
   useEffect(() => {
     if (!start) return;
-    const duration = 1800;
-    const steps = 60;
-    const increment = target / steps;
-    let current = 0;
-    const timer = setInterval(() => {
-      current += increment;
-      if (current >= target) {
-        setCount(target);
-        clearInterval(timer);
-      } else {
-        setCount(Math.floor(current));
-      }
-    }, duration / steps);
-    return () => clearInterval(timer);
+    const startTime = performance.now();
+    const duration = 2000;
+    const animate = (currentTime: number) => {
+      const elapsed = currentTime - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setCount(Math.floor(eased * target));
+      if (progress < 1) frameRef.current = requestAnimationFrame(animate);
+      else setCount(target);
+    };
+    frameRef.current = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(frameRef.current);
   }, [start, target]);
 
   return <span>{count}{suffix}</span>;
@@ -44,16 +43,20 @@ export default function StatsSection() {
   const [started, setStarted] = useState(false);
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
     const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) setStarted(true); },
-      { threshold: 0.3 }
+      ([entry]) => {
+        if (entry.isIntersecting && !started) setStarted(true);
+      },
+      { threshold: 0.2, rootMargin: '0px 0px -50px 0px' }
     );
-    if (ref.current) observer.observe(ref.current);
-    return () => observer.disconnect();
-  }, []);
+    const current = ref.current;
+    if (current) observer.observe(current);
+    return () => { if (current) observer.unobserve(current); };
+  }, [started]);
 
   return (
-    <section ref={ref} className="py-16 md:py-24 bg-[#1A1A1A]">
+    <section ref={ref} className="cinema-reveal reveal py-8 md:py-12 bg-[#1E1410]">
       <div className="max-w-5xl mx-auto px-4">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-4">
           {STATS.map((stat) => (

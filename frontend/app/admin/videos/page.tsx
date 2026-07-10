@@ -14,6 +14,7 @@ interface FormData {
   category: string;
   order: number;
   is_active: boolean;
+  thumbnail_url: string;
 }
 
 const defaultForm: FormData = {
@@ -22,22 +23,28 @@ const defaultForm: FormData = {
   category: '',
   order: 0,
   is_active: true,
+  thumbnail_url: '',
 };
 
 /**
  * Extract YouTube video ID for live preview
  */
-function extractPreviewId(url: string): string | null {
+function extractPreviewInfo(url: string) {
   if (!url) return null;
-  const patterns = [
-    /(?:youtube\.com\/watch\?v=|youtube\.com\/watch\?.+&v=)([a-zA-Z0-9_-]{11})/,
-    /youtu\.be\/([a-zA-Z0-9_-]{11})/,
-    /youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/,
-    /youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/,
-  ];
-  for (const pattern of patterns) {
-    const match = url.match(pattern);
-    if (match) return match[1];
+  if (url.includes('instagram.com')) {
+    const match = url.match(/(?:p|reel|reels)\/([a-zA-Z0-9_-]+)/);
+    if (match) return { platform: 'instagram', id: match[1] };
+  } else {
+    const patterns = [
+      /(?:youtube\.com\/watch\?v=|youtube\.com\/watch\?.+&v=)([a-zA-Z0-9_-]{11})/,
+      /youtu\.be\/([a-zA-Z0-9_-]{11})/,
+      /youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/,
+      /youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/,
+    ];
+    for (const pattern of patterns) {
+      const match = url.match(pattern);
+      if (match) return { platform: 'youtube', id: match[1] };
+    }
   }
   return null;
 }
@@ -50,8 +57,38 @@ export default function AdminVideosPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [deleteVideo, setDeleteVideo] = useState<VideoItem | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
-  const previewId = extractPreviewId(form.youtube_url);
+  const previewInfo = extractPreviewInfo(form.youtube_url);
+
+  const handleThumbnailUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files?.[0]) return;
+    const file = e.target.files[0];
+    setUploadingImage(true);
+    try {
+      const { signature, timestamp, cloudName, apiKey } = await apiRequest('/admin/cloudinary-signature');
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('api_key', apiKey);
+      formData.append('timestamp', timestamp.toString());
+      formData.append('signature', signature);
+      formData.append('folder', 'portfolio/videos');
+
+      const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error?.message || 'Upload failed');
+      
+      setForm(prev => ({ ...prev, thumbnail_url: data.secure_url }));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Upload failed');
+    } finally {
+      setUploadingImage(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -82,6 +119,7 @@ export default function AdminVideosPage() {
       category: categoryId,
       order: video.order,
       is_active: video.is_active,
+      thumbnail_url: video.thumbnail_url?.includes('instagram-placeholder') ? '' : (video.thumbnail_url || ''),
     });
     setEditId(video._id);
   };
@@ -129,20 +167,20 @@ export default function AdminVideosPage() {
 
           {/* YouTube URL + Preview */}
           <div>
-            <label className="block font-body text-xs text-text-muted mb-1">YouTube URL *</label>
+            <label className="block font-body text-xs text-text-muted mb-1">Video URL (YouTube or Instagram Reel) *</label>
             <input
               type="url"
               value={form.youtube_url}
               onChange={(e) => setForm({ ...form, youtube_url: e.target.value })}
-              placeholder="https://www.youtube.com/watch?v=..."
+              placeholder="https://www.youtube.com/watch?v=... or https://www.instagram.com/reel/..."
               className="w-full px-3 py-2 border border-border rounded-md font-body text-sm focus:outline-none focus:ring-2 focus:ring-text-primary/20"
               required
             />
             {/* Live Preview */}
-            {previewId && (
+            {previewInfo && previewInfo.platform === 'youtube' && (
               <div className="mt-2 relative w-48 rounded-md overflow-hidden" style={{ aspectRatio: '16/9' }}>
                 <Image
-                  src={`https://img.youtube.com/vi/${previewId}/mqdefault.jpg`}
+                  src={`https://img.youtube.com/vi/${previewInfo.id}/mqdefault.jpg`}
                   alt="Video preview"
                   fill
                   className="object-cover"
@@ -150,7 +188,30 @@ export default function AdminVideosPage() {
                 />
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="w-8 h-8 bg-white/80 rounded-full flex items-center justify-center">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="#1A1A1A"><polygon points="5 3 19 12 5 21 5 3" /></svg>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="#1E1410"><polygon points="5 3 19 12 5 21 5 3" /></svg>
+                  </div>
+                </div>
+              </div>
+            )}
+            {previewInfo && previewInfo.platform === 'instagram' && (
+              <div className="mt-4">
+                <label className="block font-body text-xs text-text-muted mb-1">Custom Thumbnail (Optional)</label>
+                <div className="flex items-start gap-4">
+                  {form.thumbnail_url ? (
+                    <div className="relative w-48 rounded-md overflow-hidden" style={{ aspectRatio: '16/9' }}>
+                      <Image src={form.thumbnail_url} alt="Thumbnail" fill className="object-cover" unoptimized />
+                      <button type="button" onClick={() => setForm(prev => ({ ...prev, thumbnail_url: '' }))} className="absolute top-1 right-1 bg-white/90 p-1 rounded-full text-red-500 shadow-sm"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+                    </div>
+                  ) : (
+                    <div className="w-48 h-28 bg-gradient-to-tr from-[#f09433] via-[#dc2743] to-[#bc1888] rounded-md flex flex-col items-center justify-center text-white relative">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+                      <span className="text-xs mt-1 font-body text-center px-2">Default Instagram View</span>
+                    </div>
+                  )}
+                  <div className="flex-1">
+                    <input type="file" accept="image/*" onChange={handleThumbnailUpload} disabled={uploadingImage} className="block w-full text-sm font-body file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-surface file:text-text-primary hover:file:bg-hover-surface disabled:opacity-50" />
+                    {uploadingImage && <span className="text-xs text-text-muted mt-2 block">Uploading...</span>}
+                    <p className="text-xs text-text-muted mt-2">Upload a custom image to override the default Instagram gradient placeholder.</p>
                   </div>
                 </div>
               </div>
@@ -231,13 +292,17 @@ export default function AdminVideosPage() {
               >
                 {/* Thumbnail */}
                 <div className="relative w-32 flex-shrink-0 rounded-md overflow-hidden" style={{ aspectRatio: '16/9' }}>
-                  <Image
-                    src={video.thumbnail_url}
-                    alt={video.title || 'Video'}
-                    fill
-                    className="object-cover"
-                    unoptimized
-                  />
+                  {video.platform === 'instagram' && !video.thumbnail_url?.includes('res.cloudinary.com') ? (
+                    <div className="w-full h-full bg-gradient-to-tr from-[#f09433] via-[#dc2743] to-[#bc1888] flex items-center justify-center">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+                    </div>
+                  ) : (
+                    <img
+                      src={video.thumbnail_url ? video.thumbnail_url.replace('maxresdefault.jpg', 'hqdefault.jpg') : `https://img.youtube.com/vi/${video.youtube_id}/hqdefault.jpg`}
+                      alt={video.title || 'Video'}
+                      className="w-full h-full object-cover"
+                    />
+                  )}
                 </div>
 
                 {/* Info */}

@@ -39,7 +39,7 @@ export default function BottomNav() {
         <Link
           href="/"
           className={`flex flex-col items-center justify-center gap-0.5 w-full h-full transition-colors ${
-            isHome ? 'text-[#1A1A1A]' : 'text-gray-400'
+            isHome ? 'text-[#1E1410]' : 'text-gray-400'
           }`}
         >
           <svg
@@ -61,7 +61,7 @@ export default function BottomNav() {
         {/* Gallery */}
         <button
           onClick={scrollToGallery}
-          className="flex flex-col items-center justify-center gap-0.5 w-full h-full text-gray-400 transition-colors active:text-[#1A1A1A]"
+          className="flex flex-col items-center justify-center gap-0.5 w-full h-full text-gray-400 transition-colors active:text-[#1E1410]"
         >
           <svg
             width="22"

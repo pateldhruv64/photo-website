@@ -5,11 +5,12 @@ import { createPortal } from 'react-dom';
 
 interface VideoLightboxProps {
   youtubeId: string;
+  platform?: 'youtube' | 'instagram';
   title?: string;
   onClose: () => void;
 }
 
-export default function VideoLightbox({ youtubeId, title, onClose }: VideoLightboxProps) {
+export default function VideoLightbox({ youtubeId, platform = 'youtube', title, onClose }: VideoLightboxProps) {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -51,17 +52,27 @@ export default function VideoLightbox({ youtubeId, title, onClose }: VideoLightb
 
         {/* Video Container */}
         <div
-          className="w-full max-w-4xl"
-          style={{ aspectRatio: '16/9' }}
+          className="w-full max-w-4xl flex justify-center"
+          style={{ aspectRatio: platform === 'instagram' ? 'auto' : '16/9' }}
           onClick={(e) => e.stopPropagation()}
         >
-          <iframe
-            src={`https://www.youtube.com/embed/${youtubeId}?autoplay=1&rel=0`}
-            title={title || 'Video'}
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-            className="w-full h-full rounded-lg"
-          />
+          {platform === 'instagram' ? (
+            <iframe
+              src={`https://www.instagram.com/reel/${youtubeId}/embed/`}
+              className="w-full max-w-[400px] h-[80vh] min-h-[500px] bg-white rounded-lg shadow-xl"
+              frameBorder="0"
+              scrolling="no"
+              allowTransparency
+            />
+          ) : (
+            <iframe
+              src={`https://www.youtube.com/embed/${youtubeId}?autoplay=1&rel=0`}
+              title={title || 'Video'}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              className="w-full h-full rounded-lg"
+            />
+          )}
         </div>
 
         {/* Title */}

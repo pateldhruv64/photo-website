@@ -45,11 +45,11 @@ export default function TestimonialsSection() {
   return (
     <section
       ref={sectionRef}
-      className="pt-8 pb-16 md:pt-12 md:pb-24 bg-white border-t border-border/30 overflow-hidden"
+      className="py-8 md:py-12 bg-transparent border-t border-border/30 overflow-hidden"
       id="testimonials-section"
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8 text-center">
-        <p className="font-body text-[10px] tracking-[0.4em] uppercase text-text-muted mb-3">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8 text-center flex flex-col items-center">
+        <p className="eyebrow justify-center">
           Client Experiences
         </p>
         <h2 className="font-display text-3xl md:text-4xl font-light tracking-wide text-text-primary">
@@ -66,11 +66,11 @@ export default function TestimonialsSection() {
         <div className="absolute right-0 top-0 bottom-0 w-16 md:w-32 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none" />
 
         {/* Sliding marquee track */}
-        <div className="animate-marquee flex gap-6 py-4">
+        <div className="animate-marquee flex gap-6 py-4 stagger-reveal">
           {marqueeItems.map((testimonial, index) => (
             <div
               key={`${testimonial._id}-${index}`}
-              className="w-[320px] md:w-[380px] flex-shrink-0"
+              className="w-[320px] md:w-[380px] flex-shrink-0 reveal"
             >
               <TestimonialCard testimonial={testimonial} renderStars={renderStars} />
             </div>

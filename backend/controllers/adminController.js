@@ -593,7 +593,7 @@ exports.getVideos = async (req, res) => {
  */
 exports.createVideo = async (req, res) => {
   try {
-    const { youtube_url, title, category, order, is_active } = req.body;
+    const { youtube_url, title, category, order, is_active, thumbnail_url } = req.body;
 
     if (!youtube_url || !category) {
       return res.status(400).json({ error: 'youtube_url and category are required.' });
@@ -604,7 +604,8 @@ exports.createVideo = async (req, res) => {
       title: title || '',
       category,
       order: order || 0,
-      is_active: is_active !== undefined ? is_active : true
+      is_active: is_active !== undefined ? is_active : true,
+      thumbnail_url: thumbnail_url || ''
     });
 
     await video.save();
@@ -631,13 +632,14 @@ exports.updateVideo = async (req, res) => {
       return res.status(404).json({ error: 'Video not found.' });
     }
 
-    const { youtube_url, title, category, order, is_active } = req.body;
+    const { youtube_url, title, category, order, is_active, thumbnail_url } = req.body;
 
     if (youtube_url !== undefined) video.youtube_url = youtube_url;
     if (title !== undefined) video.title = title;
     if (category !== undefined) video.category = category;
     if (order !== undefined) video.order = order;
     if (is_active !== undefined) video.is_active = is_active;
+    if (thumbnail_url !== undefined) video.thumbnail_url = thumbnail_url;
 
     await video.save();
     const populated = await VideoItem.findById(video._id).populate('category', 'name slug');

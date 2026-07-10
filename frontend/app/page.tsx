@@ -2,10 +2,24 @@ import Navbar from '@/components/Navbar';
 import HeroSection from '@/components/HeroSection';
 import HomeGallery from '@/components/HomeGallery';
 import Marquee from '@/components/Marquee';
-import BookingForm from '@/components/BookingForm';
-import TestimonialsSection from '@/components/TestimonialsSection';
-import StatsSection from '@/components/StatsSection';
-import PricingSection from '@/components/PricingSection';
+import dynamic from 'next/dynamic';
+
+const TestimonialsSection = dynamic(() => import('@/components/TestimonialsSection'), {
+  ssr: false,
+  loading: () => <div className="h-64 bg-[#F8F3EC]" />,
+});
+const StatsSection = dynamic(() => import('@/components/StatsSection'), {
+  ssr: false,
+  loading: () => <div className="h-48 bg-[#1E1410]" />,
+});
+const PricingSection = dynamic(() => import('@/components/PricingSection'), {
+  ssr: false,
+  loading: () => <div className="h-96 bg-[#FEFCF8]" />,
+});
+const BookingForm = dynamic(() => import('@/components/BookingForm'), {
+  ssr: false,
+  loading: () => <div className="h-80 bg-[#F8F3EC]" />,
+});
 import type { SiteConfig, Category, Photo, VideoItem } from '@/lib/types';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
@@ -57,12 +71,12 @@ export default async function HomePage() {
       <HeroSection config={config || defaultConfig} />
 
       {/* Content that scrolls over the hero */}
-      <div className="relative z-10 bg-white">
+      <div className="relative z-10 bg-[#F7F2EB]">
         {/* Marquee of featured photos */}
         {featuredPhotos.length > 0 && (
-          <div className="py-6 md:py-8 bg-surface">
-            <div className="max-w-7xl mx-auto px-4 mb-4">
-              <p className="font-body text-xs tracking-[0.3em] uppercase text-text-muted text-center">
+          <div className="py-6 md:py-8 bg-surface reveal">
+            <div className="max-w-7xl mx-auto px-4 mb-4 flex flex-col items-center">
+              <p className="eyebrow justify-center">
                 Featured Work
               </p>
             </div>
@@ -76,23 +90,34 @@ export default async function HomePage() {
         )}
 
         {/* Unified Gallery with Category Tabs */}
-        <HomeGallery
-          categories={categories}
-          initialPhotos={initialPhotos}
-          initialVideos={initialVideos}
-        />
+        <div className="reveal">
+          <HomeGallery
+            categories={categories}
+            initialPhotos={initialPhotos}
+            initialVideos={initialVideos}
+          />
+        </div>
 
         {/* Testimonials Section */}
-        <TestimonialsSection />
+        <div className="reveal">
+          <TestimonialsSection />
+        </div>
 
-        <StatsSection />
-        <PricingSection />
+        <div className="reveal">
+          <StatsSection />
+        </div>
+        
+        <div className="reveal">
+          <PricingSection />
+        </div>
 
         {/* Booking Form Section */}
-        <BookingForm />
+        <div className="reveal">
+          <BookingForm />
+        </div>
 
         {/* Footer */}
-        <footer className="border-t border-border py-12 md:py-16">
+        <footer className="border-t border-[#EDE4D8] py-12 md:py-16 bg-[#F7F2EB]">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex flex-col md:flex-row items-center justify-between gap-6">
               <div className="text-center md:text-left">

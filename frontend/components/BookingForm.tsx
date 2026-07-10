@@ -90,7 +90,7 @@ Date: ${formData.eventDate}${formData.message ? `\nMessage: ${formData.message}`
 
   if (submitted) {
     return (
-      <section className="py-16 md:py-24 bg-surface" id="booking-section">
+      <section className="py-8 md:py-12 bg-surface" id="booking-section">
         <div className="max-w-xl mx-auto px-4 text-center">
           <div className="w-16 h-16 bg-[#25D366] rounded-full flex items-center justify-center mx-auto mb-6">
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -109,7 +109,7 @@ Date: ${formData.eventDate}${formData.message ? `\nMessage: ${formData.message}`
   }
 
   return (
-    <section className="py-16 md:py-24 bg-surface" id="booking-section">
+    <section className="py-8 md:py-12 bg-surface" id="booking-section">
       <div className="max-w-xl mx-auto px-4">
         {/* Section Title */}
         <div className="text-center mb-10">
@@ -137,7 +137,7 @@ Date: ${formData.eventDate}${formData.message ? `\nMessage: ${formData.message}`
               value={formData.name}
               onChange={(e) => handleChange('name', e.target.value)}
               placeholder="Your full name"
-              className={`w-full px-4 py-3 font-body text-sm border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#1A1A1A]/20 transition-all ${
+              className={`w-full px-4 py-3 font-body text-sm border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#B5784A]/30 transition-all ${
                 errors.name ? 'border-red-400' : 'border-border'
               }`}
             />
@@ -155,7 +155,7 @@ Date: ${formData.eventDate}${formData.message ? `\nMessage: ${formData.message}`
               value={formData.phone}
               onChange={(e) => handleChange('phone', e.target.value)}
               placeholder="+91 98765 43210"
-              className={`w-full px-4 py-3 font-body text-sm border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#1A1A1A]/20 transition-all ${
+              className={`w-full px-4 py-3 font-body text-sm border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#B5784A]/30 transition-all ${
                 errors.phone ? 'border-red-400' : 'border-border'
               }`}
             />
@@ -171,7 +171,7 @@ Date: ${formData.eventDate}${formData.message ? `\nMessage: ${formData.message}`
               id="booking-event-type"
               value={formData.eventType}
               onChange={(e) => handleChange('eventType', e.target.value)}
-              className={`w-full px-4 py-3 font-body text-sm border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#1A1A1A]/20 transition-all appearance-none ${
+              className={`w-full px-4 py-3 font-body text-sm border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#B5784A]/30 transition-all appearance-none ${
                 errors.eventType ? 'border-red-400' : 'border-border'
               } ${!formData.eventType ? 'text-text-muted' : 'text-text-primary'}`}
             >
@@ -193,7 +193,7 @@ Date: ${formData.eventDate}${formData.message ? `\nMessage: ${formData.message}`
               type="date"
               value={formData.eventDate}
               onChange={(e) => handleChange('eventDate', e.target.value)}
-              className={`w-full px-4 py-3 font-body text-sm border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#1A1A1A]/20 transition-all ${
+              className={`w-full px-4 py-3 font-body text-sm border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#B5784A]/30 transition-all ${
                 errors.eventDate ? 'border-red-400' : 'border-border'
               }`}
             />
@@ -211,14 +211,14 @@ Date: ${formData.eventDate}${formData.message ? `\nMessage: ${formData.message}`
               onChange={(e) => handleChange('message', e.target.value)}
               placeholder="Any additional details..."
               rows={3}
-              className="w-full px-4 py-3 font-body text-sm border border-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#1A1A1A]/20 transition-all resize-none"
+              className="w-full px-4 py-3 font-body text-sm border border-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#B5784A]/30 transition-all resize-none"
             />
           </div>
 
           {/* Submit */}
           <button
             type="submit"
-            className="w-full py-3.5 bg-[#1A1A1A] text-white font-body text-sm font-medium rounded-lg hover:bg-gray-800 active:scale-[0.99] transition-all duration-200"
+            className="w-full py-3.5 bg-[#1E1410] text-white font-body text-sm font-medium rounded-lg hover:bg-[#2C1F18] active:scale-[0.99] transition-all duration-200"
           >
             Send via WhatsApp
           </button>

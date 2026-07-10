@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import useSWR from 'swr';
 import PhotoGrid from './PhotoGrid';
+import { useCardTilt } from '@/hooks/useCardTilt';
 import Lightbox from './Lightbox';
 import VideoCard from './VideoCard';
 import VideoLightbox from './VideoLightbox';
@@ -23,6 +24,9 @@ interface HomepageBulkData {
 }
 
 export default function HomeGallery({ categories, initialPhotos = [], initialVideos = [] }: Props) {
+  const galleryRef = useRef<HTMLDivElement>(null);
+  useCardTilt(galleryRef);
+
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
@@ -162,12 +166,14 @@ export default function HomeGallery({ categories, initialPhotos = [], initialVid
             hasMore={hasMore}
             isLoading={false}
           >
-            <PhotoGrid photos={currentPhotos} onPhotoClick={openLightbox} />
+            <div ref={galleryRef} className="w-full">
+              <PhotoGrid photos={currentPhotos} onPhotoClick={openLightbox} />
+            </div>
 
             {/* Videos Section Below Photos */}
             {activeVideos.length > 0 && (
-              <div className="mt-10 pt-10 border-t border-border/20">
-                <p className="font-body text-xs tracking-[0.2em] uppercase text-text-muted mb-6">
+              <div className="mt-10 pt-10 border-t border-border/20 flex flex-col items-center md:items-start">
+                <p className="eyebrow justify-center md:justify-start">
                   Videos
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -203,6 +209,7 @@ export default function HomeGallery({ categories, initialPhotos = [], initialVid
       {videoLightbox && (
         <VideoLightbox
           youtubeId={videoLightbox.youtube_id}
+          platform={videoLightbox.platform}
           title={videoLightbox.title}
           onClose={() => setVideoLightbox(null)}
         />

@@ -44,14 +44,14 @@ export default function StudioCard({ config, isOpen, onClose }: StudioCardProps)
       }}
     >
       <div 
-        className="w-full max-w-[340px] bg-white/95 backdrop-blur-md rounded-[2rem] border border-white/20 shadow-[0_25px_60px_rgba(0,0,0,0.3)] p-7 relative flex flex-col items-center select-none animate-scale-in"
+        className="w-full max-w-[340px] bg-[#F8F4EC]/95 backdrop-blur-md rounded-[2rem] border border-[#E8DFD1]/50 shadow-[0_25px_60px_rgba(0,0,0,0.3)] p-7 relative flex flex-col items-center select-none animate-scale-in"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Top Accent Handle */}
-        <div className="w-10 h-1 bg-neutral-200 rounded-full mb-5" />
+        <div className="w-10 h-1 bg-[#E8DFD1] rounded-full mb-5" />
 
         {/* Studio Logo - Floating Emblem Style */}
-        <div className="relative w-20 h-20 rounded-full bg-white border border-neutral-100 shadow-[0_8px_24px_rgba(0,0,0,0.06)] flex items-center justify-center overflow-hidden mb-3 p-[3px]">
+        <div className="relative w-20 h-20 rounded-full bg-[#F8F4EC] border border-[#E8DFD1] shadow-[0_8px_24px_rgba(0,0,0,0.06)] flex items-center justify-center overflow-hidden mb-3 p-[3px]">
           {logoUrl ? (
             <img 
               src={logoUrl} 
@@ -69,12 +69,12 @@ export default function StudioCard({ config, isOpen, onClose }: StudioCardProps)
         </div>
 
         {/* Studio Name */}
-        <h3 className="font-display text-xl font-medium text-neutral-900 tracking-wide text-center mb-1">
+        <h3 className="font-display text-xl font-medium text-[#1E1410] tracking-wide text-center mb-1">
           {config.studio_name || 'Studio Profile'}
         </h3>
         
         {/* Established Badge */}
-        <span className="text-[9px] tracking-[0.2em] uppercase text-neutral-400 font-semibold mb-5">
+        <span className="text-[9px] tracking-[0.2em] uppercase text-[#8C7A6B] font-semibold mb-5">
           CREATIVE PHOTOGRAPHY
         </span>
 
@@ -83,7 +83,7 @@ export default function StudioCard({ config, isOpen, onClose }: StudioCardProps)
           {phone && (
             <a 
               href={`tel:${phone}`}
-              className="flex-1 py-2.5 px-4 rounded-full bg-neutral-900 hover:bg-neutral-800 text-white font-body text-xs font-medium tracking-wide flex items-center justify-center gap-2 shadow-sm hover:shadow active:scale-[0.98] transition-all"
+              className="flex-1 py-2.5 px-4 rounded-full bg-[#A35D40] hover:bg-[#8C4E34] text-white font-body text-xs font-medium tracking-wide flex items-center justify-center gap-2 shadow-sm hover:shadow active:scale-[0.98] transition-all"
               title="Call Studio"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -97,7 +97,7 @@ export default function StudioCard({ config, isOpen, onClose }: StudioCardProps)
               href={website}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex-1 py-2.5 px-4 rounded-full border border-neutral-200 hover:bg-neutral-50 text-neutral-800 font-body text-xs font-medium tracking-wide flex items-center justify-center gap-2 active:scale-[0.98] transition-all"
+              className="flex-1 py-2.5 px-4 rounded-full border border-[#E8DFD1] hover:bg-[#F0EBE1] text-[#1E1410] font-body text-xs font-medium tracking-wide flex items-center justify-center gap-2 active:scale-[0.98] transition-all"
               title="Visit Website"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -110,19 +110,19 @@ export default function StudioCard({ config, isOpen, onClose }: StudioCardProps)
         </div>
 
         {/* Divider line */}
-        <div className="w-full h-[1px] bg-neutral-100 mb-5" />
+        <div className="w-full h-[1px] bg-[#E8DFD1] mb-5" />
 
         {/* Services List */}
         {services.length > 0 && (
           <div className="w-full mb-5">
-            <h4 className="font-body text-[8px] tracking-[0.25em] uppercase text-neutral-400 font-bold mb-2.5 text-center">
+            <h4 className="font-body text-[8px] tracking-[0.25em] uppercase text-[#8C7A6B] font-bold mb-2.5 text-center">
               OUR EXPERTISE
             </h4>
             <div className="flex flex-wrap justify-center gap-1.5 max-h-[85px] overflow-y-auto pr-1">
               {services.map((service, index) => (
                 <span 
                   key={index} 
-                  className="font-body text-[9px] font-medium tracking-wide uppercase text-neutral-600 bg-neutral-50 border border-neutral-200/60 rounded-full px-3 py-1.5 transition-colors hover:bg-neutral-100"
+                  className="font-body text-[9px] font-medium tracking-wide uppercase text-[#5C4D43] bg-[#F0EBE1] border border-[#E8DFD1]/60 rounded-full px-3 py-1.5 transition-colors hover:bg-[#E8DFD1]"
                 >
                   {service}
                 </span>
@@ -133,7 +133,7 @@ export default function StudioCard({ config, isOpen, onClose }: StudioCardProps)
 
         {/* Studio Description / Subtext */}
         {description && (
-          <p className="font-body text-[11px] text-neutral-500 italic text-center mb-5 px-3 leading-relaxed max-h-[50px] overflow-y-auto">
+          <p className="font-body text-[11px] text-[#8C7A6B] italic text-center mb-5 px-3 leading-relaxed max-h-[50px] overflow-y-auto">
             &ldquo;{description}&rdquo;
           </p>
         )}
@@ -145,7 +145,7 @@ export default function StudioCard({ config, isOpen, onClose }: StudioCardProps)
               href={getWhatsappLink(whatsapp)} 
               target="_blank" 
               rel="noopener noreferrer" 
-              className="w-9 h-9 rounded-full bg-neutral-50 border border-neutral-100 flex items-center justify-center text-neutral-800 hover:text-[#25D366] hover:bg-neutral-100 hover:scale-105 active:scale-95 transition-all shadow-xs"
+              className="w-9 h-9 rounded-full bg-[#F0EBE1] border border-[#E8DFD1]/50 flex items-center justify-center text-[#5C4D43] hover:text-[#25D366] hover:bg-[#E8DFD1] hover:scale-105 active:scale-95 transition-all shadow-xs"
               title="WhatsApp"
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
@@ -158,7 +158,7 @@ export default function StudioCard({ config, isOpen, onClose }: StudioCardProps)
               href={facebook} 
               target="_blank" 
               rel="noopener noreferrer" 
-              className="w-9 h-9 rounded-full bg-neutral-50 border border-neutral-100 flex items-center justify-center text-neutral-800 hover:text-[#1877F2] hover:bg-neutral-100 hover:scale-105 active:scale-95 transition-all shadow-xs"
+              className="w-9 h-9 rounded-full bg-[#F0EBE1] border border-[#E8DFD1]/50 flex items-center justify-center text-[#5C4D43] hover:text-[#1877F2] hover:bg-[#E8DFD1] hover:scale-105 active:scale-95 transition-all shadow-xs"
               title="Facebook"
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
@@ -171,7 +171,7 @@ export default function StudioCard({ config, isOpen, onClose }: StudioCardProps)
               href={instagram} 
               target="_blank" 
               rel="noopener noreferrer" 
-              className="w-9 h-9 rounded-full bg-neutral-50 border border-neutral-100 flex items-center justify-center text-neutral-800 hover:text-[#E1306C] hover:bg-neutral-100 hover:scale-105 active:scale-95 transition-all shadow-xs"
+              className="w-9 h-9 rounded-full bg-[#F0EBE1] border border-[#E8DFD1]/50 flex items-center justify-center text-[#5C4D43] hover:text-[#E1306C] hover:bg-[#E8DFD1] hover:scale-105 active:scale-95 transition-all shadow-xs"
               title="Instagram"
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -186,7 +186,7 @@ export default function StudioCard({ config, isOpen, onClose }: StudioCardProps)
               href={youtube} 
               target="_blank" 
               rel="noopener noreferrer" 
-              className="w-9 h-9 rounded-full bg-neutral-50 border border-neutral-100 flex items-center justify-center text-neutral-800 hover:text-[#FF0000] hover:bg-neutral-100 hover:scale-105 active:scale-95 transition-all shadow-xs"
+              className="w-9 h-9 rounded-full bg-[#F0EBE1] border border-[#E8DFD1]/50 flex items-center justify-center text-[#5C4D43] hover:text-[#FF0000] hover:bg-[#E8DFD1] hover:scale-105 active:scale-95 transition-all shadow-xs"
               title="YouTube"
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
@@ -199,7 +199,7 @@ export default function StudioCard({ config, isOpen, onClose }: StudioCardProps)
               href={locationUrl} 
               target="_blank" 
               rel="noopener noreferrer" 
-              className="w-9 h-9 rounded-full bg-neutral-50 border border-neutral-100 flex items-center justify-center text-neutral-800 hover:text-[#EA4335] hover:bg-neutral-100 hover:scale-105 active:scale-95 transition-all shadow-xs"
+              className="w-9 h-9 rounded-full bg-[#F0EBE1] border border-[#E8DFD1]/50 flex items-center justify-center text-[#5C4D43] hover:text-[#EA4335] hover:bg-[#E8DFD1] hover:scale-105 active:scale-95 transition-all shadow-xs"
               title="Google Maps Location"
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

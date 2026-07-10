@@ -103,6 +103,7 @@ export interface VideoItem {
   _id: string;
   youtube_url: string;
   youtube_id: string;
+  platform?: 'youtube' | 'instagram';
   title: string;
   thumbnail_url: string;
   category: Category | string;

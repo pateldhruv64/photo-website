@@ -29,10 +29,10 @@ const PACKAGES = [
 
 export default function PricingSection() {
   return (
-    <section className="py-16 md:py-24 bg-surface" id="pricing-section">
+    <section className="py-8 md:py-12 bg-surface" id="pricing-section">
       <div className="max-w-5xl mx-auto px-4">
-        <div className="text-center mb-12">
-          <p className="font-body text-xs tracking-[0.3em] uppercase text-text-muted mb-3">
+        <div className="text-center mb-12 flex flex-col items-center">
+          <p className="eyebrow justify-center">
             Investment
           </p>
           <h2 className="font-display text-3xl md:text-4xl font-light text-text-primary">
@@ -41,15 +41,16 @@ export default function PricingSection() {
           <p className="mt-3 font-body text-sm text-text-muted">
             Prices are starting rates. Custom packages available on request.
           </p>
+          <div className="divider-line mx-auto mt-6 max-w-[80px]" />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 stagger-reveal">
           {PACKAGES.map((pkg) => (
             <div
               key={pkg.name}
-              className={`rounded-xl p-8 border transition-all ${
+              className={`reveal-scale rounded-xl p-8 border transition-all ${
                 pkg.highlight
-                  ? 'bg-[#1A1A1A] border-[#1A1A1A] text-white'
+                  ? 'bg-[#1E1410] border-[#1E1410] text-white'
                   : 'bg-white border-border text-text-primary'
               }`}
             >
@@ -72,7 +73,7 @@ export default function PricingSection() {
                   <li key={f} className={`font-body text-sm flex items-center gap-2 ${pkg.highlight ? 'text-white/80' : 'text-text-muted'}`}>
                     <span className={`w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 ${pkg.highlight ? 'bg-white/20' : 'bg-[#EAEAEA]'}`}>
                       <svg width="8" height="8" viewBox="0 0 10 8" fill="none">
-                        <path d="M1 4l2.5 2.5L9 1" stroke={pkg.highlight ? '#fff' : '#1A1A1A'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M1 4l2.5 2.5L9 1" stroke={pkg.highlight ? '#fff' : '#1E1410'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                       </svg>
                     </span>
                     {f}
@@ -85,10 +86,10 @@ export default function PricingSection() {
                   e.preventDefault();
                   document.getElementById('booking-section')?.scrollIntoView({ behavior: 'smooth' });
                 }}
-                className={`block w-full text-center py-3 rounded-lg font-body text-sm font-medium transition-all ${
+                className={`block w-full text-center py-3 rounded-lg border border-transparent font-body text-sm font-medium transition-all ${
                   pkg.highlight
-                    ? 'bg-white text-[#1A1A1A] hover:bg-gray-100'
-                    : 'bg-[#1A1A1A] text-white hover:bg-gray-800'
+                    ? 'bg-white text-[#1E1410] hover:bg-gray-100'
+                    : 'bg-[#1E1410] text-white hover:bg-[#B5784A] hover:border-[#B5784A]'
                 }`}
               >
                 Book This Package

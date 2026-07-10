@@ -181,7 +181,7 @@ export default function PhotosPage() {
             input.click();
           }}
         >
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#6B6B6B" strokeWidth="1.5" className="mx-auto mb-3">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#7A6555" strokeWidth="1.5" className="mx-auto mb-3">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
             <polyline points="17 8 12 3 7 8" />
             <line x1="12" y1="3" x2="12" y2="15" />

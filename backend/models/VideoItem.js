@@ -10,6 +10,11 @@ const videoItemSchema = new mongoose.Schema({
     required: true,
     unique: true
   },
+  platform: {
+    type: String,
+    enum: ['youtube', 'instagram'],
+    default: 'youtube'
+  },
   title: {
     type: String,
     default: ''
@@ -47,15 +52,15 @@ const videoItemSchema = new mongoose.Schema({
 videoItemSchema.index({ category: 1, order: 1 });
 videoItemSchema.index({ is_active: 1, category: 1 });
 
-/**
- * Extract YouTube video ID from various URL formats:
- * - https://www.youtube.com/watch?v=VIDEO_ID
- * - https://youtu.be/VIDEO_ID
- * - https://www.youtube.com/shorts/VIDEO_ID
- * - https://www.youtube.com/embed/VIDEO_ID
- */
-function extractYoutubeId(url) {
+function extractVideoInfo(url) {
   if (!url) return null;
+
+  if (url.includes('instagram.com')) {
+    const match = url.match(/(?:p|reel|reels)\/([a-zA-Z0-9_-]+)/);
+    if (match) {
+      return { platform: 'instagram', id: match[1], thumbnail: '/images/instagram-placeholder.png' };
+    }
+  }
 
   const patterns = [
     /(?:youtube\.com\/watch\?v=|youtube\.com\/watch\?.+&v=)([a-zA-Z0-9_-]{11})/,
@@ -66,21 +71,24 @@ function extractYoutubeId(url) {
 
   for (const pattern of patterns) {
     const match = url.match(pattern);
-    if (match) return match[1];
+    if (match) return { platform: 'youtube', id: match[1], thumbnail: `https://img.youtube.com/vi/${match[1]}/hqdefault.jpg` };
   }
 
   return null;
 }
 
-// Pre-validate hook: extract youtube_id and set thumbnail before validation runs
+// Pre-validate hook: extract id and set thumbnail before validation runs
 videoItemSchema.pre('validate', function(next) {
   if (this.isModified('youtube_url')) {
-    const videoId = extractYoutubeId(this.youtube_url);
-    if (!videoId) {
-      return next(new Error('Invalid YouTube URL. Could not extract video ID.'));
+    const info = extractVideoInfo(this.youtube_url);
+    if (!info) {
+      return next(new Error('Invalid video URL. Could not extract video ID.'));
     }
-    this.youtube_id = videoId;
-    this.thumbnail_url = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
+    this.youtube_id = info.id;
+    this.platform = info.platform;
+    if (info.platform === 'youtube' || !this.thumbnail_url || this.thumbnail_url === '/images/instagram-placeholder.png') {
+      this.thumbnail_url = info.thumbnail;
+    }
   }
   next();
 });

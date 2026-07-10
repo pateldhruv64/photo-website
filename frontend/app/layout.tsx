@@ -5,6 +5,10 @@ import './globals.css';
 import ServiceWorkerRegister from '@/components/ServiceWorkerRegister';
 import BottomNav from '@/components/BottomNav';
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import BokehBackground from '@/components/BokehBackground';
+import CameraCursor from '@/components/CameraCursor';
+import ScrollProgressBar from '@/components/ScrollProgressBar';
+import ScrollRevealProvider from '@/components/ScrollRevealProvider';
 
 const raleway = Raleway({
   subsets: ['latin'],
@@ -95,11 +99,19 @@ export default function RootLayout({
     <html lang="en" className={raleway.variable}>
       <head>
         <link rel="apple-touch-icon" href="/icon-192.png" />
+        {/* Cloudinary CDN se pehle connect karo — images fast load hongi */}
+        <link rel="preconnect" href="https://res.cloudinary.com" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://res.cloudinary.com" />
       </head>
       <body className="font-body antialiased pb-20 md:pb-0">
+        {/* Bokeh: 1500ms baad mount hoga — hero ko pehle load hone dega */}
+        <BokehBackground />
+        <CameraCursor />
+        <ScrollProgressBar />
         <BackendPing />
         {children}
         <BottomNav />
+        <ScrollRevealProvider />
         <ServiceWorkerRegister />
         <SpeedInsights />
       </body>
