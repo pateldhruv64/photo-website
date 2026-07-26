@@ -116,7 +116,7 @@ export default function RootLayout({
           <BottomNav />
           <ScrollRevealProvider />
           <ServiceWorkerRegister />
-          <SpeedInsights />
+          {process.env.NODE_ENV === 'production' && <SpeedInsights />}
         </LenisProvider>
       </body>
     </html>

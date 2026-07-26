@@ -49,10 +49,13 @@ export default function Lightbox({ photos, currentIndex, onClose, onNavigate }: 
       dragRef.current.moved = true;
     }
     
-    setPosition(() => ({
-      x: dragRef.current!.posX + dx,
-      y: dragRef.current!.posY + dy,
-    }));
+    const initialX = dragRef.current.posX;
+    const initialY = dragRef.current.posY;
+
+    setPosition({
+      x: initialX + dx,
+      y: initialY + dy,
+    });
   }, []);
 
   const handleDragEnd = useCallback(() => {

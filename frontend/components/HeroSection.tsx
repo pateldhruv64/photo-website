@@ -3,8 +3,8 @@ import { useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { heroUrl, blurUrl } from '@/lib/cloudinary';
 import type { SiteConfig } from '@/lib/types';
-import AnimatedText from '@/components/ui/AnimatedText';
 import ShimmerButton from '@/components/ui/ShimmerButton';
+import FlipWords from '@/components/ui/FlipWords';
 
 interface HeroSectionProps { config: SiteConfig; }
 
@@ -29,9 +29,11 @@ export default function HeroSection({ config }: HeroSectionProps) {
     document.getElementById('gallery-section')?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  const flipWordsList = ['Moments', 'Emotions', 'Stories', 'Weddings', 'Memories'];
+
   return (
     <div className="sticky top-0 z-0 overflow-hidden">
-      <section className="relative h-[70vh] md:h-screen w-full flex items-center justify-center overflow-hidden">
+      <section className="relative h-[75vh] md:h-screen w-full flex items-center justify-center overflow-hidden">
         <div ref={imgRef} className="absolute inset-0 scale-110" style={{ willChange: 'transform' }}>
           {hasHeroPhoto ? (
             <Image
@@ -50,21 +52,18 @@ export default function HeroSection({ config }: HeroSectionProps) {
           )}
         </div>
 
-        {/* Ambient Dark Overlay with Radial Vignette */}
-        <div className="absolute inset-0 bg-black/40 backdrop-brightness-95" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/30" />
+        {/* Ambient Dark Overlay with Vignette */}
+        <div className="absolute inset-0 bg-black/45 backdrop-brightness-95" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/30" />
 
         <div ref={textRef} className="relative z-10 flex flex-col items-center text-center px-4 max-w-5xl pt-20 md:pt-28" style={{ willChange: 'transform' }}>
           <p className="font-body text-xs md:text-sm tracking-[0.35em] uppercase text-white/80 mb-4 bg-white/10 backdrop-blur-md px-4 py-1.5 rounded-full border border-white/20">
             {config?.photographer_name || 'Photographer'}
           </p>
 
-          <AnimatedText
-            text={config?.hero_title || 'Capturing Moments'}
-            variant="word"
-            as="h1"
-            className="font-display text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-light text-white tracking-wide justify-center drop-shadow-[0_4px_25px_rgba(0,0,0,0.6)]"
-          />
+          <h1 className="font-display text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-light text-white tracking-wide justify-center drop-shadow-[0_4px_25px_rgba(0,0,0,0.6)] leading-tight">
+            Capturing <FlipWords words={flipWordsList} duration={2500} />
+          </h1>
 
           <p className="mt-4 md:mt-6 font-display text-lg sm:text-xl md:text-2xl italic text-white/90 max-w-2xl drop-shadow-[0_2px_10px_rgba(0,0,0,0.5)]">
             {config?.hero_subtitle || 'Photography that tells your story'}
