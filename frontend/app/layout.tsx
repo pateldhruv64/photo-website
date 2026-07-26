@@ -90,6 +90,8 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
+import LenisProvider from '@/components/LenisProvider';
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -105,15 +107,17 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased pb-20 md:pb-0">
         {/* Bokeh: 1500ms baad mount hoga — hero ko pehle load hone dega */}
-        <BokehBackground />
-        <CameraCursor />
-        <ScrollProgressBar />
-        <BackendPing />
-        {children}
-        <BottomNav />
-        <ScrollRevealProvider />
-        <ServiceWorkerRegister />
-        <SpeedInsights />
+        <LenisProvider>
+          <BokehBackground />
+          <CameraCursor />
+          <ScrollProgressBar />
+          <BackendPing />
+          {children}
+          <BottomNav />
+          <ScrollRevealProvider />
+          <ServiceWorkerRegister />
+          <SpeedInsights />
+        </LenisProvider>
       </body>
     </html>
   );

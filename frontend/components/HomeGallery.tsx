@@ -2,8 +2,8 @@
 
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import useSWR from 'swr';
+import { motion } from 'framer-motion';
 import PhotoGrid from './PhotoGrid';
-import { useCardTilt } from '@/hooks/useCardTilt';
 import Lightbox from './Lightbox';
 import VideoCard from './VideoCard';
 import VideoLightbox from './VideoLightbox';
@@ -25,7 +25,6 @@ interface HomepageBulkData {
 
 export default function HomeGallery({ categories, initialPhotos = [], initialVideos = [] }: Props) {
   const galleryRef = useRef<HTMLDivElement>(null);
-  useCardTilt(galleryRef);
 
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -129,33 +128,35 @@ export default function HomeGallery({ categories, initialPhotos = [], initialVid
     setLightboxOpen(true);
   };
 
+  const allCategories = [{ _id: 'all', name: 'All Work', slug: 'all' }, ...categories];
+
   return (
     <div className="pt-4 pb-6 md:pt-8 md:pb-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" id="gallery-section">
-      {/* Category Tabs */}
-      <div className="flex items-center justify-start md:justify-center gap-3 md:gap-6 mb-10 overflow-x-auto whitespace-nowrap scrollbar-none px-4 md:px-0 -mx-4 md:mx-0">
-        <button
-          onClick={() => handleCategoryChange('all')}
-          className={`font-body text-xs tracking-[0.2em] uppercase transition-all px-4 py-2 rounded-full border ${
-            activeCategory === 'all'
-              ? 'bg-[#EAEAEA] text-text-primary border-[#EAEAEA] font-medium'
-              : 'bg-transparent text-text-muted border-transparent hover:border-border hover:text-text-primary'
-          }`}
-        >
-          All
-        </button>
-        {categories.map((cat) => (
-          <button
-            key={cat._id}
-            onClick={() => handleCategoryChange(cat._id)}
-            className={`font-body text-xs tracking-[0.2em] uppercase transition-all px-4 py-2 rounded-full border ${
-              activeCategory === cat._id
-                ? 'bg-[#EAEAEA] text-text-primary border-[#EAEAEA] font-medium'
-                : 'bg-transparent text-text-muted border-transparent hover:border-border hover:text-text-primary'
-            }`}
-          >
-            {cat.name}
-          </button>
-        ))}
+      {/* Animate UI Animated Category Pill Tabs */}
+      <div className="flex items-center justify-start md:justify-center gap-2 md:gap-3 mb-10 overflow-x-auto whitespace-nowrap scrollbar-none px-4 md:px-0 -mx-4 md:mx-0 py-2">
+        <div className="flex items-center gap-1.5 p-1.5 bg-[#EAE3D9]/60 backdrop-blur-md rounded-full border border-[#EDE4D8]">
+          {allCategories.map((cat) => {
+            const isActive = activeCategory === cat._id;
+            return (
+              <button
+                key={cat._id}
+                onClick={() => handleCategoryChange(cat._id)}
+                className={`relative px-5 py-2 text-xs font-medium tracking-widest uppercase transition-colors duration-300 rounded-full z-10 ${
+                  isActive ? 'text-white' : 'text-[#7A6555] hover:text-[#1E1410]'
+                }`}
+              >
+                {isActive && (
+                  <motion.div
+                    layoutId="activeCategoryPill"
+                    className="absolute inset-0 bg-[#1E1410] rounded-full z-[-1] shadow-md"
+                    transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                  />
+                )}
+                {cat.name}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* Photo Grid with Client-Side Infinite Scroll + Videos */}
@@ -173,10 +174,10 @@ export default function HomeGallery({ categories, initialPhotos = [], initialVid
             {/* Videos Section Below Photos */}
             {activeVideos.length > 0 && (
               <div className="mt-10 pt-10 border-t border-border/20 flex flex-col items-center md:items-start">
-                <p className="eyebrow justify-center md:justify-start">
-                  Videos
+                <p className="eyebrow justify-center md:justify-start mb-6">
+                  Featured Videos
                 </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
                   {activeVideos.map((video) => (
                     <VideoCard
                       key={video._id}
@@ -201,7 +202,7 @@ export default function HomeGallery({ categories, initialPhotos = [], initialVid
           photos={filteredPhotos}
           currentIndex={lightboxIndex}
           onClose={() => setLightboxOpen(false)}
-          onNavigate={setLightboxIndex}
+          onNavigate={(i) => setLightboxIndex(i)}
         />
       )}
 
