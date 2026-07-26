@@ -327,9 +327,6 @@ export default function ClientLightbox({
 
         {/* Photo info */}
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-center">
-          {photo.title && (
-            <p className="text-white/80 text-sm font-body mb-1">{photo.title}</p>
-          )}
           <p className="text-white/40 text-xs font-body">
             {currentIndex + 1} / {photos.length}
           </p>

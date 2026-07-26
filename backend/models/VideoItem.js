@@ -77,8 +77,10 @@ function extractVideoInfo(url) {
   return null;
 }
 
+const { getInstagramThumbnail } = require('../utils/instagram');
+
 // Pre-validate hook: extract id and set thumbnail before validation runs
-videoItemSchema.pre('validate', function(next) {
+videoItemSchema.pre('validate', async function(next) {
   if (this.isModified('youtube_url')) {
     const info = extractVideoInfo(this.youtube_url);
     if (!info) {
@@ -86,8 +88,16 @@ videoItemSchema.pre('validate', function(next) {
     }
     this.youtube_id = info.id;
     this.platform = info.platform;
-    if (info.platform === 'youtube' || !this.thumbnail_url || this.thumbnail_url === '/images/instagram-placeholder.png') {
-      this.thumbnail_url = info.thumbnail;
+    
+    if (info.platform === 'youtube') {
+      if (!this.thumbnail_url || this.thumbnail_url === '/images/instagram-placeholder.png') {
+        this.thumbnail_url = info.thumbnail;
+      }
+    } else if (info.platform === 'instagram') {
+      if (!this.thumbnail_url || this.thumbnail_url === '/images/instagram-placeholder.png') {
+        const autoThumb = await getInstagramThumbnail(info.id);
+        this.thumbnail_url = autoThumb || '/images/instagram-placeholder.png';
+      }
     }
   }
   next();

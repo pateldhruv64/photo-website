@@ -34,12 +34,6 @@ export default function PhotoCard({ photo, onClick }: PhotoCardProps) {
           onLoad={() => setLoaded(true)}
         />
         
-        {/* Caption overlay on hover */}
-        <div className="caption-overlay">
-          <p className="text-white text-sm font-body drop-shadow-lg font-medium">
-            {photo.title || 'Photo'}
-          </p>
-        </div>
       </div>
     </div>
   );
