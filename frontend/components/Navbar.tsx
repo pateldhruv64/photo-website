@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import useSWR from 'swr';
@@ -14,6 +14,7 @@ export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
+  const headerRef = useRef<HTMLDivElement>(null);
 
   const { data: config } = useSWR<SiteConfig>('/config', fetcher, {
     revalidateOnFocus: false,
@@ -42,6 +43,25 @@ export default function Navbar() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // Close mobile drawer when clicking outside
+  useEffect(() => {
+    if (!mobileOpen) return;
+
+    const handleOutsideClick = (e: MouseEvent | TouchEvent) => {
+      if (headerRef.current && !headerRef.current.contains(e.target as Node)) {
+        setMobileOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleOutsideClick);
+    document.addEventListener('touchstart', handleOutsideClick);
+
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick);
+      document.removeEventListener('touchstart', handleOutsideClick);
+    };
+  }, [mobileOpen]);
+
   const handleBookScroll = (e: React.MouseEvent) => {
     if (pathname === '/') {
       e.preventDefault();
@@ -54,8 +74,23 @@ export default function Navbar() {
 
   return (
     <>
+      {/* Full-screen Backdrop Blur Overlay when Mobile Drawer is open */}
+      <AnimatePresence>
+        {mobileOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setMobileOpen(false)}
+            className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm md:hidden"
+            aria-hidden="true"
+          />
+        )}
+      </AnimatePresence>
+
       <header className="fixed top-0 left-0 right-0 z-50 px-3 sm:px-6 py-3 transition-all duration-300 pointer-events-none">
         <div
+          ref={headerRef}
           className={`max-w-6xl mx-auto pointer-events-auto rounded-full transition-all duration-500 border shadow-2xl ${
             scrolled
               ? 'bg-[#1E1410]/90 backdrop-blur-xl border-white/15 py-2.5 px-5 shadow-[0_10px_30px_rgba(0,0,0,0.35)]'
@@ -115,9 +150,9 @@ export default function Navbar() {
                 ))}
             </nav>
 
-            {/* Right: Book Now CTA & Social Icons Dock */}
+            {/* Right: Book Now CTA & Desktop Social Dock */}
             <div className="hidden md:flex items-center gap-4">
-              {/* Social Dock */}
+              {/* Desktop Social Dock */}
               <div className="flex items-center gap-2 border-r border-white/15 pr-4">
                 {config?.social_links?.instagram && (
                   <motion.a
@@ -261,6 +296,64 @@ export default function Navbar() {
           )}
         </AnimatePresence>
       </header>
+
+      {/* Persistent Floating Social Dock (Mobile Bottom Left) */}
+      <div className="fixed left-0 bottom-24 z-40 flex md:hidden flex-col items-center gap-2.5 bg-[#1E1410]/85 backdrop-blur-md py-3 px-2 rounded-r-2xl shadow-[4px_4px_20px_rgba(0,0,0,0.3)] border-y border-r border-white/15 pointer-events-auto">
+        {config?.social_links?.instagram && (
+          <a
+            href={config.social_links.instagram}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-8 h-8 rounded-full bg-white/10 text-white hover:text-amber-300 border border-white/15 flex items-center justify-center transition-all active:scale-90"
+            aria-label="Instagram"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+              <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+              <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
+            </svg>
+          </a>
+        )}
+        {config?.social_links?.facebook && (
+          <a
+            href={config.social_links.facebook}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-8 h-8 rounded-full bg-white/10 text-white hover:text-amber-300 border border-white/15 flex items-center justify-center transition-all active:scale-90"
+            aria-label="Facebook"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M9 8h-3v4h3v12h5v-12h3.642l.358-4h-4v-1.667c0-.955.192-1.333 1.115-1.333h2.885v-5h-3.808c-3.596 0-5.192 1.583-5.192 4.615v3.385z" />
+            </svg>
+          </a>
+        )}
+        {config?.social_links?.youtube && (
+          <a
+            href={config.social_links.youtube}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-8 h-8 rounded-full bg-white/10 text-white hover:text-amber-300 border border-white/15 flex items-center justify-center transition-all active:scale-90"
+            aria-label="YouTube"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M23.498 6.163c-.272-1.016-1.071-1.815-2.087-2.087C19.565 3.5 12 3.5 12 3.5s-7.565 0-9.411.576c-1.016.272-1.815 1.071-2.087 2.087C0 8.01 0 12 0 12s0 3.99.502 5.837c.272 1.016 1.071 1.815 2.087 2.087C4.435 20.5 12 20.5 12 20.5s7.565 0 9.411-.576c1.016-.272 1.815-1.071 2.087-2.087C24 15.99 24 12 24 12s0-3.99-.502-5.837zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+            </svg>
+          </a>
+        )}
+        {whatsappUrl && (
+          <a
+            href={whatsappUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-8 h-8 rounded-full bg-[#25D366] text-white flex items-center justify-center transition-all active:scale-90 shadow-md"
+            aria-label="WhatsApp"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.514 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.724-1.455L0 24zm6.59-4.846c1.6.95 3.188 1.449 4.825 1.451 5.436 0 9.859-4.42 9.863-9.864.002-2.634-1.02-5.11-2.881-6.974-1.86-1.865-4.343-2.891-6.986-2.893-5.44 0-9.866 4.418-9.87 9.864-.001 1.77.462 3.5 1.343 5.03l-.974 3.565 3.683-.966zm12.352-7.073c-.33-.165-1.951-.963-2.251-1.072-.3-.11-.518-.165-.736.165-.218.33-.846 1.072-1.037 1.29-.19.218-.38.245-.71.08-.33-.165-1.393-.513-2.653-1.637-1-.893-1.676-2-1.874-2.33-.198-.33-.02-.508.145-.671.15-.147.33-.38.495-.57.165-.188.22-.321.33-.536.11-.215.056-.4-.028-.565-.084-.165-.736-1.77-.1-.99-2.036-.3-1.074-.627-1.424-.736-.3-.11-.647-.099-.9.165-.253.264-1.01 1.022-1.01 2.49 0 1.469 1.07 2.89 1.218 3.09.148.199 2.107 3.217 5.105 4.512.714.309 1.272.494 1.707.632.717.228 1.37.196 1.885.119.574-.085 1.951-.798 2.224-1.57.272-.772.272-1.433.19-1.57-.08-.136-.3-.217-.63-.382z" />
+            </svg>
+          </a>
+        )}
+      </div>
     </>
   );
 }
