@@ -105,7 +105,7 @@ export default function RootLayout({
         <link rel="preconnect" href="https://res.cloudinary.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://res.cloudinary.com" />
       </head>
-      <body className="font-body antialiased pb-20 md:pb-0">
+      <body className="font-body antialiased bg-[#FEFCF8] text-[#1E1410] overflow-x-hidden min-h-screen">
         {/* Bokeh: 1500ms baad mount hoga — hero ko pehle load hone dega */}
         <LenisProvider>
           <BokehBackground />

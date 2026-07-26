@@ -5,6 +5,7 @@ import { heroUrl, blurUrl } from '@/lib/cloudinary';
 import type { SiteConfig } from '@/lib/types';
 import ShimmerButton from '@/components/ui/ShimmerButton';
 import FlipWords from '@/components/ui/FlipWords';
+import Sparkles from '@/components/ui/Sparkles';
 
 interface HeroSectionProps { config: SiteConfig; }
 
@@ -33,7 +34,7 @@ export default function HeroSection({ config }: HeroSectionProps) {
 
   return (
     <div className="sticky top-0 z-0 overflow-hidden">
-      <section className="relative h-[75vh] md:h-screen w-full flex items-center justify-center overflow-hidden">
+      <section className="relative h-[85dvh] md:h-screen w-full flex items-center justify-center overflow-hidden">
         <div ref={imgRef} className="absolute inset-0 scale-110" style={{ willChange: 'transform' }}>
           {hasHeroPhoto ? (
             <Image
@@ -52,9 +53,10 @@ export default function HeroSection({ config }: HeroSectionProps) {
           )}
         </div>
 
-        {/* Ambient Dark Overlay with Vignette */}
+        {/* Ambient Dark Overlay with Vignette & Sparkles */}
         <div className="absolute inset-0 bg-black/45 backdrop-brightness-95" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/30" />
+        <Sparkles particleColor="#FFE8D6" particleDensity={75} speed={1.2} />
 
         <div ref={textRef} className="relative z-10 flex flex-col items-center text-center px-4 max-w-5xl pt-20 md:pt-28" style={{ willChange: 'transform' }}>
           <p className="font-body text-xs md:text-sm tracking-[0.35em] uppercase text-white/80 mb-4 bg-white/10 backdrop-blur-md px-4 py-1.5 rounded-full border border-white/20">

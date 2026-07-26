@@ -3,14 +3,17 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import Masonry from 'react-masonry-css';
+import useSWR from 'swr';
 import ClientLightbox from '@/components/ClientLightbox';
+import Footer from '@/components/Footer';
 import { blurUrl } from '@/lib/cloudinary';
+import { fetcher } from '@/lib/fetcher';
 import {
   downloadSinglePhoto,
   downloadAllPhotos,
   downloadAsFolder,
 } from '@/lib/clientGalleryDownload';
-import type { Photo } from '@/lib/types';
+import type { Photo, SiteConfig } from '@/lib/types';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
@@ -45,6 +48,11 @@ export default function ClientGalleryPage({ params }: { params: { slug: string }
   const [downloadingAll, setDownloadingAll] = useState(false);
   const [downloadingFolder, setDownloadingFolder] = useState(false);
   const [downloadingPhotoId, setDownloadingPhotoId] = useState<string | null>(null);
+
+  const { data: config } = useSWR<SiteConfig>('/config', fetcher, {
+    revalidateOnFocus: false,
+    dedupingInterval: 3600000,
+  });
 
   // Fetch gallery data using token
   const fetchGallery = useCallback(async (authToken: string) => {
@@ -227,10 +235,10 @@ export default function ClientGalleryPage({ params }: { params: { slug: string }
   // ═══ STEP 1: Unlock Screen ═══
   if (step === 'unlock') {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center px-4">
+      <div className="min-h-screen bg-[#FEFCF8] text-[#1E1410] flex items-center justify-center px-4">
         <div className="max-w-sm w-full text-center">
           {/* Lock Icon */}
-          <div className="w-16 h-16 bg-surface rounded-full flex items-center justify-center mx-auto mb-6">
+          <div className="w-16 h-16 bg-[#EBE7E2] rounded-full flex items-center justify-center mx-auto mb-6">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#1E1410" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
               <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
               <path d="M7 11V7a5 5 0 0 1 10 0v4" />
@@ -400,6 +408,9 @@ export default function ClientGalleryPage({ params }: { params: { slug: string }
           ))}
         </Masonry>
       </div>
+
+      {/* Inspira Luxury Footer */}
+      <Footer config={config} />
 
       {/* Client Lightbox (with download button, no protection) */}
       {lightboxOpen && (

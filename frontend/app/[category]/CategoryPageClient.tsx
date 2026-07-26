@@ -11,7 +11,8 @@ import VideoCard from '@/components/VideoCard';
 import VideoLightbox from '@/components/VideoLightbox';
 import { fetcher } from '@/lib/fetcher';
 import { getPreloadedCategoryPhotos } from '@/lib/preloadedStore';
-import type { Photo, Category, PaginatedPhotos, VideoItem } from '@/lib/types';
+import Footer from '@/components/Footer';
+import type { Photo, Category, PaginatedPhotos, VideoItem, SiteConfig } from '@/lib/types';
 
 interface Props {
   categorySlug: string;
@@ -21,6 +22,12 @@ export default function CategoryPageClient({ categorySlug }: Props) {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const [videoLightbox, setVideoLightbox] = useState<VideoItem | null>(null);
+
+  // Fetch site config for footer
+  const { data: config } = useSWR<SiteConfig>('/config', fetcher, {
+    revalidateOnFocus: false,
+    dedupingInterval: 3600000,
+  });
 
   // Fetch videos for this category
   const { data: videos } = useSWR<VideoItem[]>(categorySlug ? `/videos?category=${categorySlug}` : null, fetcher, {
@@ -74,7 +81,7 @@ export default function CategoryPageClient({ categorySlug }: Props) {
   };
 
   return (
-    <main>
+    <main className="bg-[#FEFCF8] text-[#1E1410] min-h-screen">
       <Navbar />
 
       {/* Category Header */}
@@ -122,6 +129,9 @@ export default function CategoryPageClient({ categorySlug }: Props) {
           </div>
         )}
       </div>
+
+      {/* Inspira Luxury Footer */}
+      <Footer config={config} />
 
       {/* Lightbox */}
       {lightboxOpen && (

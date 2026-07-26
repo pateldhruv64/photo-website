@@ -133,7 +133,7 @@ export default function HomeGallery({ categories, initialPhotos = [], initialVid
   return (
     <div className="pt-4 pb-6 md:pt-8 md:pb-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" id="gallery-section">
       {/* Animate UI Animated Category Pill Tabs */}
-      <div className="flex items-center justify-start md:justify-center gap-2 md:gap-3 mb-10 overflow-x-auto whitespace-nowrap scrollbar-none px-4 md:px-0 -mx-4 md:mx-0 py-2">
+      <div className="flex items-center justify-start md:justify-center mb-10 overflow-x-auto whitespace-nowrap no-scrollbar py-2 w-full">
         <div className="flex items-center gap-1.5 p-1.5 bg-[#EAE3D9]/60 backdrop-blur-md rounded-full border border-[#EDE4D8]">
           {allCategories.map((cat) => {
             const isActive = activeCategory === cat._id;

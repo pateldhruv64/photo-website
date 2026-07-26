@@ -25,7 +25,7 @@ export default function Footer({ config }: FooterProps) {
   };
 
   return (
-    <footer className="relative bg-[#1E1410] text-white pt-16 md:pt-24 pb-20 md:pb-12 border-t border-white/10 overflow-hidden">
+    <footer className="relative bg-[#1E1410] text-white pt-16 md:pt-24 pb-28 sm:pb-24 md:pb-12 border-t border-white/10 overflow-hidden">
       {/* Inspira UI Moving Border Beam on top edge */}
       <BorderBeam size={250} duration={8} colorFrom="#B5784A" colorTo="#F7F2EB" />
 

@@ -17,6 +17,10 @@ const PricingSection = dynamic(() => import('@/components/PricingSection'), {
   ssr: false,
   loading: () => <div className="h-96 bg-[#FEFCF8]" />,
 });
+const RetouchShowcase = dynamic(() => import('@/components/RetouchShowcase'), {
+  ssr: false,
+  loading: () => <div className="h-96 bg-[#1E1410]" />,
+});
 const BookingForm = dynamic(() => import('@/components/BookingForm'), {
   ssr: false,
   loading: () => <div className="h-80 bg-[#F8F3EC]" />,
@@ -97,6 +101,11 @@ export default async function HomePage() {
             initialPhotos={initialPhotos}
             initialVideos={initialVideos}
           />
+        </div>
+
+        {/* Retouching RAW vs Edited Showcase */}
+        <div className="reveal">
+          <RetouchShowcase />
         </div>
 
         {/* Testimonials Section */}
