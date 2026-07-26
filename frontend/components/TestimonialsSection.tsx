@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import useSWR from 'swr';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -24,21 +24,35 @@ export default function TestimonialsSection() {
   });
 
   const [activeIdx, setActiveIdx] = useState(0);
+  const [isHovered, setIsHovered] = useState(false);
+
+  const activeTestimonials = testimonials?.filter((t) => t.is_active) || [];
+
+  const handleNext = useCallback(() => {
+    if (activeTestimonials.length === 0) return;
+    setActiveIdx((prev) => (prev + 1) % activeTestimonials.length);
+  }, [activeTestimonials.length]);
+
+  const handlePrev = useCallback(() => {
+    if (activeTestimonials.length === 0) return;
+    setActiveIdx((prev) => (prev - 1 + activeTestimonials.length) % activeTestimonials.length);
+  }, [activeTestimonials.length]);
+
+  // Auto-swipe every 1.5 seconds unless hovered
+  useEffect(() => {
+    if (isHovered || activeTestimonials.length <= 1) return;
+
+    const timer = setInterval(() => {
+      handleNext();
+    }, 1500);
+
+    return () => clearInterval(timer);
+  }, [isHovered, activeTestimonials.length, handleNext]);
 
   if (!testimonials || !Array.isArray(testimonials) || testimonials.length === 0) return null;
-
-  const activeTestimonials = testimonials.filter((t) => t.is_active);
   if (activeTestimonials.length === 0) return null;
 
   const current = activeTestimonials[activeIdx % activeTestimonials.length];
-
-  const handleNext = () => {
-    setActiveIdx((prev) => (prev + 1) % activeTestimonials.length);
-  };
-
-  const handlePrev = () => {
-    setActiveIdx((prev) => (prev - 1 + activeTestimonials.length) % activeTestimonials.length);
-  };
 
   const renderStars = (rating: number) => {
     return Array.from({ length: 5 }, (_, i) => (
@@ -61,8 +75,12 @@ export default function TestimonialsSection() {
           <div className="divider-line mx-auto mt-4 max-w-[80px]" />
         </div>
 
-        {/* Inspira UI Animated Testimonials Stack */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-center bg-white/70 backdrop-blur-md rounded-3xl p-6 sm:p-10 border border border-border shadow-xl relative">
+        {/* Inspira UI Animated Testimonials Stack with Auto-Swipe */}
+        <div
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+          className="grid grid-cols-1 md:grid-cols-2 gap-10 items-center bg-white/70 backdrop-blur-md rounded-3xl p-6 sm:p-10 border border-border shadow-xl relative"
+        >
           
           {/* Photo Stack Container */}
           <div className="relative h-72 sm:h-80 w-full flex items-center justify-center">
@@ -129,7 +147,7 @@ export default function TestimonialsSection() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -15 }}
                   transition={{ duration: 0.3 }}
-                  className="font-display text-lg sm:text-xl text-[#1E1410] leading-relaxed italic mb-6"
+                  className="font-display text-lg sm:text-xl text-[#1E1410] leading-relaxed italic mb-6 min-h-[80px]"
                 >
                   {current.review_text}
                 </motion.p>
@@ -145,25 +163,43 @@ export default function TestimonialsSection() {
               </span>
 
               {/* Navigation Controls */}
-              <div className="flex items-center gap-3 mt-6">
-                <button
-                  onClick={handlePrev}
-                  className="w-10 h-10 rounded-full border border-border bg-white hover:bg-[#1E1410] hover:text-white flex items-center justify-center transition-all duration-300 shadow-sm"
-                  aria-label="Previous testimonial"
-                >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                  </svg>
-                </button>
-                <button
-                  onClick={handleNext}
-                  className="w-10 h-10 rounded-full border border-border bg-white hover:bg-[#1E1410] hover:text-white flex items-center justify-center transition-all duration-300 shadow-sm"
-                  aria-label="Next testimonial"
-                >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </button>
+              <div className="flex items-center justify-between mt-6">
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={handlePrev}
+                    className="w-10 h-10 rounded-full border border-border bg-white hover:bg-[#1E1410] hover:text-white flex items-center justify-center transition-all duration-300 shadow-sm"
+                    aria-label="Previous testimonial"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={handleNext}
+                    className="w-10 h-10 rounded-full border border-border bg-white hover:bg-[#1E1410] hover:text-white flex items-center justify-center transition-all duration-300 shadow-sm"
+                    aria-label="Next testimonial"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                </div>
+
+                {/* Progress indicator dots */}
+                <div className="flex items-center gap-1.5">
+                  {activeTestimonials.map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setActiveIdx(i)}
+                      className={`h-2 rounded-full transition-all duration-300 ${
+                        i === activeIdx % activeTestimonials.length
+                          ? 'w-6 bg-[#B5784A]'
+                          : 'w-2 bg-neutral-300 hover:bg-neutral-400'
+                      }`}
+                      aria-label={`Go to slide ${i + 1}`}
+                    />
+                  ))}
+                </div>
               </div>
             </div>
           </div>
