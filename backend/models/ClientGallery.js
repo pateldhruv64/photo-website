@@ -13,7 +13,7 @@ const clientGallerySchema = new mongoose.Schema({
     unique: true,
     lowercase: true,
     trim: true,
-    index: true
+    index:true
   },
   password_hash: {
     type: String,
