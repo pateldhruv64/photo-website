@@ -43,23 +43,14 @@ export default function Navbar() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Close mobile drawer when clicking outside
+  // Lock body scroll when mobile menu is open
   useEffect(() => {
-    if (!mobileOpen) return;
-
-    const handleOutsideClick = (e: MouseEvent | TouchEvent) => {
-      if (headerRef.current && !headerRef.current.contains(e.target as Node)) {
-        setMobileOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleOutsideClick);
-    document.addEventListener('touchstart', handleOutsideClick);
-
-    return () => {
-      document.removeEventListener('mousedown', handleOutsideClick);
-      document.removeEventListener('touchstart', handleOutsideClick);
-    };
+    if (mobileOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
   }, [mobileOpen]);
 
   const handleBookScroll = (e: React.MouseEvent) => {
@@ -74,17 +65,142 @@ export default function Navbar() {
 
   return (
     <>
-      {/* Full-screen Backdrop Blur Overlay when Mobile Drawer is open */}
+      {/* ─── Full-Screen Mobile Menu Overlay ─── */}
       <AnimatePresence>
         {mobileOpen && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={() => setMobileOpen(false)}
-            className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm md:hidden"
-            aria-hidden="true"
-          />
+            transition={{ duration: 0.3 }}
+            className="fixed inset-0 z-[45] bg-[#1E1410]/98 backdrop-blur-xl md:hidden flex flex-col"
+          >
+            {/* Decorative ambient glows */}
+            <div className="absolute top-20 right-0 w-60 h-60 bg-amber-500/8 rounded-full blur-[100px] pointer-events-none" />
+            <div className="absolute bottom-40 left-0 w-40 h-40 bg-amber-700/6 rounded-full blur-[80px] pointer-events-none" />
+
+            {/* Close button */}
+            <div className="flex justify-end p-5 pt-6">
+              <button
+                onClick={() => setMobileOpen(false)}
+                className="w-10 h-10 rounded-full bg-white/10 border border-white/15 flex items-center justify-center text-white/70 hover:text-white transition-colors"
+                aria-label="Close menu"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Nav Links with staggered animation */}
+            <div className="flex-1 flex flex-col justify-center px-8 -mt-10">
+              {[
+                { href: '/', label: 'Home', isActive: pathname === '/' },
+                ...navCategories
+                  .sort((a, b) => a.navbar_order - b.navbar_order)
+                  .map((cat) => ({
+                    href: `/${cat.slug}`,
+                    label: cat.name,
+                    isActive: pathname === `/${cat.slug}`,
+                  })),
+                ...(config?.navbar_links?.sort((a, b) => a.order - b.order).map((link) => ({
+                  href: link.url,
+                  label: link.label,
+                  isActive: false,
+                })) || []),
+              ].map((item, idx) => (
+                <motion.div
+                  key={item.href + item.label}
+                  initial={{ opacity: 0, x: -30 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -15 }}
+                  transition={{ delay: 0.1 + idx * 0.07, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                >
+                  <Link
+                    href={item.href}
+                    onClick={() => setMobileOpen(false)}
+                    className={`flex items-center justify-between py-4 border-b border-white/5 group ${
+                      item.isActive ? 'text-amber-300' : 'text-white/90'
+                    }`}
+                  >
+                    <span className="font-display text-2xl font-light tracking-wide group-hover:translate-x-2 transition-transform duration-300">
+                      {item.label}
+                    </span>
+                    {item.isActive ? (
+                      <span className="w-2 h-2 rounded-full bg-amber-300 animate-pulse" />
+                    ) : (
+                      <svg className="w-4 h-4 text-white/30 group-hover:text-white/60 group-hover:translate-x-1 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5l7 7-7 7" />
+                      </svg>
+                    )}
+                  </Link>
+                </motion.div>
+              ))}
+
+              {/* Book Session CTA */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5, duration: 0.4 }}
+                className="mt-8"
+              >
+                <Link
+                  href="/#booking-section"
+                  onClick={(e) => {
+                    setMobileOpen(false);
+                    handleBookScroll(e);
+                  }}
+                >
+                  <ShimmerButton className="w-full py-4 text-sm font-medium rounded-full bg-white text-[#1E1410]">
+                    ✦ Book a Session
+                  </ShimmerButton>
+                </Link>
+              </motion.div>
+            </div>
+
+            {/* Bottom: Social Icons + Branding */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.55, duration: 0.4 }}
+              className="px-8 pb-8"
+            >
+              {/* Social Icons Row */}
+              <div className="flex items-center justify-center gap-3 mb-5">
+                {config?.social_links?.instagram && (
+                  <a href={config.social_links.instagram} target="_blank" rel="noopener noreferrer"
+                    className="w-11 h-11 rounded-full bg-white/10 border border-white/15 flex items-center justify-center text-white/60 hover:text-[#E1306C] hover:bg-white/15 transition-all" aria-label="Instagram">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="2" y="2" width="20" height="20" rx="5" ry="5" /><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" /><line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
+                    </svg>
+                  </a>
+                )}
+                {config?.social_links?.facebook && (
+                  <a href={config.social_links.facebook} target="_blank" rel="noopener noreferrer"
+                    className="w-11 h-11 rounded-full bg-white/10 border border-white/15 flex items-center justify-center text-white/60 hover:text-[#1877F2] hover:bg-white/15 transition-all" aria-label="Facebook">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M9 8h-3v4h3v12h5v-12h3.642l.358-4h-4v-1.667c0-.955.192-1.333 1.115-1.333h2.885v-5h-3.808c-3.596 0-5.192 1.583-5.192 4.615v3.385z" /></svg>
+                  </a>
+                )}
+                {config?.social_links?.youtube && (
+                  <a href={config.social_links.youtube} target="_blank" rel="noopener noreferrer"
+                    className="w-11 h-11 rounded-full bg-white/10 border border-white/15 flex items-center justify-center text-white/60 hover:text-[#FF0000] hover:bg-white/15 transition-all" aria-label="YouTube">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.163c-.272-1.016-1.071-1.815-2.087-2.087C19.565 3.5 12 3.5 12 3.5s-7.565 0-9.411.576c-1.016.272-1.815 1.071-2.087 2.087C0 8.01 0 12 0 12s0 3.99.502 5.837c.272 1.016 1.071 1.815 2.087 2.087C4.435 20.5 12 20.5 12 20.5s7.565 0 9.411-.576c1.016-.272 1.815-1.071 2.087-2.087C24 15.99 24 12 24 12s0-3.99-.502-5.837zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" /></svg>
+                  </a>
+                )}
+                {whatsappUrl && (
+                  <a href={whatsappUrl} target="_blank" rel="noopener noreferrer"
+                    className="w-11 h-11 rounded-full bg-[#25D366] text-white flex items-center justify-center transition-all shadow-md" aria-label="WhatsApp">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.514 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.724-1.455L0 24zm6.59-4.846c1.6.95 3.188 1.449 4.825 1.451 5.436 0 9.859-4.42 9.863-9.864.002-2.634-1.02-5.11-2.881-6.974-1.86-1.865-4.343-2.891-6.986-2.893-5.44 0-9.866 4.418-9.87 9.864-.001 1.77.462 3.5 1.343 5.03l-.974 3.565 3.683-.966zm12.352-7.073c-.33-.165-1.951-.963-2.251-1.072-.3-.11-.518-.165-.736.165-.218.33-.846 1.072-1.037 1.29-.19.218-.38.245-.71.08-.33-.165-1.393-.513-2.653-1.637-1-.893-1.676-2-1.874-2.33-.198-.33-.02-.508.145-.671.15-.147.33-.38.495-.57.165-.188.22-.321.33-.536.11-.215.056-.4-.028-.565-.084-.165-.736-1.77-.1-.99-2.036-.3-1.074-.627-1.424-.736-.3-.11-.647-.099-.9.165-.253.264-1.01 1.022-1.01 2.49 0 1.469 1.07 2.89 1.218 3.09.148.199 2.107 3.217 5.105 4.512.714.309 1.272.494 1.707.632.717.228 1.37.196 1.885.119.574-.085 1.951-.798 2.224-1.57.272-.772.272-1.433.19-1.57-.08-.136-.3-.217-.63-.382z" /></svg>
+                  </a>
+                )}
+              </div>
+              {/* Branding */}
+              <p className="text-center font-body text-[10px] tracking-[0.3em] uppercase text-white/30">
+                © {new Date().getFullYear()} {config?.photographer_name || 'Niks Photos'}
+              </p>
+            </motion.div>
+          </motion.div>
         )}
       </AnimatePresence>
 
@@ -237,123 +353,7 @@ export default function Navbar() {
 
           </div>
         </div>
-
-        {/* Mobile Menu Glass Drawer */}
-        <AnimatePresence>
-          {mobileOpen && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              className="md:hidden pointer-events-auto mt-3 max-w-6xl mx-auto rounded-3xl bg-[#1E1410]/95 backdrop-blur-2xl border border-white/15 p-6 shadow-2xl text-white"
-            >
-              <div className="flex flex-col gap-3">
-                <Link
-                  href="/"
-                  onClick={() => setMobileOpen(false)}
-                  className="px-4 py-2.5 rounded-xl text-sm font-body tracking-wider uppercase hover:bg-white/10 transition-colors"
-                >
-                  Home
-                </Link>
-
-                {navCategories.map((cat) => (
-                  <Link
-                    key={cat._id}
-                    href={`/${cat.slug}`}
-                    onClick={() => setMobileOpen(false)}
-                    className="px-4 py-2.5 rounded-xl text-sm font-body tracking-wider uppercase hover:bg-white/10 transition-colors"
-                  >
-                    {cat.name}
-                  </Link>
-                ))}
-
-                {config?.navbar_links?.map((link, i) => (
-                  <Link
-                    key={i}
-                    href={link.url}
-                    onClick={() => setMobileOpen(false)}
-                    className="px-4 py-2.5 rounded-xl text-sm font-body tracking-wider uppercase hover:bg-white/10 transition-colors"
-                  >
-                    {link.label}
-                  </Link>
-                ))}
-
-                <div className="pt-4 border-t border-white/10 flex flex-col gap-3">
-                  <Link
-                    href="/#booking-section"
-                    onClick={(e) => {
-                      setMobileOpen(false);
-                      handleBookScroll(e);
-                    }}
-                  >
-                    <ShimmerButton className="w-full py-3 text-sm font-medium rounded-full bg-white text-[#1E1410]">
-                      Book Session
-                    </ShimmerButton>
-                  </Link>
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
       </header>
-
-      {/* Persistent Floating Social Dock (Mobile Bottom Left) */}
-      <div className="fixed left-0 bottom-24 z-40 flex md:hidden flex-col items-center gap-2.5 bg-[#1E1410]/85 backdrop-blur-md py-3 px-2 rounded-r-2xl shadow-[4px_4px_20px_rgba(0,0,0,0.3)] border-y border-r border-white/15 pointer-events-auto">
-        {config?.social_links?.instagram && (
-          <a
-            href={config.social_links.instagram}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="w-8 h-8 rounded-full bg-white/10 text-white hover:text-amber-300 border border-white/15 flex items-center justify-center transition-all active:scale-90"
-            aria-label="Instagram"
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
-              <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
-              <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
-            </svg>
-          </a>
-        )}
-        {config?.social_links?.facebook && (
-          <a
-            href={config.social_links.facebook}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="w-8 h-8 rounded-full bg-white/10 text-white hover:text-amber-300 border border-white/15 flex items-center justify-center transition-all active:scale-90"
-            aria-label="Facebook"
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M9 8h-3v4h3v12h5v-12h3.642l.358-4h-4v-1.667c0-.955.192-1.333 1.115-1.333h2.885v-5h-3.808c-3.596 0-5.192 1.583-5.192 4.615v3.385z" />
-            </svg>
-          </a>
-        )}
-        {config?.social_links?.youtube && (
-          <a
-            href={config.social_links.youtube}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="w-8 h-8 rounded-full bg-white/10 text-white hover:text-amber-300 border border-white/15 flex items-center justify-center transition-all active:scale-90"
-            aria-label="YouTube"
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M23.498 6.163c-.272-1.016-1.071-1.815-2.087-2.087C19.565 3.5 12 3.5 12 3.5s-7.565 0-9.411.576c-1.016.272-1.815 1.071-2.087 2.087C0 8.01 0 12 0 12s0 3.99.502 5.837c.272 1.016 1.071 1.815 2.087 2.087C4.435 20.5 12 20.5 12 20.5s7.565 0 9.411-.576c1.016-.272 1.815-1.071 2.087-2.087C24 15.99 24 12 24 12s0-3.99-.502-5.837zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
-            </svg>
-          </a>
-        )}
-        {whatsappUrl && (
-          <a
-            href={whatsappUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="w-8 h-8 rounded-full bg-[#25D366] text-white flex items-center justify-center transition-all active:scale-90 shadow-md"
-            aria-label="WhatsApp"
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.514 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.724-1.455L0 24zm6.59-4.846c1.6.95 3.188 1.449 4.825 1.451 5.436 0 9.859-4.42 9.863-9.864.002-2.634-1.02-5.11-2.881-6.974-1.86-1.865-4.343-2.891-6.986-2.893-5.44 0-9.866 4.418-9.87 9.864-.001 1.77.462 3.5 1.343 5.03l-.974 3.565 3.683-.966zm12.352-7.073c-.33-.165-1.951-.963-2.251-1.072-.3-.11-.518-.165-.736.165-.218.33-.846 1.072-1.037 1.29-.19.218-.38.245-.71.08-.33-.165-1.393-.513-2.653-1.637-1-.893-1.676-2-1.874-2.33-.198-.33-.02-.508.145-.671.15-.147.33-.38.495-.57.165-.188.22-.321.33-.536.11-.215.056-.4-.028-.565-.084-.165-.736-1.77-.1-.99-2.036-.3-1.074-.627-1.424-.736-.3-.11-.647-.099-.9.165-.253.264-1.01 1.022-1.01 2.49 0 1.469 1.07 2.89 1.218 3.09.148.199 2.107 3.217 5.105 4.512.714.309 1.272.494 1.707.632.717.228 1.37.196 1.885.119.574-.085 1.951-.798 2.224-1.57.272-.772.272-1.433.19-1.57-.08-.136-.3-.217-.63-.382z" />
-            </svg>
-          </a>
-        )}
-      </div>
     </>
   );
 }

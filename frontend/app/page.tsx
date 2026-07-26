@@ -25,6 +25,18 @@ const BookingForm = dynamic(() => import('@/components/BookingForm'), {
   ssr: false,
   loading: () => <div className="h-80 bg-[#F8F3EC]" />,
 });
+const ProcessTimeline = dynamic(() => import('@/components/ProcessTimeline'), {
+  ssr: false,
+  loading: () => <div className="h-96 bg-[#1E1410]" />,
+});
+const FAQSection = dynamic(() => import('@/components/FAQSection'), {
+  ssr: false,
+  loading: () => <div className="h-80 bg-[#F8F3EC]" />,
+});
+const InstagramFeed = dynamic(() => import('@/components/InstagramFeed'), {
+  ssr: false,
+  loading: () => <div className="h-80 bg-[#F8F3EC]" />,
+});
 import type { SiteConfig, Category, Photo, VideoItem } from '@/lib/types';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
@@ -116,9 +128,19 @@ export default async function HomePage() {
         <div className="reveal">
           <StatsSection />
         </div>
+
+        {/* How It Works — Process Timeline */}
+        <div className="reveal">
+          <ProcessTimeline />
+        </div>
         
         <div className="reveal">
           <PricingSection />
+        </div>
+
+        {/* FAQ Section */}
+        <div className="reveal">
+          <FAQSection />
         </div>
 
         {/* Booking Form Section */}
@@ -126,7 +148,12 @@ export default async function HomePage() {
           <BookingForm />
         </div>
 
-        {/* Inspira UI Luxury Footer */}
+        {/* Instagram Feed */}
+        <div className="reveal">
+          <InstagramFeed />
+        </div>
+
+        {/* Footer */}
         <Footer config={config} />
       </div>
     </main>

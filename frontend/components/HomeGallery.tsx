@@ -153,6 +153,23 @@ export default function HomeGallery({ categories, initialPhotos = [], initialVid
                   />
                 )}
                 {cat.name}
+                {/* Photo count badge */}
+                {(() => {
+                  const count = cat._id === 'all'
+                    ? latestPhotos.length
+                    : latestPhotos.filter((p) => {
+                        if (!p.category) return false;
+                        if (typeof p.category === 'string') return p.category === cat._id;
+                        return p.category._id === cat._id;
+                      }).length;
+                  return count > 0 ? (
+                    <span className={`ml-1.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${
+                      isActive ? 'bg-white/20 text-white' : 'bg-[#EDE4D8] text-[#7A6555]'
+                    }`}>
+                      {count}
+                    </span>
+                  ) : null;
+                })()}
               </button>
             );
           })}

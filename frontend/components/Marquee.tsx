@@ -20,7 +20,16 @@ export default function Marquee({ photos, reverse = false, speed = 30 }: Marquee
   const duplicated = Array(evenRepeatCount).fill(photos).flat();
 
   return (
-    <div className="marquee-container py-0.5 overflow-hidden">
+    <div className="marquee-container py-0.5 overflow-hidden group"
+      onMouseEnter={(e) => {
+        const content = e.currentTarget.querySelector('.marquee-content, .marquee-content-reverse') as HTMLElement;
+        if (content) content.style.animationPlayState = 'paused';
+      }}
+      onMouseLeave={(e) => {
+        const content = e.currentTarget.querySelector('.marquee-content, .marquee-content-reverse') as HTMLElement;
+        if (content) content.style.animationPlayState = 'running';
+      }}
+    >
       <div
         className={reverse ? 'marquee-content-reverse' : 'marquee-content'}
         style={{ animationDuration: `${speed}s` }}

@@ -63,11 +63,14 @@ function CountUp({ target, suffix, start }: { target: number; suffix: string; st
   useEffect(() => {
     if (!start) return;
     const startTime = performance.now();
-    const duration = 2200;
+    const duration = 2500;
     const animate = (currentTime: number) => {
       const elapsed = currentTime - startTime;
       const progress = Math.min(elapsed / duration, 1);
-      const eased = 1 - Math.pow(1 - progress, 4);
+      // More dramatic easing: slow start, fast middle, slow end
+      const eased = progress < 0.5
+        ? 4 * progress * progress * progress
+        : 1 - Math.pow(-2 * progress + 2, 3) / 2;
       setCount(Math.floor(eased * target));
       if (progress < 1) frameRef.current = requestAnimationFrame(animate);
       else setCount(target);
@@ -76,7 +79,27 @@ function CountUp({ target, suffix, start }: { target: number; suffix: string; st
     return () => cancelAnimationFrame(frameRef.current);
   }, [start, target]);
 
-  return <span>{count}{suffix}</span>;
+  // Split digits for individual styling
+  const digits = count.toString().split('');
+
+  return (
+    <span className="inline-flex items-baseline">
+      {digits.map((digit, i) => (
+        <span
+          key={i}
+          className="inline-block transition-all duration-150"
+          style={{
+            transform: start ? 'translateY(0)' : 'translateY(20px)',
+            opacity: start ? 1 : 0,
+            transitionDelay: `${i * 50}ms`,
+          }}
+        >
+          {digit}
+        </span>
+      ))}
+      <span className="text-amber-300/70">{suffix}</span>
+    </span>
+  );
 }
 
 export default function StatsSection() {
