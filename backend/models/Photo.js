@@ -22,6 +22,26 @@ const photoSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
+  // ─── Image SEO ────────────────────────────────────────────────
+  // Blank rehne par utils/seo.js title + category se alt bana deta hai.
+  alt_text: {
+    type: String,
+    default: '',
+    maxlength: 250
+  },
+  caption: {
+    type: String,
+    default: '',
+    maxlength: 500
+  },
+  location: {
+    type: String,
+    default: ''
+  },
+  tags: {
+    type: [String],
+    default: []
+  },
   category: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Category',

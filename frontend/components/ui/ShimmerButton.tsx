@@ -23,7 +23,7 @@ export default function ShimmerButton({
       whileTap={{ scale: 0.98 }}
       onClick={onClick}
       className={cn(
-        'group relative isolate flex items-center justify-center overflow-hidden rounded-full border border-white/20 bg-[#1E1410] px-6 py-3 text-sm font-medium text-white shadow-xl transition-all duration-300 hover:border-white/40 hover:shadow-2xl',
+        'group relative isolate flex items-center justify-center overflow-hidden rounded-full border border-white/20 bg-[#142433] px-6 py-3 text-sm font-medium text-white shadow-xl transition-all duration-300 hover:border-white/40 hover:shadow-2xl',
         className
       )}
       {...props}

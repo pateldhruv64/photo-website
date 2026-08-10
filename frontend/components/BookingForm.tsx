@@ -135,13 +135,13 @@ Date: ${formData.eventDate}${formData.message ? `\nMessage: ${formData.message}`
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
           {/* Left Column: Direct Info Card */}
-          <div className="lg:col-span-5 relative rounded-3xl bg-[#1E1410] text-white p-8 sm:p-10 shadow-2xl border border-white/10 overflow-hidden flex flex-col justify-between min-h-[480px]">
+          <div className="lg:col-span-5 relative rounded-3xl bg-[#142433] text-white p-8 sm:p-10 shadow-2xl border border-white/10 overflow-hidden flex flex-col justify-between min-h-[480px]">
             {/* Inspira Border Beam */}
-            <BorderBeam size={200} duration={7} colorFrom="#B5784A" colorTo="#FFFFFF" />
+            <BorderBeam size={200} duration={7} colorFrom="#769FCD" colorTo="#FFFFFF" />
 
             <div>
               <div className="w-12 h-12 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center mb-6">
-                <svg className="w-6 h-6 text-amber-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-6 h-6 text-accent-soft" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
@@ -161,7 +161,7 @@ Date: ${formData.eventDate}${formData.message ? `\nMessage: ${formData.message}`
                   <span>Available for Bookings</span>
                 </div>
                 <div className="flex items-center gap-3 text-sm text-white/80">
-                  <svg className="w-4 h-4 text-amber-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className="w-4 h-4 text-accent-soft" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   <span>Quick response on WhatsApp</span>
@@ -178,7 +178,7 @@ Date: ${formData.eventDate}${formData.message ? `\nMessage: ${formData.message}`
                 href={`https://wa.me/${cleanNumber}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="font-display text-xl text-amber-300 hover:underline flex items-center gap-2"
+                className="font-display text-xl text-accent-soft hover:underline flex items-center gap-2"
               >
                 <span>+{cleanNumber}</span>
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -207,8 +207,8 @@ Date: ${formData.eventDate}${formData.message ? `\nMessage: ${formData.message}`
                         onClick={() => handleChange('eventType', type)}
                         className={`px-4 py-2.5 rounded-full text-xs font-medium tracking-wide uppercase transition-all duration-300 ${
                           isSelected
-                            ? 'bg-[#1E1410] text-white shadow-md scale-105'
-                            : 'bg-[#EAE3D9]/60 text-[#7A6555] hover:bg-[#EAE3D9] hover:text-[#1E1410]'
+                            ? 'bg-[#142433] text-white shadow-md scale-105'
+                            : 'bg-[#D6E6F2]/60 text-[#476485] hover:bg-[#D6E6F2] hover:text-[#142433]'
                         }`}
                       >
                         {type}
@@ -231,7 +231,7 @@ Date: ${formData.eventDate}${formData.message ? `\nMessage: ${formData.message}`
                     value={formData.name}
                     onChange={(e) => handleChange('name', e.target.value)}
                     placeholder="Your full name"
-                    className={`w-full px-4 py-3.5 font-body text-sm border rounded-xl bg-white/90 focus:outline-none focus:ring-2 focus:ring-[#B5784A] transition-all shadow-xs ${
+                    className={`w-full px-4 py-3.5 font-body text-sm border rounded-xl bg-white/90 focus:outline-none focus:ring-2 focus:ring-[#769FCD] transition-all shadow-xs ${
                       errors.name ? 'border-red-400' : 'border-border'
                     }`}
                   />
@@ -248,7 +248,7 @@ Date: ${formData.eventDate}${formData.message ? `\nMessage: ${formData.message}`
                     value={formData.phone}
                     onChange={(e) => handleChange('phone', e.target.value)}
                     placeholder="+91 98765 43210"
-                    className={`w-full px-4 py-3.5 font-body text-sm border rounded-xl bg-white/90 focus:outline-none focus:ring-2 focus:ring-[#B5784A] transition-all shadow-xs ${
+                    className={`w-full px-4 py-3.5 font-body text-sm border rounded-xl bg-white/90 focus:outline-none focus:ring-2 focus:ring-[#769FCD] transition-all shadow-xs ${
                       errors.phone ? 'border-red-400' : 'border-border'
                     }`}
                   />
@@ -266,14 +266,14 @@ Date: ${formData.eventDate}${formData.message ? `\nMessage: ${formData.message}`
                   type="date"
                   value={formData.eventDate}
                   onChange={(e) => handleChange('eventDate', e.target.value)}
-                  className={`w-full px-4 py-3.5 font-body text-sm border rounded-xl bg-white/90 focus:outline-none focus:ring-2 focus:ring-[#B5784A] transition-all shadow-xs ${
+                  className={`w-full px-4 py-3.5 font-body text-sm border rounded-xl bg-white/90 focus:outline-none focus:ring-2 focus:ring-[#769FCD] transition-all shadow-xs ${
                     errors.eventDate ? 'border-red-400' : 'border-border'
                   }`}
                 />
                 {errors.eventDate && <p className="mt-1.5 font-body text-xs text-red-500">{errors.eventDate}</p>}
                 {!errors.eventDate && (
                   <p className="mt-1.5 font-body text-xs text-text-muted/60 flex items-center gap-1.5">
-                    <svg className="w-3.5 h-3.5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <svg className="w-3.5 h-3.5 text-accent-deep" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     Weekends fill fast — book early for your preferred date!
@@ -292,14 +292,14 @@ Date: ${formData.eventDate}${formData.message ? `\nMessage: ${formData.message}`
                   onChange={(e) => handleChange('message', e.target.value)}
                   placeholder="Location, estimated guest count, or special requests..."
                   rows={3}
-                  className="w-full px-4 py-3.5 font-body text-sm border border-border rounded-xl bg-white/90 focus:outline-none focus:ring-2 focus:ring-[#B5784A] transition-all resize-none shadow-xs"
+                  className="w-full px-4 py-3.5 font-body text-sm border border-border rounded-xl bg-white/90 focus:outline-none focus:ring-2 focus:ring-[#769FCD] transition-all resize-none shadow-xs"
                 />
               </div>
 
               {/* Submit ShimmerButton */}
               <ShimmerButton
                 type="submit"
-                className="w-full py-4 bg-[#1E1410] text-white font-body text-sm font-medium rounded-full shadow-xl hover:bg-[#2C1F18]"
+                className="w-full py-4 bg-[#142433] text-white font-body text-sm font-medium rounded-full shadow-xl hover:bg-[#1E3446]"
               >
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>

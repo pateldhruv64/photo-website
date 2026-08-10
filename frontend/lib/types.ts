@@ -10,6 +10,11 @@ export interface Photo {
   is_featured: boolean;
   order: number;
   created_at: string;
+  /** SEO alt text — backend blank hone par auto-generate karta hai */
+  alt_text?: string;
+  caption?: string;
+  location?: string;
+  tags?: string[];
 }
 
 // ─── Category ────────────────────────────────────────────────────────
@@ -23,6 +28,12 @@ export interface Category {
   navbar_order: number;
   is_active: boolean;
   photoCount?: number;
+  allow_videos?: boolean;
+  // Per-category SEO — blank chhodne par backend auto bharta hai
+  seo_title?: string;
+  seo_description?: string;
+  seo_keywords?: string[];
+  intro_text?: string;
 }
 
 // ─── Site Config ─────────────────────────────────────────────────────
@@ -51,6 +62,34 @@ export interface SiteConfig {
   studio_description?: string;
   studio_whatsapp?: string;
   studio_location_url?: string;
+  seo?: SiteSeoSettings;
+}
+
+// ─── SEO Settings (admin panel se control hoti hain) ──────────────────
+export interface SiteSeoSettings {
+  meta_title?: string;
+  meta_description?: string;
+  keywords?: string[];
+  title_template?: string;
+  og_image?: { public_id: string; secure_url: string } | null;
+  twitter_handle?: string;
+  google_site_verification?: string;
+  bing_site_verification?: string;
+  business_type?: string;
+  street_address?: string;
+  city?: string;
+  state?: string;
+  postal_code?: string;
+  country?: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  price_range?: string;
+  founding_year?: string;
+  service_areas?: string[];
+  opening_hours?: string[];
+  allow_indexing?: boolean;
+  auto_seo?: boolean;
+  custom_head_scripts?: string;
 }
 
 export interface NavbarLink {

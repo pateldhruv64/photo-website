@@ -11,6 +11,15 @@ router.get('/config', publicController.getConfig);
 // GET /api/categories — all active categories
 router.get('/categories', publicController.getCategories);
 
+// GET /api/seo — resolved SEO payload (meta + local business + ratings)
+router.get('/seo', publicController.getSeo);
+
+// GET /api/sitemap — categories + image entries for the XML sitemap
+router.get('/sitemap', publicController.getSitemapData);
+
+// GET /api/category/:slug — SSR payload for a single category page
+router.get('/category/:slug', publicController.getCategoryPage);
+
 // GET /api/photos/featured — featured photos (must be before /api/photos/:id)
 router.get('/photos/featured', publicController.getFeaturedPhotos);
 

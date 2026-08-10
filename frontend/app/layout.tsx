@@ -1,112 +1,100 @@
 import type { Metadata, Viewport } from 'next';
-import BackendPing from '@/components/BackendPing';
-import { Raleway } from 'next/font/google';
+import { Cormorant_Garamond, Raleway } from 'next/font/google';
 import './globals.css';
+
+import BackendPing from '@/components/BackendPing';
 import ServiceWorkerRegister from '@/components/ServiceWorkerRegister';
 import BottomNav from '@/components/BottomNav';
-import { SpeedInsights } from "@vercel/speed-insights/next";
 import BokehBackground from '@/components/BokehBackground';
 import CameraCursor from '@/components/CameraCursor';
 import ScrollProgressBar from '@/components/ScrollProgressBar';
 import ScrollRevealProvider from '@/components/ScrollRevealProvider';
+import LenisProvider from '@/components/LenisProvider';
+import JsonLd from '@/components/JsonLd';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 
+import { getSeo, buildMetadata, buildSchemaGraph } from '@/lib/seo';
+
+/* ─── Fonts ─────────────────────────────────────────────────────────
+   Do fonts: Cormorant (editorial serif) headings ke liye, Raleway body
+   ke liye. Do-font pairing se page instantly premium lagta hai —
+   single-font sites hamesha template jaisi dikhti hain.               */
 const raleway = Raleway({
   subsets: ['latin'],
-  weight: ['100', '200', '300', '400', '500', '600', '700', '800', '900'],
-  style: ['normal', 'italic'],
+  weight: ['300', '400', '500', '600', '700'],
   variable: '--font-raleway',
   display: 'swap',
 });
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
-
-interface ConfigResponse {
-  photographer_name?: string;
-  about_text?: string;
-  hero_photo?: {
-    public_id: string;
-  } | null;
-}
+const cormorant = Cormorant_Garamond({
+  subsets: ['latin'],
+  weight: ['300', '400', '500', '600', '700'],
+  style: ['normal', 'italic'],
+  variable: '--font-cormorant',
+  display: 'swap',
+});
 
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   maximumScale: 5,
   userScalable: true,
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#F7FBFC' },
+    { media: '(prefers-color-scheme: dark)', color: '#142433' },
+  ],
+  colorScheme: 'light',
 };
 
+/**
+ * Site-wide metadata. Poora content admin panel se aata hai — jo blank
+ * ho wo backend ka auto-SEO engine bhar deta hai.
+ */
 export async function generateMetadata(): Promise<Metadata> {
-  let config: ConfigResponse | null = null;
-
-  try {
-    const res = await fetch(`${API_URL}/config`, { next: { revalidate: 300 } });
-    if (res.ok) {
-      config = await res.json();
-    }
-  } catch {
-    // Use fallback values
-  }
-
-  const photographerName = config?.photographer_name || 'Photographer';
-  const title = `${photographerName} | Photography`;
-  const description = config?.about_text
-    ? config.about_text.substring(0, 160)
-    : 'Professional photography portfolio showcasing stunning visual storytelling';
-
-  const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
-  const ogImage = config?.hero_photo?.public_id && cloudName
-    ? `https://res.cloudinary.com/${cloudName}/image/upload/w_1200,h_630,c_fill,q_auto,f_auto/${config.hero_photo.public_id}`
-    : undefined;
+  const seo = await getSeo();
 
   return {
-    title,
-    description,
-    metadataBase: new URL(SITE_URL),
-    alternates: {
-      canonical: '/',
+    ...buildMetadata(seo, {
+      title: seo.meta_title,
+      description: seo.meta_description,
+      path: '/',
+    }),
+    // `absolute` — koi template nahi. Pages apna poora title khud dete hain
+    // (backend title_template lagata hai), isliye yaha dobara template
+    // lagane se brand ka naam duplicate ho jaata tha.
+    title: { absolute: seo.meta_title },
+    // favicon.ico app/ folder se auto pick hoti hai — yaha sirf
+    // apple-touch-icon declare karna hai.
+    icons: {
+      apple: [{ url: '/icon-192.png', sizes: '192x192' }],
     },
-    openGraph: {
-      title,
-      description,
-      type: 'website',
-      url: SITE_URL,
-      ...(ogImage && {
-        images: [
-          {
-            url: ogImage,
-            width: 1200,
-            height: 630,
-          },
-        ],
-      }),
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title,
-      description,
-      ...(ogImage && { images: [ogImage] }),
-    },
+    manifest: '/manifest.webmanifest',
+    // formatDetection yaha jaan-bujh kar set nahi kiya: Next har mention
+    // ki hui key ko `=no` likh deta hai (value chahe true ho), jisse mobile
+    // par tap-to-call/tap-to-map band ho jaata. Browser ka default hi sahi hai.
   };
 }
 
-import LenisProvider from '@/components/LenisProvider';
-
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const seo = await getSeo();
+  const schema = buildSchemaGraph(seo);
+
   return (
-    <html lang="en" className={raleway.variable}>
+    <html lang="en-IN" className={`${raleway.variable} ${cormorant.variable}`}>
       <head>
-        <link rel="apple-touch-icon" href="/icon-192.png" />
         {/* Cloudinary CDN se pehle connect karo — images fast load hongi */}
         <link rel="preconnect" href="https://res.cloudinary.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://res.cloudinary.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       </head>
-      <body className="font-body antialiased bg-[#FEFCF8] text-[#1E1410] overflow-x-hidden min-h-screen">
-        {/* Bokeh: 1500ms baad mount hoga — hero ko pehle load hone dega */}
+      <body className="font-body antialiased bg-background text-ink overflow-x-hidden min-h-screen">
+        {/* Site-wide structured data: LocalBusiness + WebSite + Person */}
+        <JsonLd id="site-schema" data={schema} />
+
         <LenisProvider>
           <BokehBackground />
           <CameraCursor />

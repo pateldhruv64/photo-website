@@ -55,7 +55,7 @@ export default function CursorSpotlight() {
         borderRadius: '50%',
         pointerEvents: 'none',
         zIndex: 9997,
-        background: 'radial-gradient(circle, rgba(181,120,74,0.07) 0%, rgba(181,120,74,0.03) 40%, transparent 70%)',
+        background: 'radial-gradient(circle, rgba(118,159,205,0.07) 0%, rgba(118,159,205,0.03) 40%, transparent 70%)',
         willChange: 'transform',
       }}
     />

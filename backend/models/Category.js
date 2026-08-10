@@ -36,7 +36,15 @@ const categorySchema = new mongoose.Schema({
   allow_videos: {
     type: Boolean,
     default: true
-  }
+  },
+
+  // ─── Per-category SEO (blank = auto-generate) ──────────────────
+  seo_title: { type: String, default: '', maxlength: 120 },
+  seo_description: { type: String, default: '', maxlength: 400 },
+  seo_keywords: { type: [String], default: [] },
+  // Long-form intro copy shown on the category page — Google ko
+  // real text chahiye, sirf photos se ranking nahi aati.
+  intro_text: { type: String, default: '' }
 }, {
   timestamps: true,
   strict: true
@@ -52,6 +60,7 @@ categorySchema.pre('save', function(next) {
 
 // Index for navbar queries
 categorySchema.index({ is_active: 1, navbar_order: 1 });
-categorySchema.index({ slug: 1 });
+// slug ka index `unique: true` se already ban jaata hai — dobara declare
+// karne par Mongoose duplicate-index warning deta hai.
 
 module.exports = mongoose.model('Category', categorySchema);

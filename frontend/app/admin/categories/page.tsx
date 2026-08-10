@@ -182,6 +182,13 @@ function CategoryFormModal({
   const [isActive, setIsActive] = useState(category?.is_active ?? true);
   const [slugEdited, setSlugEdited] = useState(false);
 
+  // Per-category SEO — blank chhodne par backend auto-generate karta hai
+  const [seoTitle, setSeoTitle] = useState(category?.seo_title || '');
+  const [seoDescription, setSeoDescription] = useState(category?.seo_description || '');
+  const [seoKeywords, setSeoKeywords] = useState((category?.seo_keywords || []).join(', '));
+  const [introText, setIntroText] = useState(category?.intro_text || '');
+  const [showSeo, setShowSeo] = useState(false);
+
   // Auto-generate slug from name
   const handleNameChange = (value: string) => {
     setName(value);
@@ -193,7 +200,7 @@ function CategoryFormModal({
   return (
     <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={onClose}>
       <div
-        className="bg-white rounded-sm border border-border max-w-md w-full p-6 animate-scale-in"
+        className="max-h-[88dvh] w-full max-w-md overflow-y-auto rounded-sm border border-border bg-white p-6 animate-scale-in"
         onClick={(e) => e.stopPropagation()}
       >
         <h3 className="font-display text-xl font-light text-text-primary mb-4">
@@ -268,6 +275,87 @@ function CategoryFormModal({
               />
             </div>
           )}
+
+          {/* ── SEO (optional — collapsed by default) ── */}
+          <div className="border-t border-border pt-4">
+            <button
+              type="button"
+              onClick={() => setShowSeo((v) => !v)}
+              className="flex w-full items-center justify-between font-body text-xs uppercase tracking-wider text-text-muted transition-colors hover:text-text-primary"
+            >
+              <span>SEO for this page (optional)</span>
+              <span className={`transition-transform ${showSeo ? 'rotate-180' : ''}`}>▾</span>
+            </button>
+
+            {showSeo && (
+              <div className="mt-4 space-y-3">
+                <p className="rounded-sm bg-hover-surface/50 px-3 py-2 font-body text-[11px] leading-relaxed text-text-muted">
+                  Sab kuch optional hai. Blank chhodenge to category ke naam aur studio ki
+                  city se apne aap SEO ban jaayega.
+                </p>
+
+                <div>
+                  <label className="mb-1.5 block font-body text-[11px] uppercase tracking-wider text-text-muted">
+                    Google title
+                  </label>
+                  <input
+                    type="text"
+                    value={seoTitle}
+                    onChange={(e) => setSeoTitle(e.target.value)}
+                    maxLength={120}
+                    placeholder={`${name || 'Category'} Photography in <city> | Studio`}
+                    className="w-full rounded-sm border border-border px-3 py-2 font-body text-sm focus:border-text-primary focus:outline-none"
+                  />
+                  <p className="mt-1 font-body text-[11px] text-text-muted">
+                    {seoTitle.length}/60 recommended
+                  </p>
+                </div>
+
+                <div>
+                  <label className="mb-1.5 block font-body text-[11px] uppercase tracking-wider text-text-muted">
+                    Google description
+                  </label>
+                  <textarea
+                    value={seoDescription}
+                    onChange={(e) => setSeoDescription(e.target.value)}
+                    rows={2}
+                    maxLength={400}
+                    placeholder="150–160 characters"
+                    className="w-full resize-none rounded-sm border border-border px-3 py-2 font-body text-sm focus:border-text-primary focus:outline-none"
+                  />
+                  <p className="mt-1 font-body text-[11px] text-text-muted">
+                    {seoDescription.length}/160 recommended
+                  </p>
+                </div>
+
+                <div>
+                  <label className="mb-1.5 block font-body text-[11px] uppercase tracking-wider text-text-muted">
+                    Keywords
+                  </label>
+                  <input
+                    type="text"
+                    value={seoKeywords}
+                    onChange={(e) => setSeoKeywords(e.target.value)}
+                    placeholder="comma, se, alag karein"
+                    className="w-full rounded-sm border border-border px-3 py-2 font-body text-sm focus:border-text-primary focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-1.5 block font-body text-[11px] uppercase tracking-wider text-text-muted">
+                    Intro paragraph
+                  </label>
+                  <textarea
+                    value={introText}
+                    onChange={(e) => setIntroText(e.target.value)}
+                    rows={3}
+                    placeholder="Category page par photos ke upar dikhta hai. Google ko padhne ke liye text milta hai — ranking me bada farak padta hai."
+                    className="w-full resize-none rounded-sm border border-border px-3 py-2 font-body text-sm focus:border-text-primary focus:outline-none"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="mt-6 flex gap-3 justify-end">
@@ -278,7 +366,20 @@ function CategoryFormModal({
             Cancel
           </button>
           <button
-            onClick={() => onSave({ name, slug, description, show_in_navbar: showInNavbar, navbar_order: navbarOrder, is_active: isActive })}
+            onClick={() =>
+              onSave({
+                name,
+                slug,
+                description,
+                show_in_navbar: showInNavbar,
+                navbar_order: navbarOrder,
+                is_active: isActive,
+                seo_title: seoTitle,
+                seo_description: seoDescription,
+                seo_keywords: seoKeywords.split(',').map((k) => k.trim()).filter(Boolean),
+                intro_text: introText,
+              })
+            }
             className="px-4 py-2 bg-text-primary text-white font-body text-sm rounded-sm hover:bg-gray-800 transition-colors"
           >
             {category ? 'Save Changes' : 'Create'}

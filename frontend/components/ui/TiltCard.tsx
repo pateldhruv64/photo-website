@@ -18,7 +18,7 @@ export default function TiltCard({
   className = '',
   maxTilt = 10,
   glareOpacity = 0.25,
-  spotlightColor = 'rgba(255, 255, 255, 0.15)',
+  spotlightColor = 'rgba(255,255,255,0.15)',
   onClick,
 }: TiltCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);

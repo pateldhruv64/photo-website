@@ -58,7 +58,7 @@ export default function FlipWords({
           damping: 25,
           duration: 0.5,
         }}
-        className={cn('inline-block relative text-left text-amber-300 font-normal', className)}
+        className={cn('inline-block relative text-left text-accent-soft font-normal', className)}
       >
         {currentWord.split(' ').map((word, wordIndex) => (
           <span key={word + wordIndex} className="inline-block whitespace-nowrap">

@@ -1,119 +1,197 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import useSWR from 'swr';
-import { motion } from 'framer-motion';
 import { fetcher } from '@/lib/fetcher';
 import { getWhatsAppUrl } from '@/lib/whatsapp';
 import type { SiteConfig } from '@/lib/types';
 
+const ICON = {
+  home: (
+    <>
+      <path d="M3 9.5L12 3l9 6.5V20a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 20V9.5z" />
+      <path d="M9 21v-7a1.5 1.5 0 0 1 1.5-1.5h3a1.5 1.5 0 0 1 1.5 1.5v7" />
+    </>
+  ),
+  gallery: (
+    <>
+      <rect x="3" y="3" width="18" height="18" rx="3" ry="3" />
+      <circle cx="8.5" cy="8.5" r="1.4" />
+      <polyline points="21 15 16 10 5 21" />
+    </>
+  ),
+  pricing: (
+    <>
+      <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
+      <circle cx="7" cy="7" r="1.3" />
+    </>
+  ),
+  reviews: (
+    <polygon points="12 2.5 14.9 8.4 21.4 9.3 16.7 13.9 17.8 20.3 12 17.3 6.2 20.3 7.3 13.9 2.6 9.3 9.1 8.4 12 2.5" />
+  ),
+};
+
 export default function BottomNav() {
   const pathname = usePathname();
+  const [activeSection, setActiveSection] = useState<string>('');
+
   const { data: config } = useSWR<SiteConfig>('/config', fetcher, {
     revalidateOnFocus: false,
     dedupingInterval: 3600000,
   });
 
   const whatsappUrl = getWhatsAppUrl(config);
-
-  if (pathname?.startsWith('/admin')) return null;
-
   const isHome = pathname === '/';
 
-  const scrollToGallery = () => {
-    document.getElementById('gallery-section')?.scrollIntoView({ behavior: 'smooth' });
+  /* Scroll ke hisaab se active tab highlight hota hai — user ko hamesha
+     pata rehta hai wo page me kaha hai. IntersectionObserver scroll
+     listener se kaafi sasta hai.                                       */
+  useEffect(() => {
+    if (!isHome) {
+      setActiveSection('');
+      return;
+    }
+
+    const ids = ['gallery-section', 'pricing-section', 'testimonials-section'];
+    const sections = ids
+      .map((id) => document.getElementById(id))
+      .filter((el): el is HTMLElement => Boolean(el));
+
+    if (!sections.length) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((e) => e.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+        if (visible) setActiveSection(visible.target.id);
+      },
+      // Viewport ka beech ka hissa hi "active" maana jaata hai
+      { rootMargin: '-45% 0px -45% 0px', threshold: 0 }
+    );
+
+    sections.forEach((s) => observer.observe(s));
+    return () => observer.disconnect();
+  }, [isHome, pathname]);
+
+  if (pathname?.startsWith('/admin') || pathname?.startsWith('/client')) return null;
+
+  const scrollTo = (id: string) => {
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const scrollToPricing = () => {
-    document.getElementById('pricing-section')?.scrollIntoView({ behavior: 'smooth' });
-  };
-
-  const scrollToBooking = () => {
-    document.getElementById('booking-section')?.scrollIntoView({ behavior: 'smooth' });
-  };
+  const items = [
+    {
+      key: 'home',
+      label: 'Home',
+      icon: ICON.home,
+      active: isHome && !activeSection,
+      render: (children: React.ReactNode) => (
+        <Link href="/" className="contents">
+          {children}
+        </Link>
+      ),
+    },
+    {
+      key: 'gallery',
+      label: 'Work',
+      icon: ICON.gallery,
+      active: activeSection === 'gallery-section',
+      onClick: () => scrollTo('gallery-section'),
+    },
+    {
+      key: 'pricing',
+      label: 'Pricing',
+      icon: ICON.pricing,
+      active: activeSection === 'pricing-section',
+      onClick: () => scrollTo('pricing-section'),
+    },
+    {
+      key: 'reviews',
+      label: 'Reviews',
+      icon: ICON.reviews,
+      active: activeSection === 'testimonials-section',
+      onClick: () => scrollTo('testimonials-section'),
+    },
+  ];
 
   return (
     <nav
-      className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 md:hidden bg-[#1E1410]/95 backdrop-blur-2xl border border-white/20 rounded-[1.75rem] shadow-[0_10px_30px_rgba(0,0,0,0.5)] px-5 py-2.5 text-white"
       id="bottom-nav"
+      aria-label="Quick navigation"
+      className="fixed inset-x-0 bottom-0 z-40 flex justify-center px-4 pb-[calc(env(safe-area-inset-bottom,0px)+0.75rem)] md:hidden"
     >
-      <div className="flex items-center gap-6">
-        {/* 1. Home */}
-        <Link href="/" className="flex flex-col items-center gap-1 group" title="Home">
-          <motion.div
-            whileTap={{ scale: 0.9 }}
-            className={`p-2 rounded-full transition-all ${
-              isHome ? 'bg-amber-400/20 text-amber-300' : 'text-white/60 group-active:text-white'
-            }`}
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill={isHome ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M3 9.5L12 3l9 6.5V20a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 20V9.5z" />
-              <path d="M9 21v-7a1.5 1.5 0 0 1 1.5-1.5h3a1.5 1.5 0 0 1 1.5 1.5v7" />
-            </svg>
-          </motion.div>
-          <span className={`text-[9px] tracking-wider font-medium ${isHome ? 'text-amber-300' : 'text-white/40'}`}>Home</span>
-        </Link>
+      <div className="flex items-center gap-1 rounded-full border border-white/12 bg-obsidian/95 p-1.5 shadow-[0_12px_40px_-8px_rgba(0,0,0,0.6)] backdrop-blur-2xl">
+        {items.map((item) => {
+          const body = (
+            <span
+              className={`flex h-12 min-w-[3.25rem] flex-col items-center justify-center gap-[3px] rounded-full px-3 transition-colors duration-300 ${
+                item.active ? 'bg-white/10 text-accent-soft' : 'text-white/55'
+              }`}
+            >
+              <svg
+                width="19"
+                height="19"
+                viewBox="0 0 24 24"
+                fill={item.active ? 'currentColor' : 'none'}
+                stroke="currentColor"
+                strokeWidth="1.6"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden
+              >
+                {item.icon}
+              </svg>
+              <span className="text-[9px] font-medium tracking-[0.06em]">{item.label}</span>
+            </span>
+          );
 
-        {/* 2. Gallery */}
-        <button onClick={scrollToGallery} className="flex flex-col items-center gap-1 group" title="Gallery">
-          <motion.div
-            whileTap={{ scale: 0.9 }}
-            className="p-2 rounded-full text-white/60 group-active:text-white transition-all"
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="3" width="18" height="18" rx="3" ry="3" />
-              <circle cx="8.5" cy="8.5" r="1.5" />
-              <polyline points="21 15 16 10 5 21" />
-            </svg>
-          </motion.div>
-          <span className="text-[9px] tracking-wider font-medium text-white/40">Gallery</span>
-        </button>
+          if (item.render) {
+            return (
+              <span key={item.key} className="block active:scale-95 transition-transform duration-200">
+                {item.render(body)}
+              </span>
+            );
+          }
 
-        {/* 3. Pricing */}
-        <button onClick={scrollToPricing} className="flex flex-col items-center gap-1 group" title="Pricing">
-          <motion.div
-            whileTap={{ scale: 0.9 }}
-            className="p-2 rounded-full text-white/60 group-active:text-amber-300 transition-all"
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
-              <circle cx="7" cy="7" r="1.5" fill="currentColor" />
-            </svg>
-          </motion.div>
-          <span className="text-[9px] tracking-wider font-medium text-white/40">Pricing</span>
-        </button>
+          return (
+            <button
+              key={item.key}
+              onClick={item.onClick}
+              aria-current={item.active ? 'true' : undefined}
+              className="block transition-transform duration-200 active:scale-95"
+            >
+              {body}
+            </button>
+          );
+        })}
 
-        {/* 4. WhatsApp / Book */}
+        {/* Primary action — visually alag, taki thumb wahi jaaye */}
         {whatsappUrl ? (
           <a
             href={whatsappUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex flex-col items-center gap-1 group"
-            title="WhatsApp"
+            aria-label="Chat on WhatsApp"
+            className="ml-0.5 flex h-12 min-w-[3.25rem] flex-col items-center justify-center gap-[3px] rounded-full bg-[#25D366] px-3 text-white transition-transform duration-200 active:scale-95"
           >
-            <motion.div
-              whileTap={{ scale: 0.9 }}
-              className="p-2 rounded-full bg-[#25D366] text-white shadow-lg shadow-[#25D366]/30"
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.514 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.724-1.455L0 24zm6.59-4.846c1.6.95 3.188 1.449 4.825 1.451 5.436 0 9.859-4.42 9.863-9.864.002-2.634-1.02-5.11-2.881-6.974-1.86-1.865-4.343-2.891-6.986-2.893-5.44 0-9.866 4.418-9.87 9.864-.001 1.77.462 3.5 1.343 5.03l-.974 3.565 3.683-.966zm12.352-7.073c-.33-.165-1.951-.963-2.251-1.072-.3-.11-.518-.165-.736.165-.218.33-.846 1.072-1.037 1.29-.19.218-.38.245-.71.08-.33-.165-1.393-.513-2.653-1.637-1-.893-1.676-2-1.874-2.33-.198-.33-.02-.508.145-.671.15-.147.33-.38.495-.57.165-.188.22-.321.33-.536.11-.215.056-.4-.028-.565-.084-.165-.736-1.77-.1-.99-2.036-.3-1.074-.627-1.424-.736-.3-.11-.647-.099-.9.165-.253.264-1.01 1.022-1.01 2.49 0 1.469 1.07 2.89 1.218 3.09.148.199 2.107 3.217 5.105 4.512.714.309 1.272.494 1.707.632.717.228 1.37.196 1.885.119.574-.085 1.951-.798 2.224-1.57.272-.772.272-1.433.19-1.57-.08-.136-.3-.217-.63-.382z" />
-              </svg>
-            </motion.div>
-            <span className="text-[9px] tracking-wider font-medium text-[#25D366]">Chat</span>
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+              <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.514 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.717-1.455L0 24zm6.59-4.846c1.66.986 3.284 1.48 4.961 1.48 5.384 0 9.765-4.382 9.768-9.77 0-2.61-1.015-5.064-2.858-6.911-1.843-1.847-4.293-2.864-6.907-2.864-5.39 0-9.773 4.382-9.776 9.77-.001 1.8.497 3.559 1.44 5.17l-.999 3.648 3.732-.977z" />
+            </svg>
+            <span className="text-[9px] font-medium tracking-[0.06em]">Chat</span>
           </a>
         ) : (
-          <button onClick={scrollToBooking} className="flex flex-col items-center gap-1 group" title="Book">
-            <motion.div
-              whileTap={{ scale: 0.9 }}
-              className="p-2 rounded-full bg-white text-[#1E1410] shadow-lg"
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-              </svg>
-            </motion.div>
-            <span className="text-[9px] tracking-wider font-medium text-white/40">Book</span>
+          <button
+            onClick={() => scrollTo('booking-section')}
+            aria-label="Book a session"
+            className="ml-0.5 flex h-12 min-w-[3.25rem] flex-col items-center justify-center gap-[3px] rounded-full bg-white px-3 text-ink transition-transform duration-200 active:scale-95"
+          >
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+            </svg>
+            <span className="text-[9px] font-medium tracking-[0.06em]">Book</span>
           </button>
         )}
       </div>

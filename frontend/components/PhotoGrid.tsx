@@ -92,10 +92,11 @@ export default function PhotoGrid({ photos, onPhotoClick }: PhotoGridProps) {
       className="masonry-grid"
       columnClassName="masonry-grid-column"
     >
-      {photos.map((photo) => (
+      {photos.map((photo, i) => (
         <PhotoCard
           key={photo._id}
           photo={photo}
+          index={i}
           onClick={onPhotoClick}
         />
       ))}

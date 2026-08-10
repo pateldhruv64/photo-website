@@ -1,7 +1,10 @@
 'use client';
 
+import Link from 'next/link';
 import { motion } from 'framer-motion';
-import type { SiteConfig } from '@/lib/types';
+import useSWR from 'swr';
+import { fetcher } from '@/lib/fetcher';
+import type { SiteConfig, Category } from '@/lib/types';
 import { getWhatsAppUrl } from '@/lib/whatsapp';
 import BorderBeam from '@/components/ui/BorderBeam';
 
@@ -12,6 +15,15 @@ interface FooterProps {
 export default function Footer({ config }: FooterProps) {
   const photographerName = config?.photographer_name || 'Niks Photos';
   const whatsappUrl = getWhatsAppUrl(config);
+
+  // Collections ko footer se link karna — user ko har page ke end par
+  // aage ka raasta milta hai. (SEO ke liye server-rendered links
+  // SeoContentSection me already hain.)
+  const { data: categories } = useSWR<Category[]>('/categories', fetcher, {
+    revalidateOnFocus: false,
+    dedupingInterval: 3600000,
+  });
+  const collections = (categories || []).slice(0, 6);
 
   const scrollToSection = (id: string) => {
     const el = document.getElementById(id);
@@ -25,9 +37,9 @@ export default function Footer({ config }: FooterProps) {
   };
 
   return (
-    <footer className="relative bg-[#1E1410] text-white pt-16 md:pt-24 pb-28 sm:pb-24 md:pb-12 border-t border-white/10 overflow-hidden">
+    <footer className="relative bg-[#142433] text-white pt-16 md:pt-24 pb-28 sm:pb-24 md:pb-12 border-t border-white/10 overflow-hidden">
       {/* Inspira UI Moving Border Beam on top edge */}
-      <BorderBeam size={250} duration={8} colorFrom="#B5784A" colorTo="#F7F2EB" />
+      <BorderBeam size={250} duration={8} colorFrom="#769FCD" colorTo="#F7FBFC" />
 
       {/* Giant Typography Background Watermark */}
       <div className="absolute top-4 left-1/2 -translate-x-1/2 w-full text-center pointer-events-none select-none overflow-hidden opacity-5">
@@ -45,7 +57,7 @@ export default function Footer({ config }: FooterProps) {
           <div className="lg:col-span-5 flex flex-col justify-between">
             <div>
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-amber-300">
+                <div className="w-10 h-10 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-accent-soft">
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -55,13 +67,13 @@ export default function Footer({ config }: FooterProps) {
                   <h3 className="font-display text-2xl font-light text-white tracking-wide">
                     {photographerName}
                   </h3>
-                  <span className="w-4 h-4 rounded-full bg-amber-300 text-[#1E1410] flex items-center justify-center text-[9px] font-bold">
+                  <span className="w-4 h-4 rounded-full bg-accent-soft text-[#142433] flex items-center justify-center text-[9px] font-bold">
                     ✓
                   </span>
                 </div>
               </div>
 
-              <p className="font-body text-xs uppercase tracking-[0.25em] text-amber-200/80 font-medium mb-4">
+              <p className="font-body text-xs uppercase tracking-[0.25em] text-accent-soft/80 font-medium mb-4">
                 CREATIVE PHOTOGRAPHY & VISUAL STORYTELLING
               </p>
 
@@ -78,42 +90,52 @@ export default function Footer({ config }: FooterProps) {
             </div>
           </div>
 
-          {/* Col 2: Navigation Links (Lg: 3 Cols) */}
+          {/* Col 2: Collections + page sections (Lg: 3 Cols) */}
           <div className="lg:col-span-3">
-            <h4 className="font-body text-xs font-semibold tracking-[0.25em] uppercase text-white/50 mb-5">
+            {collections.length > 0 && (
+              <>
+                <h4 className="mb-5 font-body text-xs font-semibold uppercase tracking-[0.25em] text-white/50">
+                  Collections
+                </h4>
+                <ul className="mb-8 space-y-3 font-body text-sm text-white/80">
+                  {collections.map((cat) => (
+                    <li key={cat._id}>
+                      <Link
+                        href={`/${cat.slug}`}
+                        className="group inline-flex items-center gap-2 transition-colors hover:text-accent-soft"
+                      >
+                        {cat.name}
+                        <span
+                          aria-hidden
+                          className="opacity-0 transition-all duration-300 group-hover:translate-x-0.5 group-hover:opacity-100"
+                        >
+                          →
+                        </span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
+
+            <h4 className="mb-5 font-body text-xs font-semibold uppercase tracking-[0.25em] text-white/50">
               Explore
             </h4>
             <ul className="space-y-3 font-body text-sm text-white/80">
-              <li>
-                <button onClick={scrollToTop} className="hover:text-amber-300 transition-colors">
-                  Home
-                </button>
-              </li>
-              <li>
-                <button onClick={() => scrollToSection('gallery-section')} className="hover:text-amber-300 transition-colors">
-                  Featured Gallery
-                </button>
-              </li>
-              <li>
-                <button onClick={() => scrollToSection('pricing-section')} className="hover:text-amber-300 transition-colors">
-                  Investment & Packages
-                </button>
-              </li>
-              <li>
-                <button onClick={() => scrollToSection('testimonials-section')} className="hover:text-amber-300 transition-colors">
-                  Client Experiences
-                </button>
-              </li>
-              <li>
-                <button onClick={() => scrollToSection('booking-section')} className="hover:text-amber-300 transition-colors">
-                  Book a Session
-                </button>
-              </li>
-              <li>
-                <button onClick={() => scrollToSection('faq-section')} className="hover:text-amber-300 transition-colors">
-                  FAQ
-                </button>
-              </li>
+              {[
+                { label: 'Home', action: scrollToTop },
+                { label: 'About the studio', action: () => scrollToSection('about-section') },
+                { label: 'Investment & packages', action: () => scrollToSection('pricing-section') },
+                { label: 'Client experiences', action: () => scrollToSection('testimonials-section') },
+                { label: 'Book a session', action: () => scrollToSection('booking-section') },
+                { label: 'FAQ', action: () => scrollToSection('faq-section') },
+              ].map((item) => (
+                <li key={item.label}>
+                  <button onClick={item.action} className="transition-colors hover:text-accent-soft">
+                    {item.label}
+                  </button>
+                </li>
+              ))}
             </ul>
           </div>
 
@@ -193,7 +215,7 @@ export default function Footer({ config }: FooterProps) {
             {/* Studio Location */}
             {config?.studio_location_url && (
               <div className="mt-6 bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center gap-4">
-                <div className="w-10 h-10 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-300 flex-shrink-0">
+                <div className="w-10 h-10 rounded-full bg-accent/10 border border-accent/30 flex items-center justify-center text-accent-soft flex-shrink-0">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
                     <circle cx="12" cy="10" r="3" />
@@ -205,7 +227,7 @@ export default function Footer({ config }: FooterProps) {
                     href={config.studio_location_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="font-body text-sm text-amber-200/90 hover:text-amber-300 transition-colors flex items-center gap-1.5"
+                    className="font-body text-sm text-accent-soft/90 hover:text-accent-soft transition-colors flex items-center gap-1.5"
                   >
                     View on Google Maps
                     <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -231,10 +253,41 @@ export default function Footer({ config }: FooterProps) {
           </div>
         </div>
 
+        {/* NAP line — har page par same name/phone/email/address.
+            Local SEO me consistency hi sabse bada trust signal hai. */}
+        {(config?.studio_phone || config?.contact_email || config?.seo?.city) && (
+          <address className="mt-8 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-white/10 pt-6 font-body text-xs not-italic text-white/45">
+            <span className="text-white/70">{config?.studio_name || photographerName}</span>
+            {config?.seo?.city && (
+              <span>
+                {[config.seo.street_address, config.seo.city, config.seo.state, config.seo.postal_code]
+                  .filter(Boolean)
+                  .join(', ')}
+              </span>
+            )}
+            {config?.studio_phone && (
+              <a
+                href={`tel:${config.studio_phone.replace(/\s/g, '')}`}
+                className="transition-colors hover:text-accent-soft"
+              >
+                {config.studio_phone}
+              </a>
+            )}
+            {config?.contact_email && (
+              <a
+                href={`mailto:${config.contact_email}`}
+                className="transition-colors hover:text-accent-soft"
+              >
+                {config.contact_email}
+              </a>
+            )}
+          </address>
+        )}
+
         {/* Bottom Bar */}
-        <div className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-body text-white/50">
+        <div className="mt-6 flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-6 font-body text-xs text-white/45 sm:flex-row">
           <p>© {new Date().getFullYear()} {photographerName}. All rights reserved.</p>
-          <p className="tracking-wide">Designed for Creative Photography</p>
+          <p className="tracking-wide">Crafted for storytellers</p>
         </div>
       </div>
     </footer>

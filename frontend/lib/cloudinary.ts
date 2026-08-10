@@ -22,3 +22,16 @@ export const blurUrl = (publicId: string): string => {
 export const heroUrl = (publicId: string): string => {
   return `https://res.cloudinary.com/${CLOUD_NAME}/image/upload/w_1920,q_auto:good,f_auto/${publicId}`;
 };
+
+/**
+ * Open Graph / Twitter card image — 1200x630 exact, warna social platforms
+ * apne hisaab se crop kar dete hain aur preview kharaab dikhta hai.
+ */
+export const ogImageUrl = (publicId: string): string => {
+  return `https://res.cloudinary.com/${CLOUD_NAME}/image/upload/w_1200,h_630,c_fill,g_auto,q_auto:good,f_jpg/${publicId}`;
+};
+
+/** Sitemap / schema.org me daalne ke liye stable, full-size public URL. */
+export const seoImageUrl = (publicId: string, width = 1600): string => {
+  return `https://res.cloudinary.com/${CLOUD_NAME}/image/upload/w_${width},q_auto:good,f_auto/${publicId}`;
+};

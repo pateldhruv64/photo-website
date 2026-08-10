@@ -235,11 +235,11 @@ export default function ClientGalleryPage({ params }: { params: { slug: string }
   // ═══ STEP 1: Unlock Screen ═══
   if (step === 'unlock') {
     return (
-      <div className="min-h-screen bg-[#FEFCF8] text-[#1E1410] flex items-center justify-center px-4">
+      <div className="min-h-screen bg-[#FFFFFF] text-[#142433] flex items-center justify-center px-4">
         <div className="max-w-sm w-full text-center">
           {/* Lock Icon */}
-          <div className="w-16 h-16 bg-[#EBE7E2] rounded-full flex items-center justify-center mx-auto mb-6">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#1E1410" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <div className="w-16 h-16 bg-[#D6E6F2] rounded-full flex items-center justify-center mx-auto mb-6">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#142433" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
               <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
               <path d="M7 11V7a5 5 0 0 1 10 0v4" />
             </svg>
@@ -264,14 +264,14 @@ export default function ClientGalleryPage({ params }: { params: { slug: string }
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Enter password"
-              className="w-full px-4 py-3 font-body text-sm border border-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#1E1410]/20 transition-all text-center"
+              className="w-full px-4 py-3 font-body text-sm border border-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#142433]/20 transition-all text-center"
               autoFocus
               required
             />
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 bg-[#1E1410] text-white font-body text-sm font-medium rounded-lg hover:bg-gray-800 disabled:opacity-50 transition-all"
+              className="w-full py-3 bg-[#142433] text-white font-body text-sm font-medium rounded-lg hover:bg-gray-800 disabled:opacity-50 transition-all"
             >
               {loading ? 'Verifying...' : 'Unlock Gallery'}
             </button>

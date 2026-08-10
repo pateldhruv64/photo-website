@@ -12,7 +12,7 @@ interface SparklesProps {
 }
 
 export default function Sparkles({
-  particleColor = '#B5784A',
+  particleColor = '#769FCD',
   minSize = 1,
   maxSize = 2.5,
   speed = 1.5,

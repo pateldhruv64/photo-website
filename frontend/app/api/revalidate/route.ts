@@ -1,4 +1,4 @@
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, revalidateTag } from 'next/cache';
 import { NextRequest, NextResponse } from 'next/server';
 
 /**
@@ -23,6 +23,13 @@ export async function POST(request: NextRequest) {
     // Revalidate homepage and all category pages
     revalidatePath('/', 'page');
     revalidatePath('/[category]', 'page');
+
+    // SEO payload cache tag — isse layout ke meta tags, robots.txt,
+    // sitemap.xml aur image-sitemap.xml sab ek saath refresh ho jaate hain.
+    revalidateTag('seo');
+    revalidatePath('/sitemap.xml');
+    revalidatePath('/image-sitemap.xml');
+    revalidatePath('/robots.txt');
 
     return NextResponse.json({
       revalidated: true,

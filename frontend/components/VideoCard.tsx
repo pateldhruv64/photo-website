@@ -47,7 +47,7 @@ export default function VideoCard({ video, onClick }: VideoCardProps) {
         {/* Play Button Overlay */}
         <div className="absolute inset-0 flex items-center justify-center z-10 bg-black/20 group-hover:bg-black/40 transition-colors">
           <div className="w-14 h-14 bg-white/90 rounded-full flex items-center justify-center shadow-lg backdrop-blur-sm group-hover:scale-110 transition-transform">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="#1E1410" className="ml-1">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="#142433" className="ml-1">
               <polygon points="5 3 19 12 5 21 5 3" />
             </svg>
           </div>

@@ -58,14 +58,14 @@ const STEPS = [
 
 export default function ProcessTimeline() {
   return (
-    <section className="py-16 md:py-24 bg-[#1E1410] relative overflow-hidden">
+    <section className="py-16 md:py-24 bg-[#142433] relative overflow-hidden">
       {/* Ambient glow */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-amber-600/8 blur-[120px] rounded-full pointer-events-none" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-accent-deep/8 blur-[120px] rounded-full pointer-events-none" />
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         {/* Section Header */}
         <div className="text-center mb-16 flex flex-col items-center">
-          <p className="eyebrow text-amber-300 justify-center mb-2">
+          <p className="eyebrow text-accent-soft justify-center mb-2">
             Our Process
           </p>
           <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-light text-white">
@@ -74,13 +74,13 @@ export default function ProcessTimeline() {
           <p className="mt-3 font-body text-sm md:text-base text-white/60 max-w-md">
             From first hello to your final gallery — here&apos;s how we bring your vision to life.
           </p>
-          <div className="divider-line mx-auto mt-6 max-w-[80px] bg-amber-400/50" />
+          <div className="divider-line mx-auto mt-6 max-w-[80px] bg-accent-soft/50" />
         </div>
 
         {/* Timeline Steps */}
         <div className="relative">
           {/* Vertical connecting line (Desktop) */}
-          <div className="hidden md:block absolute left-1/2 top-0 bottom-0 w-px bg-gradient-to-b from-transparent via-amber-500/30 to-transparent -translate-x-1/2" />
+          <div className="hidden md:block absolute left-1/2 top-0 bottom-0 w-px bg-gradient-to-b from-transparent via-accent/30 to-transparent -translate-x-1/2" />
 
           <div className="space-y-8 md:space-y-0">
             {STEPS.map((step, idx) => {
@@ -100,11 +100,11 @@ export default function ProcessTimeline() {
                   <div className={`md:w-[calc(50%-2rem)] ${isEven ? 'md:text-right' : 'md:text-left'}`}>
                     <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 hover:bg-white/8 transition-all duration-300 group">
                       <div className={`flex items-center gap-3 mb-3 ${isEven ? 'md:justify-end' : ''}`}>
-                        <span className="font-display text-xs tracking-[0.3em] text-amber-300/60 font-medium">
+                        <span className="font-display text-xs tracking-[0.3em] text-accent-soft/60 font-medium">
                           STEP {step.number}
                         </span>
                       </div>
-                      <h3 className="font-display text-xl md:text-2xl font-light text-white mb-2 group-hover:text-amber-100 transition-colors">
+                      <h3 className="font-display text-xl md:text-2xl font-light text-white mb-2 group-hover:text-accent-tint transition-colors">
                         {step.title}
                       </h3>
                       <p className="font-body text-sm text-white/60 leading-relaxed">
@@ -114,13 +114,13 @@ export default function ProcessTimeline() {
                   </div>
 
                   {/* Center Node */}
-                  <div className="hidden md:flex absolute left-1/2 -translate-x-1/2 w-12 h-12 rounded-full bg-[#1E1410] border-2 border-amber-500/40 items-center justify-center text-amber-300 z-10 shadow-[0_0_20px_rgba(181,120,74,0.3)]">
+                  <div className="hidden md:flex absolute left-1/2 -translate-x-1/2 w-12 h-12 rounded-full bg-[#142433] border-2 border-accent/40 items-center justify-center text-accent-soft z-10 shadow-[0_0_20px_rgba(118,159,205,0.3)]">
                     {step.icon}
                   </div>
 
                   {/* Mobile icon (visible only on mobile) */}
                   <div className="md:hidden flex items-center gap-3 mb-3">
-                    <div className="w-10 h-10 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-300">
+                    <div className="w-10 h-10 rounded-full bg-accent/10 border border-accent/30 flex items-center justify-center text-accent-soft">
                       {step.icon}
                     </div>
                   </div>

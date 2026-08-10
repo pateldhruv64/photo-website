@@ -46,14 +46,23 @@ const photoUploadSchema = z.object({
   title: z.string().optional().default(''),
   category: z.string().min(1, 'Category ID is required'),
   is_featured: z.boolean().optional().default(false),
-  order: z.number().optional().default(0)
+  order: z.number().optional().default(0),
+  // Image SEO — blank chhodo to utils/seo.js auto bana dega
+  alt_text: z.string().max(250).optional().default(''),
+  caption: z.string().max(500).optional().default(''),
+  location: z.string().optional().default(''),
+  tags: z.array(z.string()).optional().default([])
 });
 
 const photoUpdateSchema = z.object({
   title: z.string().optional(),
   category: z.string().optional(),
   is_featured: z.boolean().optional(),
-  order: z.number().optional()
+  order: z.number().optional(),
+  alt_text: z.string().max(250).optional(),
+  caption: z.string().max(500).optional(),
+  location: z.string().optional(),
+  tags: z.array(z.string()).optional()
 });
 
 const categorySchema = z.object({
@@ -63,7 +72,41 @@ const categorySchema = z.object({
   show_in_navbar: z.boolean().optional().default(false),
   navbar_order: z.number().optional().default(0),
   is_active: z.boolean().optional().default(true),
-  cover_photo: z.string().nullable().optional()
+  cover_photo: z.string().nullable().optional(),
+  // Per-category SEO — blank = auto
+  seo_title: z.string().max(120).optional().default(''),
+  seo_description: z.string().max(400).optional().default(''),
+  seo_keywords: z.array(z.string()).optional().default([]),
+  intro_text: z.string().optional().default('')
+});
+
+const seoSchema = z.object({
+  meta_title: z.string().max(120).optional(),
+  meta_description: z.string().max(400).optional(),
+  keywords: z.array(z.string()).optional(),
+  title_template: z.string().optional(),
+  og_image: z.object({
+    public_id: z.string().optional().default(''),
+    secure_url: z.string().optional().default('')
+  }).nullable().optional(),
+  twitter_handle: z.string().optional(),
+  google_site_verification: z.string().optional(),
+  bing_site_verification: z.string().optional(),
+  business_type: z.string().optional(),
+  street_address: z.string().optional(),
+  city: z.string().optional(),
+  state: z.string().optional(),
+  postal_code: z.string().optional(),
+  country: z.string().optional(),
+  latitude: z.number().nullable().optional(),
+  longitude: z.number().nullable().optional(),
+  price_range: z.string().optional(),
+  founding_year: z.string().optional(),
+  service_areas: z.array(z.string()).optional(),
+  opening_hours: z.array(z.string()).optional(),
+  allow_indexing: z.boolean().optional(),
+  auto_seo: z.boolean().optional(),
+  custom_head_scripts: z.string().optional()
 });
 
 const configUpdateSchema = z.object({
@@ -89,6 +132,7 @@ const configUpdateSchema = z.object({
   studio_description: z.string().optional(),
   studio_whatsapp: z.string().optional(),
   studio_location_url: z.string().optional(),
+  seo: seoSchema.optional(),
   navbar_links: z.array(z.object({
     label: z.string(),
     url: z.string(),
@@ -422,14 +466,22 @@ exports.deleteCategory = async (req, res) => {
 exports.updateConfig = async (req, res) => {
   try {
     const data = configUpdateSchema.parse(req.body);
-    
+    const { seo: seoPatch, ...rest } = data;
+
     let config = await SiteConfig.findOne();
     if (!config) {
-      config = new SiteConfig(data);
+      config = new SiteConfig(rest);
     } else {
-      Object.assign(config, data);
+      Object.assign(config, rest);
     }
-    
+
+    // seo ek nested subdoc hai — Object.assign use karte to partial save
+    // par baaki SEO fields wipe ho jaate. Isliye merge karke set karte hain.
+    if (seoPatch) {
+      const current = config.seo ? config.seo.toObject() : {};
+      config.seo = { ...current, ...seoPatch };
+    }
+
     await config.save();
     
     // Return populated version

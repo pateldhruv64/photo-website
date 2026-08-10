@@ -181,7 +181,7 @@ export default function PhotosPage() {
             input.click();
           }}
         >
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#7A6555" strokeWidth="1.5" className="mx-auto mb-3">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#476485" strokeWidth="1.5" className="mx-auto mb-3">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
             <polyline points="17 8 12 3 7 8" />
             <line x1="12" y1="3" x2="12" y2="15" />
@@ -376,11 +376,13 @@ function EditPhotoModal({
     typeof photo.category === 'object' ? photo.category._id : photo.category
   );
   const [isFeatured, setIsFeatured] = useState(photo.is_featured);
+  const [altText, setAltText] = useState(photo.alt_text || '');
+  const [location, setLocation] = useState(photo.location || '');
 
   return (
     <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={onClose}>
       <div
-        className="bg-white rounded-sm border border-border max-w-md w-full p-6 animate-scale-in"
+        className="max-h-[88dvh] w-full max-w-md overflow-y-auto rounded-sm border border-border bg-white p-6 animate-scale-in"
         onClick={(e) => e.stopPropagation()}
       >
         <h3 className="font-display text-xl font-light text-text-primary mb-4">Edit Photo</h3>
@@ -418,6 +420,41 @@ function EditPhotoModal({
             />
             <span className="font-body text-sm text-text-primary">Featured photo</span>
           </label>
+
+          {/* ── Image SEO ──
+              Google Images se traffic sirf alt text par depend karta hai. */}
+          <div className="space-y-3 border-t border-border pt-4">
+            <div>
+              <label className="mb-1.5 block font-body text-xs uppercase tracking-wider text-text-muted">
+                Alt text (Google Images)
+              </label>
+              <input
+                type="text"
+                value={altText}
+                onChange={(e) => setAltText(e.target.value)}
+                maxLength={250}
+                placeholder="Blank chhodenge to apne aap ban jaayega"
+                className="w-full rounded-sm border border-border px-3 py-2 font-body text-sm focus:border-text-primary focus:outline-none"
+              />
+              <p className="mt-1 font-body text-[11px] leading-relaxed text-text-muted">
+                Photo me kya dikh raha hai wo likhein — jaise &ldquo;Candid haldi ceremony
+                moment, Ahmedabad wedding&rdquo;.
+              </p>
+            </div>
+
+            <div>
+              <label className="mb-1.5 block font-body text-xs uppercase tracking-wider text-text-muted">
+                Location
+              </label>
+              <input
+                type="text"
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                placeholder="e.g. The Grand Bhagwati, Ahmedabad"
+                className="w-full rounded-sm border border-border px-3 py-2 font-body text-sm focus:border-text-primary focus:outline-none"
+              />
+            </div>
+          </div>
         </div>
 
         <div className="mt-6 flex gap-3 justify-end">
@@ -428,7 +465,15 @@ function EditPhotoModal({
             Cancel
           </button>
           <button
-            onClick={() => onSave({ title, category, is_featured: isFeatured })}
+            onClick={() =>
+              onSave({
+                title,
+                category,
+                is_featured: isFeatured,
+                alt_text: altText,
+                location,
+              })
+            }
             className="px-4 py-2 bg-text-primary text-white font-body text-sm rounded-sm hover:bg-gray-800 transition-colors"
           >
             Save Changes

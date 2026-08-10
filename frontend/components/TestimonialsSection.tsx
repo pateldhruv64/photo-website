@@ -56,7 +56,7 @@ export default function TestimonialsSection() {
 
   const renderStars = (rating: number) => {
     return Array.from({ length: 5 }, (_, i) => (
-      <span key={i} className={`text-sm ${i < rating ? 'text-amber-400' : 'text-neutral-300'}`}>
+      <span key={i} className={`text-sm ${i < rating ? 'text-accent-soft' : 'text-neutral-300'}`}>
         ★
       </span>
     ));
@@ -116,7 +116,7 @@ export default function TestimonialsSection() {
                         unoptimized
                       />
                     ) : (
-                      <div className="w-full h-full bg-[#1E1410] flex flex-col items-center justify-center text-white p-6 text-center">
+                      <div className="w-full h-full bg-[#142433] flex flex-col items-center justify-center text-white p-6 text-center">
                         <span className="font-display text-5xl font-light mb-2">
                           {testimonial.client_name.charAt(0)}
                         </span>
@@ -136,7 +136,7 @@ export default function TestimonialsSection() {
                 {renderStars(current.rating)}
               </div>
 
-              <span className="font-display text-6xl text-[#B5784A]/30 leading-none block -mb-4 select-none">
+              <span className="font-display text-6xl text-[#769FCD]/30 leading-none block -mb-4 select-none">
                 &ldquo;
               </span>
 
@@ -147,7 +147,7 @@ export default function TestimonialsSection() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -15 }}
                   transition={{ duration: 0.3 }}
-                  className="font-display text-lg sm:text-xl text-[#1E1410] leading-relaxed italic mb-6 min-h-[80px]"
+                  className="font-display text-lg sm:text-xl text-[#142433] leading-relaxed italic mb-6 min-h-[80px]"
                 >
                   {current.review_text}
                 </motion.p>
@@ -155,10 +155,10 @@ export default function TestimonialsSection() {
             </div>
 
             <div>
-              <p className="font-display text-xl font-medium text-[#1E1410]">
+              <p className="font-display text-xl font-medium text-[#142433]">
                 {current.client_name}
               </p>
-              <span className="inline-block text-xs tracking-widest uppercase text-[#B5784A] font-body mt-0.5 font-semibold">
+              <span className="inline-block text-xs tracking-widest uppercase text-[#769FCD] font-body mt-0.5 font-semibold">
                 {current.event_type}
               </span>
 
@@ -167,7 +167,7 @@ export default function TestimonialsSection() {
                 <div className="flex items-center gap-3">
                   <button
                     onClick={handlePrev}
-                    className="w-10 h-10 rounded-full border border-border bg-white hover:bg-[#1E1410] hover:text-white flex items-center justify-center transition-all duration-300 shadow-sm"
+                    className="w-10 h-10 rounded-full border border-border bg-white hover:bg-[#142433] hover:text-white flex items-center justify-center transition-all duration-300 shadow-sm"
                     aria-label="Previous testimonial"
                   >
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -176,7 +176,7 @@ export default function TestimonialsSection() {
                   </button>
                   <button
                     onClick={handleNext}
-                    className="w-10 h-10 rounded-full border border-border bg-white hover:bg-[#1E1410] hover:text-white flex items-center justify-center transition-all duration-300 shadow-sm"
+                    className="w-10 h-10 rounded-full border border-border bg-white hover:bg-[#142433] hover:text-white flex items-center justify-center transition-all duration-300 shadow-sm"
                     aria-label="Next testimonial"
                   >
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -193,7 +193,7 @@ export default function TestimonialsSection() {
                       onClick={() => setActiveIdx(i)}
                       className={`h-2 rounded-full transition-all duration-300 ${
                         i === activeIdx % activeTestimonials.length
-                          ? 'w-6 bg-[#B5784A]'
+                          ? 'w-6 bg-[#769FCD]'
                           : 'w-2 bg-neutral-300 hover:bg-neutral-400'
                       }`}
                       aria-label={`Go to slide ${i + 1}`}

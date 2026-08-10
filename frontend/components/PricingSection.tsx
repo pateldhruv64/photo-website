@@ -57,16 +57,16 @@ export default function PricingSection() {
             <TiltCard
               key={pkg.name}
               maxTilt={6}
-              spotlightColor={pkg.highlight ? 'rgba(255, 255, 255, 0.15)' : 'rgba(30, 20, 16, 0.08)'}
+              spotlightColor={pkg.highlight ? 'rgba(255,255,255,0.15)' : 'rgba(20,36,51,0.08)'}
               className={`rounded-2xl p-8 transition-all flex flex-col justify-between relative overflow-hidden ${
                 pkg.highlight
-                  ? 'bg-[#1E1410] border-2 border-amber-500/40 text-white shadow-2xl md:scale-105 pricing-glow'
+                  ? 'bg-[#142433] border-2 border-accent/40 text-white shadow-2xl md:scale-105 pricing-glow'
                   : 'bg-white/80 backdrop-blur-sm border border-border text-text-primary shadow-sm hover:shadow-xl'
               }`}
             >
               <div>
                 {pkg.highlight && (
-                  <span className="inline-block font-body text-[10px] tracking-[0.25em] uppercase text-amber-300 bg-white/10 px-3 py-1 rounded-full mb-4 border border-amber-300/30">
+                  <span className="inline-block font-body text-[10px] tracking-[0.25em] uppercase text-accent-soft bg-white/10 px-3 py-1 rounded-full mb-4 border border-accent-soft/30">
                     ★ Most Popular
                   </span>
                 )}
@@ -83,9 +83,9 @@ export default function PricingSection() {
                 <ul className="space-y-3.5 mb-8">
                   {pkg.features.map((f) => (
                     <li key={f} className={`font-body text-sm flex items-center gap-3 ${pkg.highlight ? 'text-white/90' : 'text-text-muted'}`}>
-                      <span className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 ${pkg.highlight ? 'bg-white/20' : 'bg-[#EAE3D9]'}`}>
+                      <span className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 ${pkg.highlight ? 'bg-white/20' : 'bg-[#D6E6F2]'}`}>
                         <svg width="10" height="10" viewBox="0 0 10 8" fill="none">
-                          <path d="M1 4l2.5 2.5L9 1" stroke={pkg.highlight ? '#fff' : '#1E1410'} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                          <path d="M1 4l2.5 2.5L9 1" stroke={pkg.highlight ? '#fff' : '#142433'} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
                         </svg>
                       </span>
                       {f}
@@ -96,13 +96,13 @@ export default function PricingSection() {
 
               <div className="mt-6">
                 {pkg.highlight ? (
-                  <ShimmerButton onClick={scrollToBooking} className="w-full bg-white text-[#1E1410] hover:bg-amber-50 font-semibold border-none py-3.5">
+                  <ShimmerButton onClick={scrollToBooking} className="w-full bg-white text-[#142433] hover:bg-accent-tint font-semibold border-none py-3.5">
                     Book {pkg.name} Package
                   </ShimmerButton>
                 ) : (
                   <button
                     onClick={scrollToBooking}
-                    className="w-full text-center py-3.5 rounded-full border border-[#1E1410] font-body text-sm font-medium transition-all duration-300 text-[#1E1410] hover:bg-[#1E1410] hover:text-white"
+                    className="w-full text-center py-3.5 rounded-full border border-[#142433] font-body text-sm font-medium transition-all duration-300 text-[#142433] hover:bg-[#142433] hover:text-white"
                   >
                     Select {pkg.name}
                   </button>

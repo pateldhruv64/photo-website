@@ -7,6 +7,7 @@ const ClientGallery = require('../models/ClientGallery');
 const jwt = require('jsonwebtoken');
 const axios = require('axios');
 const archiver = require('archiver');
+const { resolveSiteSeo, buildCategorySeo, buildPhotoAlt } = require('../utils/seo');
 
 /**
  * Verify client gallery JWT token (separate secret from admin JWT)
@@ -83,8 +84,14 @@ exports.getPhotos = async (req, res) => {
       Photo.countDocuments(filter)
     ]);
 
+    const config = await SiteConfig.getConfig();
+    const siteSeo = config.seo || {};
+
     res.json({
-      photos,
+      photos: photos.map((p) => ({
+        ...p,
+        alt_text: buildPhotoAlt(p, p.category?.name, config, siteSeo)
+      })),
       pagination: {
         page: pageNum,
         limit: limitNum,
@@ -144,16 +151,195 @@ exports.getHomepage = async (req, res) => {
         .lean()
     ]);
 
+    // Har photo par SEO-friendly alt text chipka do (blank ho to auto-generate)
+    const siteSeo = config.seo || {};
+    const withAlt = (list) => list.map((p) => ({
+      ...p,
+      alt_text: buildPhotoAlt(p, p.category?.name, config, siteSeo)
+    }));
+
     res.json({
       config,
       categories,
-      featuredPhotos,
-      photos,
+      featuredPhotos: withAlt(featuredPhotos),
+      photos: withAlt(photos),
       videos
     });
   } catch (error) {
     console.error('getHomepage error:', error);
     res.status(500).json({ error: 'Failed to fetch homepage data.' });
+  }
+};
+
+/**
+ * GET /api/seo
+ * Poora resolved SEO payload — meta tags, keywords, local business data
+ * aur aggregate rating. Frontend isi ek call se saara metadata + JSON-LD
+ * bana leta hai. Blank admin fields yaha auto-fill hote hain.
+ */
+exports.getSeo = async (req, res) => {
+  try {
+    const [config, categories, testimonials, photoCount, videoCount] = await Promise.all([
+      SiteConfig.getConfig(),
+      Category.find({ is_active: true })
+        .populate('cover_photo')
+        .sort({ navbar_order: 1 })
+        .lean(),
+      Testimonial.find({ is_active: true }).select('rating').lean(),
+      Photo.countDocuments({}),
+      VideoItem.countDocuments({ is_active: true })
+    ]);
+
+    // AggregateRating schema ke liye — Google rich snippet me stars dikhte hain
+    const rated = testimonials.filter((t) => typeof t.rating === 'number' && t.rating > 0);
+    const ratingValue = rated.length
+      ? Number((rated.reduce((sum, t) => sum + t.rating, 0) / rated.length).toFixed(1))
+      : null;
+
+    const stats = {
+      photo_count: photoCount,
+      video_count: videoCount,
+      category_count: categories.length,
+      review_count: rated.length,
+      rating_value: ratingValue
+    };
+
+    const seo = resolveSiteSeo({ config, categories, stats });
+
+    // Har category ka resolved SEO bhi bhej do — frontend ko dobara compute nahi karna padta
+    seo.categories = categories.map((cat) => ({
+      _id: cat._id,
+      name: cat.name,
+      slug: cat.slug,
+      description: cat.description || '',
+      intro_text: cat.intro_text || '',
+      cover_public_id: cat.cover_photo?.public_id || '',
+      updated_at: cat.updatedAt || cat.createdAt || null,
+      ...buildCategorySeo(cat, config, config.seo || {})
+    }));
+
+    res.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=3600');
+    res.json(seo);
+  } catch (error) {
+    console.error('getSeo error:', error);
+    res.status(500).json({ error: 'Failed to build SEO payload.' });
+  }
+};
+
+/**
+ * GET /api/sitemap
+ * Sitemap ke liye chhota payload: categories + lastmod + top images.
+ * Image sitemap se Google Images me photos index hoti hain.
+ */
+exports.getSitemapData = async (req, res) => {
+  try {
+    const [config, categories] = await Promise.all([
+      SiteConfig.getConfig(),
+      Category.find({ is_active: true })
+        .populate('cover_photo')
+        .sort({ navbar_order: 1 })
+        .lean()
+    ]);
+
+    const entries = await Promise.all(
+      categories.map(async (cat) => {
+        // Har category ki top 40 photos image-sitemap me daalte hain.
+        // Isse zyada bhejne se sitemap bloat ho jaata hai.
+        const [photos, latest] = await Promise.all([
+          Photo.find({ category: cat._id })
+            .sort({ order: 1, created_at: -1 })
+            .limit(40)
+            .select('public_id title alt_text caption location')
+            .lean(),
+          Photo.findOne({ category: cat._id })
+            .sort({ created_at: -1 })
+            .select('created_at')
+            .lean()
+        ]);
+
+        return {
+          slug: cat.slug,
+          name: cat.name,
+          last_modified: latest?.created_at || cat.updatedAt || cat.createdAt || null,
+          photo_count: photos.length,
+          images: photos.map((p) => ({
+            public_id: p.public_id,
+            title: p.title || cat.name,
+            caption: p.caption || '',
+            alt: buildPhotoAlt(p, cat.name, config, config.seo || {})
+          }))
+        };
+      })
+    );
+
+    res.set('Cache-Control', 'public, max-age=600, stale-while-revalidate=3600');
+    res.json({
+      allow_indexing: config.seo?.allow_indexing !== false,
+      categories: entries
+    });
+  } catch (error) {
+    console.error('getSitemapData error:', error);
+    res.status(500).json({ error: 'Failed to build sitemap data.' });
+  }
+};
+
+/**
+ * GET /api/category/:slug
+ * Ek call me category page ka saara SSR data — category, resolved SEO,
+ * pehle page ki photos (alt text ke saath) aur videos.
+ * Isse category page server par render ho paata hai, jo Google ke liye zaroori hai.
+ */
+exports.getCategoryPage = async (req, res) => {
+  try {
+    const { slug } = req.params;
+    const limit = Math.min(60, Math.max(1, parseInt(req.query.limit) || 24));
+
+    const category = await Category.findOne({ slug, is_active: true })
+      .populate('cover_photo')
+      .lean();
+
+    if (!category) {
+      return res.status(404).json({ error: 'Category not found.' });
+    }
+
+    const [config, photos, total, videos] = await Promise.all([
+      SiteConfig.getConfig(),
+      Photo.find({ category: category._id })
+        .sort({ order: 1, created_at: -1 })
+        .limit(limit)
+        .populate('category', 'name slug')
+        .lean(),
+      Photo.countDocuments({ category: category._id }),
+      VideoItem.find({ category: category._id, is_active: true })
+        .sort({ order: 1, created_at: -1 })
+        .populate('category', 'name slug')
+        .lean()
+    ]);
+
+    const siteSeo = config.seo || {};
+    const withAlt = photos.map((p) => ({
+      ...p,
+      alt_text: buildPhotoAlt(p, category.name, config, siteSeo)
+    }));
+
+    res.set('Cache-Control', 'public, max-age=120, stale-while-revalidate=600');
+    res.json({
+      category,
+      seo: buildCategorySeo(category, config, siteSeo),
+      config,
+      photos: withAlt,
+      videos,
+      pagination: {
+        page: 1,
+        limit,
+        total,
+        pages: Math.ceil(total / limit),
+        hasMore: withAlt.length < total
+      }
+    });
+  } catch (error) {
+    console.error('getCategoryPage error:', error);
+    res.status(500).json({ error: 'Failed to fetch category page.' });
   }
 };
 

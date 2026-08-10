@@ -16,6 +16,7 @@ const navItems = [
   { label: 'Testimonials', href: '/admin/testimonials', icon: 'star' },
   { label: 'Videos', href: '/admin/videos', icon: 'video' },
   { label: 'Client Galleries', href: '/admin/client-galleries', icon: 'lock' },
+  { label: 'SEO & Google', href: '/admin/seo', icon: 'search' },
   { label: 'Settings', href: '/admin/settings', icon: 'settings' },
 ];
 
@@ -55,6 +56,12 @@ const icons: Record<string, JSX.Element> = {
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
       <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
       <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+    </svg>
+  ),
+  search: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="11" cy="11" r="7" />
+      <line x1="21" y1="21" x2="16.65" y2="16.65" />
     </svg>
   ),
 };

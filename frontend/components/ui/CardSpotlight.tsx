@@ -13,7 +13,7 @@ export default function CardSpotlight({
   children,
   className = '',
   radius = 280,
-  color = 'rgba(181, 120, 74, 0.25)',
+  color = 'rgba(118,159,205,0.25)',
 }: CardSpotlightProps) {
   const [position, setPosition] = useState({ x: -radius * 2, y: -radius * 2 });
   const [opacity, setOpacity] = useState(0);

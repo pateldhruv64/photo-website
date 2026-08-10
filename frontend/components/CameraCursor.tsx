@@ -74,7 +74,7 @@ export default function CameraCursor() {
   return (
     <div 
       ref={cursorRef}
-      className={`pointer-events-none fixed top-0 left-0 z-[9999] flex items-center justify-center text-[#1E1410] drop-shadow-md transition-opacity duration-300 ${isVisible ? 'opacity-100' : 'opacity-0'}`}
+      className={`pointer-events-none fixed top-0 left-0 z-[9999] flex items-center justify-center text-[#142433] drop-shadow-md transition-opacity duration-300 ${isVisible ? 'opacity-100' : 'opacity-0'}`}
       style={{ willChange: 'transform' }}
     >
       <div className="relative">
@@ -91,7 +91,7 @@ export default function CameraCursor() {
         {/* Camera Flash Element (Mini flash from the camera itself) */}
         <div 
           className={`absolute -top-1 right-0 w-2.5 h-2.5 bg-white rounded-full blur-[1px] transition-all duration-75 ${clicked ? 'opacity-100 scale-150' : 'opacity-0 scale-50'}`} 
-          style={{ boxShadow: '0 0 12px 6px rgba(255, 255, 255, 0.9)' }}
+          style={{ boxShadow: '0 0 12px 6px rgba(255,255,255,0.9)' }}
         />
       </div>
     </div>

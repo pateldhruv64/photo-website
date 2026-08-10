@@ -131,49 +131,83 @@ export default function HomeGallery({ categories, initialPhotos = [], initialVid
   const allCategories = [{ _id: 'all', name: 'All Work', slug: 'all' }, ...categories];
 
   return (
-    <div className="pt-4 pb-6 md:pt-8 md:pb-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" id="gallery-section">
-      {/* Animate UI Animated Category Pill Tabs */}
-      <div className="flex items-center justify-start md:justify-center mb-10 overflow-x-auto whitespace-nowrap no-scrollbar py-2 w-full">
-        <div className="flex items-center gap-1.5 p-1.5 bg-[#EAE3D9]/60 backdrop-blur-md rounded-full border border-[#EDE4D8]">
-          {allCategories.map((cat) => {
-            const isActive = activeCategory === cat._id;
-            return (
-              <button
-                key={cat._id}
-                onClick={() => handleCategoryChange(cat._id)}
-                className={`relative px-5 py-2 text-xs font-medium tracking-widest uppercase transition-colors duration-300 rounded-full z-10 ${
-                  isActive ? 'text-white' : 'text-[#7A6555] hover:text-[#1E1410]'
-                }`}
-              >
-                {isActive && (
-                  <motion.div
-                    layoutId="activeCategoryPill"
-                    className="absolute inset-0 bg-[#1E1410] rounded-full z-[-1] shadow-md"
-                    transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-                  />
-                )}
-                {cat.name}
-                {/* Photo count badge */}
-                {(() => {
-                  const count = cat._id === 'all'
-                    ? latestPhotos.length
-                    : latestPhotos.filter((p) => {
-                        if (!p.category) return false;
-                        if (typeof p.category === 'string') return p.category === cat._id;
-                        return p.category._id === cat._id;
-                      }).length;
-                  return count > 0 ? (
-                    <span className={`ml-1.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${
-                      isActive ? 'bg-white/20 text-white' : 'bg-[#EDE4D8] text-[#7A6555]'
-                    }`}>
-                      {count}
-                    </span>
-                  ) : null;
-                })()}
-              </button>
-            );
-          })}
+    <section
+      className="mx-auto max-w-7xl px-5 pb-8 pt-10 sm:px-6 md:pb-12 md:pt-16 lg:px-8"
+      id="gallery-section"
+      aria-labelledby="gallery-heading"
+    >
+      {/* ── Section header ──
+          Pehle yaha seedhe tabs shuru ho jaate the — na koi heading, na
+          rhythm. H2 se page ka structure Google ko bhi saaf dikhta hai. */}
+      <div className="mb-8 flex flex-col items-start gap-4 md:mb-10 md:flex-row md:items-end md:justify-between">
+        <div>
+          <p className="eyebrow">The Portfolio</p>
+          <h2
+            id="gallery-heading"
+            className="font-display text-3xl font-light leading-[1.1] tracking-[-0.01em] text-ink sm:text-4xl md:text-5xl"
+          >
+            Selected <span className="italic text-ink-soft">work</span>
+          </h2>
         </div>
+
+        <p className="max-w-sm font-body text-[13px] leading-relaxed text-ink-muted md:text-right">
+          {latestPhotos.length > 0
+            ? `${latestPhotos.length} frames across ${categories.length} collections. Tap any photo to view full screen.`
+            : 'Browse the collections below.'}
+        </p>
+      </div>
+
+      {/* ── Category tabs ──
+          Mobile par scroll hoti hain, edges par fade taki pata chale
+          aur bhi options hain. */}
+      <div
+        role="tablist"
+        aria-label="Filter photos by collection"
+        className="no-scrollbar -mx-5 mb-9 flex items-center gap-1.5 overflow-x-auto px-5 pb-1 sm:mx-0 sm:px-0 md:mb-11 md:justify-center"
+      >
+        {allCategories.map((cat) => {
+          const isActive = activeCategory === cat._id;
+          const count =
+            cat._id === 'all'
+              ? latestPhotos.length
+              : latestPhotos.filter((p) => {
+                  if (!p.category) return false;
+                  if (typeof p.category === 'string') return p.category === cat._id;
+                  return p.category._id === cat._id;
+                }).length;
+
+          return (
+            <button
+              key={cat._id}
+              role="tab"
+              aria-selected={isActive}
+              onClick={() => handleCategoryChange(cat._id)}
+              className={`relative z-10 flex flex-shrink-0 items-center gap-2 rounded-full border px-5 py-2.5 font-body text-[11px] uppercase tracking-[0.16em] transition-colors duration-300 ${
+                isActive
+                  ? 'border-transparent text-canvas'
+                  : 'border-line bg-canvas/70 text-ink-muted hover:border-line-strong hover:text-ink'
+              }`}
+            >
+              {isActive && (
+                <motion.span
+                  layoutId="activeCategoryPill"
+                  className="absolute inset-0 z-[-1] rounded-full bg-ink"
+                  transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+                />
+              )}
+              <span>{cat.name}</span>
+              {count > 0 && (
+                <span
+                  className={`tabular text-[10px] font-medium ${
+                    isActive ? 'text-canvas/55' : 'text-ink-muted'
+                  }`}
+                >
+                  {count}
+                </span>
+              )}
+            </button>
+          );
+        })}
       </div>
 
       {/* Photo Grid with Client-Side Infinite Scroll + Videos */}
@@ -190,11 +224,12 @@ export default function HomeGallery({ categories, initialPhotos = [], initialVid
 
             {/* Videos Section Below Photos */}
             {activeVideos.length > 0 && (
-              <div className="mt-10 pt-10 border-t border-border/20 flex flex-col items-center md:items-start">
-                <p className="eyebrow justify-center md:justify-start mb-6">
-                  Featured Videos
-                </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
+              <div className="mt-14 border-t border-line/70 pt-12">
+                <p className="eyebrow">Motion</p>
+                <h3 className="mb-8 font-display text-2xl font-light text-ink sm:text-3xl">
+                  Films &amp; <span className="italic text-ink-soft">reels</span>
+                </h3>
+                <div className="grid w-full grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
                   {activeVideos.map((video) => (
                     <VideoCard
                       key={video._id}
@@ -207,8 +242,13 @@ export default function HomeGallery({ categories, initialPhotos = [], initialVid
             )}
           </InfiniteScroll>
         ) : (
-          <div className="text-center py-20">
-            <p className="font-body text-text-muted text-sm">No photos found in this category.</p>
+          <div className="py-24 text-center">
+            <p className="font-display text-2xl font-light text-ink-soft">
+              Nothing here yet
+            </p>
+            <p className="mt-2 font-body text-sm text-ink-muted">
+              This collection is still being curated. Try another one above.
+            </p>
           </div>
         )}
       </div>
@@ -232,6 +272,6 @@ export default function HomeGallery({ categories, initialPhotos = [], initialVid
           onClose={() => setVideoLightbox(null)}
         />
       )}
-    </div>
+    </section>
   );
 }
