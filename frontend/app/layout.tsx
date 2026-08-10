@@ -90,6 +90,14 @@ export default async function RootLayout({
         <link rel="preconnect" href="https://res.cloudinary.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://res.cloudinary.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        {/* Paint se PEHLE `js` class lagti hai. Scroll-reveal CSS isi par
+            depend karti hai — matlab JS block/fail ho to content bina
+            animation ke dikhega, gayab nahi hoga. Ek line, koi flash nahi. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `document.documentElement.classList.add('js')`,
+          }}
+        />
       </head>
       <body className="font-body antialiased bg-background text-ink overflow-x-hidden min-h-screen">
         {/* Site-wide structured data: LocalBusiness + WebSite + Person */}

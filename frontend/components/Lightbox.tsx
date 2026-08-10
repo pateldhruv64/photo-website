@@ -147,6 +147,25 @@ export default function Lightbox({ photos, currentIndex, onClose, onNavigate }: 
     };
   }, [onClose, goNext, goPrev]);
 
+  /* Sirf aage/peeche wali photo prefetch karo.
+     Pehle PhotoGrid page load par hi 40+ full-size images kheench leta
+     tha. Ab sirf 2 — aur wahi jinki user ko agle click par zarurat hai.
+     Navigation utna hi instant lagta hai, data ka kharcha 95% kam. */
+  useEffect(() => {
+    const neighbours = [photos[currentIndex + 1], photos[currentIndex - 1]].filter(Boolean);
+    const imgs = neighbours.map((p) => {
+      const img = new window.Image();
+      img.src = lightboxUrl(p.public_id);
+      return img;
+    });
+    return () => {
+      // Abort pending downloads agar user jaldi close kar de
+      imgs.forEach((img) => {
+        img.src = '';
+      });
+    };
+  }, [currentIndex, photos]);
+
   if (!mounted || !photo) return null;
 
   return createPortal(

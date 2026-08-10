@@ -5,7 +5,6 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import useSWR from 'swr';
-import { motion, AnimatePresence } from 'framer-motion';
 import { fetcher } from '@/lib/fetcher';
 import { getWhatsAppUrl } from '@/lib/whatsapp';
 import type { SiteConfig, Category } from '@/lib/types';
@@ -278,99 +277,95 @@ export default function Navbar({ config: initialConfig, categories: initialCateg
         </div>
       </header>
 
-      {/* ═══ Mobile overlay ═══ */}
-      <AnimatePresence>
-        {mobileOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.28 }}
-            className="fixed inset-0 z-[60] flex flex-col bg-obsidian md:hidden"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Navigation menu"
-          >
-            {/* Warm ambient glow — flat black se zyada alive lagta hai */}
-            <div className="pointer-events-none absolute -right-16 top-16 h-64 w-64 rounded-full bg-accent/15 blur-[110px]" />
-            <div className="pointer-events-none absolute -left-10 bottom-32 h-48 w-48 rounded-full bg-accent-deep/12 blur-[90px]" />
+      {/* ═══ Mobile overlay ═══
+          Yahan pehle framer-motion tha. Navbar har page par load hota hai,
+          to uska import framer-motion (~35KB gz) ko MAIN bundle me le
+          aata tha — sirf ek mobile menu ke fade + stagger ke liye.
+          Ab wahi effect pure CSS se: koi JS nahi, aur animation
+          compositor thread par chalta hai (main thread free). */}
+      {mobileOpen && (
+        <div
+          className="menu-overlay fixed inset-0 z-[60] flex flex-col bg-obsidian md:hidden"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Navigation menu"
+        >
+          {/* Ambient glow — flat black se zyada alive lagta hai.
+              Static hai, animated nahi, to koi per-frame cost nahi. */}
+          <div className="pointer-events-none absolute -right-16 top-16 h-64 w-64 rounded-full bg-accent/15 blur-[110px]" />
+          <div className="pointer-events-none absolute -left-10 bottom-32 h-48 w-48 rounded-full bg-accent-deep/12 blur-[90px]" />
 
-            <div className="flex items-center justify-between px-5 py-5">
-              <span className="font-display text-xl font-light text-white/90">{brand}</span>
-              <button
-                onClick={() => setMobileOpen(false)}
-                aria-label="Close menu"
-                className="flex h-11 w-11 items-center justify-center rounded-full border border-white/15 text-white/70 transition-colors hover:text-white"
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
-              </button>
-            </div>
-
-            <nav aria-label="Mobile" className="flex flex-1 flex-col justify-center px-6 pb-6">
-              {links.map((link, idx) => {
-                const active = pathname === link.href;
-                return (
-                  <motion.div
-                    key={`${link.href}-${link.label}`}
-                    initial={{ opacity: 0, x: -24 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -12 }}
-                    transition={{ delay: 0.06 + idx * 0.055, duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-                  >
-                    <Link
-                      href={link.href}
-                      onClick={() => setMobileOpen(false)}
-                      className="group flex items-baseline justify-between border-b border-white/8 py-4"
-                    >
-                      <span className="flex items-baseline gap-3">
-                        <span className="font-body text-[10px] tabular text-white/25">
-                          {String(idx + 1).padStart(2, '0')}
-                        </span>
-                        <span
-                          className={`font-display text-[1.75rem] font-light leading-none transition-transform duration-500 ease-editorial group-active:translate-x-1.5 ${
-                            active ? 'text-accent-soft italic' : 'text-white/90'
-                          }`}
-                        >
-                          {link.label}
-                        </span>
-                      </span>
-                      <span aria-hidden className={active ? 'text-accent-soft' : 'text-white/25'}>
-                        →
-                      </span>
-                    </Link>
-                  </motion.div>
-                );
-              })}
-
-              <motion.div
-                initial={{ opacity: 0, y: 18 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 + links.length * 0.055, duration: 0.45 }}
-                className="mt-8"
-              >
-                <Link
-                  href="/#booking-section"
-                  onClick={(e) => {
-                    setMobileOpen(false);
-                    scrollToBooking(e);
-                  }}
-                  className="flex w-full items-center justify-center gap-2 rounded-full bg-white py-4 font-body text-[12px] uppercase tracking-[0.2em] text-ink"
-                >
-                  Book a Session
-                </Link>
-              </motion.div>
-            </nav>
-
-            {/* Bottom: quick contact */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.35, duration: 0.4 }}
-              className="px-6 pb-[calc(env(safe-area-inset-bottom,0px)+1.5rem)]"
+          <div className="flex items-center justify-between px-5 py-5">
+            <span className="font-display text-xl font-light text-white/90">{brand}</span>
+            <button
+              onClick={() => setMobileOpen(false)}
+              aria-label="Close menu"
+              className="flex h-11 w-11 items-center justify-center rounded-full border border-white/15 text-white/70 transition-colors hover:text-white"
             >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          </div>
+
+          <nav aria-label="Mobile" className="flex flex-1 flex-col justify-center px-6 pb-6">
+            {links.map((link, idx) => {
+              const active = pathname === link.href;
+              return (
+                <div
+                  key={`${link.href}-${link.label}`}
+                  className="menu-item"
+                  // Stagger — CSS animation-delay se, JS orchestration ke bina
+                  style={{ animationDelay: `${0.05 + idx * 0.05}s` }}
+                >
+                  <Link
+                    href={link.href}
+                    onClick={() => setMobileOpen(false)}
+                    className="group flex items-baseline justify-between border-b border-white/8 py-4"
+                  >
+                    <span className="flex items-baseline gap-3">
+                      <span className="font-body text-[10px] tabular text-white/25">
+                        {String(idx + 1).padStart(2, '0')}
+                      </span>
+                      <span
+                        className={`font-display text-[1.75rem] font-light leading-none transition-transform duration-500 ease-editorial group-active:translate-x-1.5 ${
+                          active ? 'text-accent-soft italic' : 'text-white/90'
+                        }`}
+                      >
+                        {link.label}
+                      </span>
+                    </span>
+                    <span aria-hidden className={active ? 'text-accent-soft' : 'text-white/25'}>
+                      →
+                    </span>
+                  </Link>
+                </div>
+              );
+            })}
+
+            <div
+              className="menu-item mt-8"
+              style={{ animationDelay: `${0.08 + links.length * 0.05}s` }}
+            >
+              <Link
+                href="/#booking-section"
+                onClick={(e) => {
+                  setMobileOpen(false);
+                  scrollToBooking(e);
+                }}
+                className="flex w-full items-center justify-center gap-2 rounded-full bg-white py-4 font-body text-[12px] uppercase tracking-[0.2em] text-ink"
+              >
+                Book a Session
+              </Link>
+            </div>
+          </nav>
+
+          {/* Bottom: quick contact */}
+          <div
+            className="menu-item px-6 pb-[calc(env(safe-area-inset-bottom,0px)+1.5rem)]"
+            style={{ animationDelay: `${0.14 + links.length * 0.05}s` }}
+          >
               <div className="mb-5 flex items-center justify-center gap-3">
                 {(['instagram', 'facebook', 'youtube'] as const).map((key) =>
                   config?.social_links?.[key] ? (
@@ -400,13 +395,12 @@ export default function Navbar({ config: initialConfig, categories: initialCateg
                   </a>
                 )}
               </div>
-              <p className="text-center font-body text-[9px] uppercase tracking-[0.3em] text-white/25">
-                © {new Date().getFullYear()} {brand}
-              </p>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            <p className="text-center font-body text-[9px] uppercase tracking-[0.3em] text-white/25">
+              © {new Date().getFullYear()} {brand}
+            </p>
+          </div>
+        </div>
+      )}
     </>
   );
 }

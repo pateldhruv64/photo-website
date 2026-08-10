@@ -1,6 +1,5 @@
 'use client';
 
-import { motion } from 'framer-motion';
 
 const STEPS = [
   {
@@ -86,13 +85,10 @@ export default function ProcessTimeline() {
             {STEPS.map((step, idx) => {
               const isEven = idx % 2 === 0;
               return (
-                <motion.div
+                <div
                   key={step.number}
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, margin: '-50px' }}
-                  transition={{ duration: 0.5, delay: idx * 0.1 }}
-                  className={`relative md:flex md:items-center md:gap-8 ${
+                  style={{ transitionDelay: `${idx * 0.1}s` }}
+                  className={`reveal relative md:flex md:items-center md:gap-8 ${
                     isEven ? 'md:flex-row' : 'md:flex-row-reverse'
                   }`}
                 >
@@ -127,7 +123,7 @@ export default function ProcessTimeline() {
 
                   {/* Spacer for the other side */}
                   <div className="hidden md:block md:w-[calc(50%-2rem)]" />
-                </motion.div>
+                </div>
               );
             })}
           </div>

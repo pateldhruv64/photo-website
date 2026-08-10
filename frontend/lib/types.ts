@@ -145,6 +145,7 @@ export interface VideoItem {
   platform?: 'youtube' | 'instagram';
   title: string;
   thumbnail_url: string;
+  thumbnail_public_id?: string;
   category: Category | string;
   order: number;
   is_active: boolean;

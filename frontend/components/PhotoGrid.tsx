@@ -1,9 +1,7 @@
 'use client';
 
-import { useEffect } from 'react';
 import Masonry from 'react-masonry-css';
 import PhotoCard from './PhotoCard';
-import { lightboxUrl } from '@/lib/cloudinary';
 import type { Photo } from '@/lib/types';
 
 interface PhotoGridProps {
@@ -11,80 +9,34 @@ interface PhotoGridProps {
   onPhotoClick: (photo: Photo) => void;
 }
 
+/* Mobile par 2 columns — pehle 3 the, jisse har photo itni chhoti ho jaati
+   thi ki kuch dikhta hi nahi tha. Photographer ki site par photo dikhni
+   chahiye, thumbnail nahi. */
 const breakpointColumns = {
   default: 4,
+  1280: 4,
   1024: 3,
-  768: 3, // Mobile screens will display 3 columns of photos, making them compact
+  640: 2,
 };
 
-// Global memory to track which photos have already been preloaded
-const preloadedPhotos = new Set<string>();
-
+/**
+ * Masonry photo grid.
+ *
+ * NOTE — yaha se ek poora "preloader" hataya gaya hai. Wo kya karta tha:
+ *   - page load ke 1.5s baad 40 photos ke FULL-SIZE (w_1200) versions
+ *     download karta tha
+ *   - phir har 5 second me 10 aur, jab tak saari photos khatam na ho
+ *
+ * Matlab ek mobile user jo sirf scroll kar raha hai, uska 20–40MB data
+ * chup-chaap khatam ho jaata tha — aur wo downloads unhi photos se
+ * bandwidth cheenti thi jo screen par actually dikh rahi thi. Isi se
+ * "sab kuch dheere load hota hai" wala feel aata tha.
+ *
+ * Ab full-size image tabhi load hoti hai jab user lightbox kholta hai,
+ * aur Lightbox sirf aage/peeche wali photo prefetch karta hai.
+ */
 export default function PhotoGrid({ photos, onPhotoClick }: PhotoGridProps) {
-  useEffect(() => {
-    if (!photos || photos.length === 0) return;
-
-    // Filter out photos that have already been preloaded
-    const photosToPreload = photos.filter(p => !preloadedPhotos.has(p._id));
-    if (photosToPreload.length === 0) return;
-
-    let active = true;
-    let timeoutId: NodeJS.Timeout;
-
-    const preloadBatches = async () => {
-      // Wait 1.5s initially to let the main page load completely
-      await new Promise((resolve) => {
-        timeoutId = setTimeout(resolve, 1500);
-      });
-      if (!active) return;
-
-      // Batch 1: First 40 new photos (as requested by user)
-      const batch1 = photosToPreload.slice(0, 40);
-      preloadPhotos(batch1);
-
-      // Remaining batches: 10 photos each, spaced 5 seconds apart
-      let currentIndex = 40;
-      while (currentIndex < photosToPreload.length && active) {
-        await new Promise((resolve) => {
-          timeoutId = setTimeout(resolve, 5000);
-        });
-        if (!active) return;
-
-        const nextBatch = photosToPreload.slice(currentIndex, currentIndex + 10);
-        preloadPhotos(nextBatch);
-        currentIndex += 10;
-      }
-    };
-
-    const preloadPhotos = (photoBatch: Photo[]) => {
-      const loadImg = () => {
-        photoBatch.forEach((photo) => {
-          if (!preloadedPhotos.has(photo._id)) {
-            const img = new window.Image();
-            img.src = lightboxUrl(photo.public_id);
-            preloadedPhotos.add(photo._id);
-          }
-        });
-      };
-
-      if ('requestIdleCallback' in window) {
-        (window as Window & { requestIdleCallback?: (cb: () => void, options?: { timeout: number }) => void }).requestIdleCallback?.(loadImg, { timeout: 4000 });
-      } else {
-        loadImg();
-      }
-    };
-
-    preloadBatches();
-
-    return () => {
-      active = false;
-      clearTimeout(timeoutId);
-    };
-  }, [photos]);
-
-  if (!photos || photos.length === 0) {
-    return null;
-  }
+  if (!photos || photos.length === 0) return null;
 
   return (
     <Masonry
@@ -93,12 +45,7 @@ export default function PhotoGrid({ photos, onPhotoClick }: PhotoGridProps) {
       columnClassName="masonry-grid-column"
     >
       {photos.map((photo, i) => (
-        <PhotoCard
-          key={photo._id}
-          photo={photo}
-          index={i}
-          onClick={onPhotoClick}
-        />
+        <PhotoCard key={photo._id} photo={photo} index={i} onClick={onPhotoClick} />
       ))}
     </Masonry>
   );

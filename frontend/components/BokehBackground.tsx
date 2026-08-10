@@ -1,29 +1,38 @@
-'use client';
-import { useState, useEffect } from 'react';
-
+/**
+ * ─────────────────────────────────────────────────────────────────────
+ *  AMBIENT BACKGROUND
+ * ─────────────────────────────────────────────────────────────────────
+ *  Pehle yaha 6 `<span>` the, har ek `filter: blur(44px)` ke saath,
+ *  position fixed aur 18–30s ka infinite animation.
+ *
+ *  Wo kitna mehnga tha:
+ *    - blur() ek GPU filter hai. Animated element par browser har frame
+ *      us layer ko dobara blur karta hai.
+ *    - `position: fixed` matlab wo poore viewport ko cover karte hain,
+ *      to blur ka area = poori screen, 6 baar, har frame.
+ *    - Yeh scroll ke saath compete karta hai → mobile par direct jank.
+ *
+ *  Ab yeh ek server-rendered static CSS gradient hai:
+ *    - Zero JavaScript (client component bhi nahi)
+ *    - Zero animation, zero filter, zero repaint
+ *    - Compositor ise ek baar paint karke bhool jaata hai
+ *
+ *  Dikhne me farak? Orbs itni dheere aur itni transparent (6% opacity)
+ *  chal rahi thi ki koi notice hi nahi karta tha. Warmth wahi hai,
+ *  cost zero ho gayi.
+ */
 export default function BokehBackground() {
-  const [show, setShow] = useState(false);
-
-  useEffect(() => {
-    // 1500ms baad show karo — pehle hero image load ho
-    const t = setTimeout(() => setShow(true), 1500);
-    return () => clearTimeout(t);
-  }, []);
-
-  if (!show) return null;
-
   return (
     <div
       aria-hidden="true"
-      className="bokeh-layer fixed inset-0 pointer-events-none overflow-hidden"
-      style={{ zIndex: 0 }}
-    >
-      <span className="bokeh-orb" style={{ width: 340, height: 340, top: '8%',  left: '5%',  animationDuration: '18s', animationDelay: '0s'   }} />
-      <span className="bokeh-orb" style={{ width: 200, height: 200, top: '55%', left: '80%', animationDuration: '24s', animationDelay: '-6s'  }} />
-      <span className="bokeh-orb" style={{ width: 260, height: 260, top: '30%', left: '60%', animationDuration: '20s', animationDelay: '-3s'  }} />
-      <span className="bokeh-orb" style={{ width: 160, height: 160, top: '75%', left: '25%', animationDuration: '28s', animationDelay: '-10s' }} />
-      <span className="bokeh-orb" style={{ width: 120, height: 120, top: '15%', left: '75%', animationDuration: '22s', animationDelay: '-8s'  }} />
-      <span className="bokeh-orb" style={{ width: 300, height: 300, top: '85%', left: '55%', animationDuration: '30s', animationDelay: '-14s' }} />
-    </div>
+      className="pointer-events-none fixed inset-0 -z-10"
+      style={{
+        background: `
+          radial-gradient(60rem 40rem at 12% 8%,  rgba(118,159,205,0.10), transparent 60%),
+          radial-gradient(45rem 32rem at 88% 42%, rgba(185,215,234,0.14), transparent 62%),
+          radial-gradient(50rem 36rem at 45% 92%, rgba(214,230,242,0.16), transparent 60%)
+        `,
+      }}
+    />
   );
 }

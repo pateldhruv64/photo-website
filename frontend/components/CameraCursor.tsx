@@ -2,98 +2,93 @@
 import { useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
 
+/**
+ * Custom camera cursor — sirf desktop (fine pointer) par.
+ *
+ * Pehle yeh component mobile par bhi mount hota tha: `pointermove`,
+ * `pointerdown` aur `mouseover` — teen global listeners, plus har
+ * pointerdown par React state update. Touch device par isse koi fayda
+ * nahi tha (cursor hota hi nahi) par cost poori thi.
+ *
+ * Ab pehle hi check me touch device par kuch render nahi hota aur koi
+ * listener attach nahi hota.
+ */
 export default function CameraCursor() {
   const cursorRef = useRef<HTMLDivElement>(null);
-  const [clicked, setClicked] = useState(false);
-  const [isHovering, setIsHovering] = useState(false);
-  const [isVisible, setIsVisible] = useState(false);
+  const [enabled, setEnabled] = useState(false);
+  const [hovering, setHovering] = useState(false);
   const pathname = usePathname();
+  // Admin ek work tool hai — waha custom cursor sirf raaste me aata hai
+  const isAdmin = pathname?.startsWith('/admin');
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    let hideTimeout: NodeJS.Timeout;
-    let isMobile = window.matchMedia('(pointer: coarse)').matches;
-
-    const mql = window.matchMedia('(pointer: coarse)');
-    const handleMql = (e: MediaQueryListEvent) => {
-      isMobile = e.matches;
-      setIsVisible(!isMobile);
-    };
-    mql.addEventListener('change', handleMql);
-    
-    if (!isMobile) {
-      setIsVisible(true);
+    if (isAdmin) {
+      setEnabled(false);
+      return;
     }
 
-    const onPointerMove = (e: PointerEvent) => {
-      if (isMobile || !cursorRef.current) return;
-      cursorRef.current.style.transform = `translate(${e.clientX + 24}px, ${e.clientY + 12}px)`;
-    };
+    const mql = window.matchMedia('(pointer: fine)');
+    if (!mql.matches) return;
 
-    const onPointerDown = (e: PointerEvent) => {
-      if (!cursorRef.current) return;
-      
-      if (isMobile) {
-        cursorRef.current.style.transform = `translate(${e.clientX - 9}px, ${e.clientY - 30}px)`;
-        setIsVisible(true);
-        setClicked(true);
-        
-        clearTimeout(hideTimeout);
-        setTimeout(() => setClicked(false), 150);
-        hideTimeout = setTimeout(() => setIsVisible(false), 1000);
-      } else {
-        setClicked(true);
-        setTimeout(() => setClicked(false), 150);
+    setEnabled(true);
+
+    let frame = 0;
+    let x = 0;
+    let y = 0;
+
+    const paint = () => {
+      frame = 0;
+      if (cursorRef.current) {
+        cursorRef.current.style.transform = `translate3d(${x}px, ${y}px, 0)`;
       }
     };
 
-    const handleMouseOver = (e: MouseEvent) => {
-      if (isMobile) return;
-      const target = e.target as HTMLElement;
-      if (target.tagName.toLowerCase() === 'a' || target.tagName.toLowerCase() === 'button' || target.closest('a') || target.closest('button')) {
-        setIsHovering(true);
-      } else {
-        setIsHovering(false);
-      }
+    // rAF throttle — pointermove 1000Hz mouse par bahut baar fire hota hai,
+    // par paint karne ka matlab frame me ek hi baar hai.
+    const onMove = (e: PointerEvent) => {
+      x = e.clientX + 22;
+      y = e.clientY + 12;
+      if (!frame) frame = requestAnimationFrame(paint);
     };
 
-    window.addEventListener('pointermove', onPointerMove, { passive: true });
-    window.addEventListener('pointerdown', onPointerDown, { passive: true });
-    window.addEventListener('mouseover', handleMouseOver, { passive: true });
-    
+    const onOver = (e: MouseEvent) => {
+      const t = e.target as HTMLElement | null;
+      setHovering(Boolean(t?.closest('a, button')));
+    };
+
+    window.addEventListener('pointermove', onMove, { passive: true });
+    window.addEventListener('mouseover', onOver, { passive: true });
+
     return () => {
-      window.removeEventListener('pointermove', onPointerMove);
-      window.removeEventListener('pointerdown', onPointerDown);
-      window.removeEventListener('mouseover', handleMouseOver);
-      mql.removeEventListener('change', handleMql);
-      clearTimeout(hideTimeout);
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('mouseover', onOver);
+      if (frame) cancelAnimationFrame(frame);
     };
-  }, [pathname]);
+  }, [isAdmin]);
+
+  if (!enabled) return null;
 
   return (
-    <div 
+    <div
       ref={cursorRef}
-      className={`pointer-events-none fixed top-0 left-0 z-[9999] flex items-center justify-center text-[#142433] drop-shadow-md transition-opacity duration-300 ${isVisible ? 'opacity-100' : 'opacity-0'}`}
+      aria-hidden="true"
+      className="pointer-events-none fixed left-0 top-0 z-[9999] text-ink drop-shadow-md"
       style={{ willChange: 'transform' }}
     >
-      <div className="relative">
-        <svg 
-          xmlns="http://www.w3.org/2000/svg" 
-          width="18" height="18" 
-          viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-          className={`transition-transform duration-300 ${isHovering ? 'rotate-12 scale-110' : 'rotate-0 scale-100'}`}
-        >
-          <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-          <circle cx="12" cy="13" r="4"/>
-        </svg>
-        
-        {/* Camera Flash Element (Mini flash from the camera itself) */}
-        <div 
-          className={`absolute -top-1 right-0 w-2.5 h-2.5 bg-white rounded-full blur-[1px] transition-all duration-75 ${clicked ? 'opacity-100 scale-150' : 'opacity-0 scale-50'}`} 
-          style={{ boxShadow: '0 0 12px 6px rgba(255,255,255,0.9)' }}
-        />
-      </div>
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className={`transition-transform duration-300 ${hovering ? 'rotate-12 scale-110' : ''}`}
+      >
+        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+        <circle cx="12" cy="13" r="4" />
+      </svg>
     </div>
   );
 }

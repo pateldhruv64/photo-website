@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import useSWR from 'swr';
-import { motion } from 'framer-motion';
 import { fetcher } from '@/lib/fetcher';
 import { getWhatsAppNumber } from '@/lib/whatsapp';
 import type { SiteConfig } from '@/lib/types';
@@ -93,15 +92,13 @@ Date: ${formData.eventDate}${formData.message ? `\nMessage: ${formData.message}`
     return (
       <section className="py-16 md:py-24 bg-surface" id="booking-section">
         <div className="max-w-xl mx-auto px-4 text-center">
-          <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="w-20 h-20 bg-[#25D366] rounded-full flex items-center justify-center mx-auto mb-6 shadow-2xl"
+          <div
+            className="w-20 h-20 bg-[#25D366] rounded-full flex items-center justify-center mx-auto mb-6 shadow-2xl animate-scale-in"
           >
             <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="20 6 9 17 4 12" />
             </svg>
-          </motion.div>
+          </div>
           <h3 className="font-display text-3xl md:text-4xl font-light text-text-primary mb-3">
             Message Sent!
           </h3>

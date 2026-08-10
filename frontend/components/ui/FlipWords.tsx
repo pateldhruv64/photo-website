@@ -1,7 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 
 interface FlipWordsProps {
@@ -10,76 +9,38 @@ interface FlipWordsProps {
   className?: string;
 }
 
-export default function FlipWords({
-  words,
-  duration = 3000,
-  className = '',
-}: FlipWordsProps) {
-  const [currentWordIndex, setCurrentWordIndex] = useState(0);
-  const [isAnimating, setIsAnimating] = useState(false);
-
-  const startAnimation = useCallback(() => {
-    const nextIndex = (currentWordIndex + 1) % words.length;
-    setCurrentWordIndex(nextIndex);
-    setIsAnimating(true);
-  }, [currentWordIndex, words.length]);
+/**
+ * Rotating word effect — ab pure CSS animation se.
+ *
+ * Pehle yeh framer-motion ke AnimatePresence + per-LETTER motion.span
+ * se banta tha. Ek 8-letter word ka matlab tha 8 alag animated
+ * components, har ek apne spring physics ke saath, hamesha chalte
+ * rehte. Ek chhote se decorative effect ke liye kaafi mehnga tha.
+ *
+ * Ab: ek element, ek CSS keyframe. Dikhne me lagbhag same, cost ~0.
+ */
+export default function FlipWords({ words, duration = 3000, className = '' }: FlipWordsProps) {
+  const [index, setIndex] = useState(0);
 
   useEffect(() => {
-    if (!isAnimating) {
-      const timer = setTimeout(() => {
-        startAnimation();
-      }, duration);
-      return () => clearTimeout(timer);
-    }
-  }, [isAnimating, duration, startAnimation]);
+    if (words.length < 2) return;
+    const timer = setInterval(() => {
+      setIndex((i) => (i + 1) % words.length);
+    }, duration);
+    return () => clearInterval(timer);
+  }, [words.length, duration]);
 
-  const currentWord = words[currentWordIndex];
+  const word = words[index];
 
   return (
-    <AnimatePresence
-      onExitComplete={() => {
-        setIsAnimating(false);
-      }}
+    <span
+      className={cn('relative inline-block text-left font-normal text-accent-soft', className)}
+      // `key` badalne par element remount hota hai, jisse CSS animation
+      // har naye word par dobara chalti hai.
+      key={word}
+      style={{ animation: 'flip-word 0.55s cubic-bezier(0.16,1,0.3,1) both' }}
     >
-      <motion.div
-        key={currentWord}
-        initial={{ opacity: 0, y: 10, filter: 'blur(8px)' }}
-        animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-        exit={{
-          opacity: 0,
-          y: -10,
-          filter: 'blur(8px)',
-          scale: 2,
-          position: 'absolute',
-        }}
-        transition={{
-          type: 'spring',
-          stiffness: 250,
-          damping: 25,
-          duration: 0.5,
-        }}
-        className={cn('inline-block relative text-left text-accent-soft font-normal', className)}
-      >
-        {currentWord.split(' ').map((word, wordIndex) => (
-          <span key={word + wordIndex} className="inline-block whitespace-nowrap">
-            {word.split('').map((letter, letterIndex) => (
-              <motion.span
-                key={word + letterIndex}
-                initial={{ opacity: 0, y: 10, filter: 'blur(8px)' }}
-                animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-                transition={{
-                  delay: wordIndex * 0.1 + letterIndex * 0.03,
-                  duration: 0.25,
-                }}
-                className="inline-block"
-              >
-                {letter}
-              </motion.span>
-            ))}
-            <span className="inline-block">&nbsp;</span>
-          </span>
-        ))}
-      </motion.div>
-    </AnimatePresence>
+      {word}
+    </span>
   );
 }

@@ -131,25 +131,59 @@ exports.getFeaturedPhotos = async (req, res) => {
  */
 exports.getHomepage = async (req, res) => {
   try {
-    const [config, categories, featuredPhotos, photos, videos] = await Promise.all([
-      SiteConfig.getConfig(),
-      Category.find({ is_active: true })
-        .populate('cover_photo')
-        .sort({ navbar_order: 1 })
-        .lean(),
-      Photo.find({ is_featured: true })
-        .sort({ order: 1, created_at: -1 })
-        .populate('category', 'name slug')
-        .lean(),
-      Photo.find({})
-        .sort({ order: 1, created_at: -1 })
-        .populate('category', 'name slug')
-        .lean(),
-      VideoItem.find({ is_active: true })
-        .sort({ order: 1, created_at: -1 })
-        .populate('category', 'name slug')
-        .lean()
+    /* Pehle yaha `Photo.find({})` tha — bina limit ke SAARI photos.
+       30 photos par thik chalta tha, par 500 photos par yeh ~300KB JSON
+       ban jaata aur har homepage visit par jaata. Ab pehla page hi
+       bhejte hain; baaki "load more" par /api/photos se aata hai.
+
+       Featured photos bhi cap kiye hain — marquee me 12 se zyada kabhi
+       nahi dikhti. */
+    // 24 photos pehle screen ke liye kaafi se zyada hain — iske aage
+    // sab kuch scroll par aata hai. Yeh HTML aur RSC payload dono
+    // chhota rakhta hai.
+    const PAGE_SIZE = 24;
+    const FEATURED_LIMIT = 10;
+
+    const [config, categories, featuredPhotos, photos, totalPhotos, videos, testimonials] =
+      await Promise.all([
+        SiteConfig.getConfig(),
+        Category.find({ is_active: true })
+          .populate('cover_photo')
+          .sort({ navbar_order: 1 })
+          .lean(),
+        Photo.find({ is_featured: true })
+          .sort({ order: 1, created_at: -1 })
+          .limit(FEATURED_LIMIT)
+          .populate('category', 'name slug')
+          .lean(),
+        Photo.find({})
+          .sort({ order: 1, created_at: -1 })
+          .limit(PAGE_SIZE)
+          .populate('category', 'name slug')
+          .lean(),
+        Photo.countDocuments({}),
+        VideoItem.find({ is_active: true })
+          .sort({ order: 1, created_at: -1 })
+          .limit(12)
+          .populate('category', 'name slug')
+          .lean(),
+        // Testimonials bhi yahi bhej do — pehle frontend inke liye ek
+        // alag round-trip karta tha.
+        Testimonial.find({ is_active: true })
+          .sort({ created_at: -1 })
+          .limit(12)
+          .lean()
+      ]);
+
+    // Har category ka photo count — tabs me dikhane ke liye, taki
+    // frontend ko saari photos client par ginni na pade.
+    const counts = await Photo.aggregate([
+      { $group: { _id: '$category', count: { $sum: 1 } } }
     ]);
+    const countMap = new Map(counts.map((c) => [String(c._id), c.count]));
+    categories.forEach((cat) => {
+      cat.photoCount = countMap.get(String(cat._id)) || 0;
+    });
 
     // Har photo par SEO-friendly alt text chipka do (blank ho to auto-generate)
     const siteSeo = config.seo || {};
@@ -158,12 +192,20 @@ exports.getHomepage = async (req, res) => {
       alt_text: buildPhotoAlt(p, p.category?.name, config, siteSeo)
     }));
 
+    res.set('Cache-Control', 'public, max-age=60, stale-while-revalidate=600');
     res.json({
       config,
       categories,
       featuredPhotos: withAlt(featuredPhotos),
       photos: withAlt(photos),
-      videos
+      videos,
+      testimonials,
+      pagination: {
+        page: 1,
+        limit: PAGE_SIZE,
+        total: totalPhotos,
+        hasMore: photos.length < totalPhotos
+      }
     });
   } catch (error) {
     console.error('getHomepage error:', error);

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import useSWR from 'swr';
@@ -33,9 +33,19 @@ const ICON = {
   ),
 };
 
+/* Tab -> section mapping. Order matters: page par jis kram me sections
+   aate hain, usi kram me. */
+const SECTIONS = [
+  { key: 'home', label: 'Home', icon: ICON.home, id: null },
+  { key: 'gallery', label: 'Work', icon: ICON.gallery, id: 'gallery-section' },
+  { key: 'pricing', label: 'Pricing', icon: ICON.pricing, id: 'pricing-section' },
+  { key: 'reviews', label: 'Reviews', icon: ICON.reviews, id: 'testimonials-section' },
+] as const;
+
 export default function BottomNav() {
   const pathname = usePathname();
-  const [activeSection, setActiveSection] = useState<string>('');
+  const [active, setActive] = useState<string>('home');
+  const navRef = useRef<HTMLElement>(null);
 
   const { data: config } = useSWR<SiteConfig>('/config', fetcher, {
     revalidateOnFocus: false,
@@ -45,35 +55,85 @@ export default function BottomNav() {
   const whatsappUrl = getWhatsAppUrl(config);
   const isHome = pathname === '/';
 
-  /* Scroll ke hisaab se active tab highlight hota hai — user ko hamesha
-     pata rehta hai wo page me kaha hai. IntersectionObserver scroll
-     listener se kaafi sasta hai.                                       */
+  /* ── Active tab detection ──
+     Pehle IntersectionObserver `rootMargin: -45% 0px -45%` ke saath tha.
+     Wo viewport ke beech me sirf 10% ki ek patti banata hai — agar us
+     patti me kisi section ka hissa na aaye (lambe section ke andar, ya
+     do sections ke beech me), to koi entry fire hi nahi hoti aur
+     highlight PICHLE tab par atka reh jaata hai. Screenshot me yahi
+     dikh raha tha: user neeche tha par "Work" selected reh gaya.
+
+     Ab: har section ka top offset ek baar naapte hain, aur scroll par
+     dekhte hain viewport ka center kis section me hai. Koi dead zone
+     nahi — har scroll position ka ek hi sahi jawab hota hai. */
   useEffect(() => {
     if (!isHome) {
-      setActiveSection('');
+      setActive('');
       return;
     }
 
-    const ids = ['gallery-section', 'pricing-section', 'testimonials-section'];
-    const sections = ids
-      .map((id) => document.getElementById(id))
-      .filter((el): el is HTMLElement => Boolean(el));
+    let offsets: Array<{ key: string; top: number }> = [];
+    let frame = 0;
 
-    if (!sections.length) return;
+    const measure = () => {
+      offsets = SECTIONS.filter((s) => s.id)
+        .map((s) => {
+          const el = document.getElementById(s.id as string);
+          if (!el) return null;
+          return { key: s.key, top: el.getBoundingClientRect().top + window.scrollY };
+        })
+        .filter(Boolean) as Array<{ key: string; top: number }>;
+      offsets.sort((a, b) => a.top - b.top);
+    };
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visible = entries
-          .filter((e) => e.isIntersecting)
-          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
-        if (visible) setActiveSection(visible.target.id);
-      },
-      // Viewport ka beech ka hissa hi "active" maana jaata hai
-      { rootMargin: '-45% 0px -45% 0px', threshold: 0 }
-    );
+    const update = () => {
+      frame = 0;
+      if (!offsets.length) return;
 
-    sections.forEach((s) => observer.observe(s));
-    return () => observer.disconnect();
+      // Viewport ka center — yahi "user abhi kahan hai" ka sabse
+      // seedha jawab hai.
+      const probe = window.scrollY + window.innerHeight / 2;
+
+      // Page ke bilkul neeche pahunch gaye to aakhri section active
+      const atBottom =
+        window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4;
+      if (atBottom) {
+        setActive(offsets[offsets.length - 1].key);
+        return;
+      }
+
+      let current = 'home';
+      for (const o of offsets) {
+        if (probe >= o.top) current = o.key;
+        else break;
+      }
+      setActive(current);
+    };
+
+    const onScroll = () => {
+      if (frame) return;
+      frame = requestAnimationFrame(update);
+    };
+
+    measure();
+    update();
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', measure, { passive: true });
+
+    // Lazy sections/images load hone par offsets badal jaate hain
+    const ro = new ResizeObserver(() => {
+      measure();
+      onScroll();
+    });
+    ro.observe(document.body);
+
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', measure);
+      ro.disconnect();
+      if (frame) cancelAnimationFrame(frame);
+    };
   }, [isHome, pathname]);
 
   if (pathname?.startsWith('/admin') || pathname?.startsWith('/client')) return null;
@@ -82,60 +142,28 @@ export default function BottomNav() {
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const items = [
-    {
-      key: 'home',
-      label: 'Home',
-      icon: ICON.home,
-      active: isHome && !activeSection,
-      render: (children: React.ReactNode) => (
-        <Link href="/" className="contents">
-          {children}
-        </Link>
-      ),
-    },
-    {
-      key: 'gallery',
-      label: 'Work',
-      icon: ICON.gallery,
-      active: activeSection === 'gallery-section',
-      onClick: () => scrollTo('gallery-section'),
-    },
-    {
-      key: 'pricing',
-      label: 'Pricing',
-      icon: ICON.pricing,
-      active: activeSection === 'pricing-section',
-      onClick: () => scrollTo('pricing-section'),
-    },
-    {
-      key: 'reviews',
-      label: 'Reviews',
-      icon: ICON.reviews,
-      active: activeSection === 'testimonials-section',
-      onClick: () => scrollTo('testimonials-section'),
-    },
-  ];
-
   return (
     <nav
+      ref={navRef}
       id="bottom-nav"
       aria-label="Quick navigation"
       className="fixed inset-x-0 bottom-0 z-40 flex justify-center px-4 pb-[calc(env(safe-area-inset-bottom,0px)+0.75rem)] md:hidden"
     >
-      <div className="flex items-center gap-1 rounded-full border border-white/12 bg-obsidian/95 p-1.5 shadow-[0_12px_40px_-8px_rgba(0,0,0,0.6)] backdrop-blur-2xl">
-        {items.map((item) => {
+      <div className="flex items-center gap-1 rounded-full border border-white/12 bg-obsidian/95 p-1.5 shadow-[0_12px_40px_-8px_rgba(8,16,24,0.6)] backdrop-blur-2xl">
+        {SECTIONS.map((item) => {
+          const isActive = active === item.key;
+
           const body = (
             <span
               className={`flex h-12 min-w-[3.25rem] flex-col items-center justify-center gap-[3px] rounded-full px-3 transition-colors duration-300 ${
-                item.active ? 'bg-white/10 text-accent-soft' : 'text-white/55'
+                isActive ? 'bg-white/10 text-accent-soft' : 'text-white/55'
               }`}
             >
               <svg
                 width="19"
                 height="19"
                 viewBox="0 0 24 24"
-                fill={item.active ? 'currentColor' : 'none'}
+                fill={isActive ? 'currentColor' : 'none'}
                 stroke="currentColor"
                 strokeWidth="1.6"
                 strokeLinecap="round"
@@ -148,27 +176,49 @@ export default function BottomNav() {
             </span>
           );
 
-          if (item.render) {
-            return (
-              <span key={item.key} className="block active:scale-95 transition-transform duration-200">
-                {item.render(body)}
-              </span>
+          // Home: dusre page par asli link chahiye, homepage par sirf scroll-to-top
+          if (item.key === 'home') {
+            return isHome ? (
+              <button
+                key={item.key}
+                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                aria-current={isActive ? 'true' : undefined}
+                className="transition-transform duration-200 active:scale-95"
+              >
+                {body}
+              </button>
+            ) : (
+              <Link
+                key={item.key}
+                href="/"
+                className="transition-transform duration-200 active:scale-95"
+              >
+                {body}
+              </Link>
             );
           }
 
-          return (
+          // Section tabs: homepage par scroll, baaki pages par home + hash
+          return isHome ? (
             <button
               key={item.key}
-              onClick={item.onClick}
-              aria-current={item.active ? 'true' : undefined}
-              className="block transition-transform duration-200 active:scale-95"
+              onClick={() => scrollTo(item.id as string)}
+              aria-current={isActive ? 'true' : undefined}
+              className="transition-transform duration-200 active:scale-95"
             >
               {body}
             </button>
+          ) : (
+            <Link
+              key={item.key}
+              href={`/#${item.id}`}
+              className="transition-transform duration-200 active:scale-95"
+            >
+              {body}
+            </Link>
           );
         })}
 
-        {/* Primary action — visually alag, taki thumb wahi jaaye */}
         {whatsappUrl ? (
           <a
             href={whatsappUrl}

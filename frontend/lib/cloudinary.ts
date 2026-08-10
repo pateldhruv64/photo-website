@@ -14,10 +14,29 @@ export const lightboxUrl = (publicId: string): string => {
   return `https://res.cloudinary.com/${CLOUD_NAME}/image/upload/q_auto:good,f_auto,w_1200/${publicId}`;
 };
 
-// FIXED: f_jpg force karo blur ke liye — f_auto blur pe kaam nahi karta
-export const blurUrl = (publicId: string): string => {
-  return `https://res.cloudinary.com/${CLOUD_NAME}/image/upload/w_20,e_blur:1000,q_1,f_jpg/${publicId}`;
-};
+/**
+ * Blur placeholder — INLINE data URI, koi network request nahi.
+ *
+ * Pehle yeh Cloudinary se `w_20,e_blur:1000` wala URL return karta tha.
+ * Sunne me chhota lagta hai, par har photo ka apna placeholder request
+ * hota tha — homepage par 79 EXTRA HTTP requests, sirf un dhundhli
+ * images ke liye jo agle 200ms me replace ho jaani thi. Mobile par har
+ * request ka apna latency cost hota hai, aur yeh asli photos se
+ * connections cheen rahi thi.
+ *
+ * Ab ek 8-byte inline SVG hai — palette ka warm-blue tone. Perceived
+ * effect wahi (photo load hone tak ek soft coloured block), par
+ * network cost bilkul zero.
+ *
+ * `publicId` argument signature compatibility ke liye rakha hai.
+ */
+// URL-encoded SVG (base64 nahi) — `Buffer` browser me exist nahi karta,
+// aur yeh client + server dono me same string deta hai.
+const BLUR_PLACEHOLDER =
+  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8'%3E%3Crect width='8' height='8' fill='%23E8F1F8'/%3E%3C/svg%3E";
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export const blurUrl = (publicId?: string): string => BLUR_PLACEHOLDER;
 
 export const heroUrl = (publicId: string): string => {
   return `https://res.cloudinary.com/${CLOUD_NAME}/image/upload/w_1920,q_auto:good,f_auto/${publicId}`;

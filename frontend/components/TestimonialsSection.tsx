@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import useSWR from 'swr';
 import Image from 'next/image';
-import { motion, AnimatePresence } from 'framer-motion';
 import { fetcher } from '@/lib/fetcher';
 
 interface Testimonial {
@@ -17,9 +16,18 @@ interface Testimonial {
   created_at: string;
 }
 
-export default function TestimonialsSection() {
+interface Props {
+  /* Server se aa chuke hain (/api/homepage me shaamil) — SWR sirf
+     background refresh ke liye hai. Pehle yeh ek alag client round-trip
+     tha aur section tab tak khaali dikhta tha. */
+  initialTestimonials?: Testimonial[];
+}
+
+export default function TestimonialsSection({ initialTestimonials }: Props = {}) {
   const { data: testimonials } = useSWR<Testimonial[]>('/testimonials', fetcher, {
+    fallbackData: initialTestimonials,
     revalidateOnFocus: false,
+    revalidateOnMount: !initialTestimonials?.length,
     dedupingInterval: 3600000,
   });
 
@@ -38,14 +46,12 @@ export default function TestimonialsSection() {
     setActiveIdx((prev) => (prev - 1 + activeTestimonials.length) % activeTestimonials.length);
   }, [activeTestimonials.length]);
 
-  // Auto-swipe every 1.5 seconds unless hovered
+  /* Auto-swipe. Pehle yeh 1.5 second par tha — ek review padhne me
+     hi 6–8 second lagte hain, to slide badal jaati thi aur user
+     chid jaata tha. 7s me aaram se padha jaata hai. */
   useEffect(() => {
     if (isHovered || activeTestimonials.length <= 1) return;
-
-    const timer = setInterval(() => {
-      handleNext();
-    }, 1500);
-
+    const timer = setInterval(handleNext, 7000);
     return () => clearInterval(timer);
   }, [isHovered, activeTestimonials.length, handleNext]);
 
@@ -83,28 +89,29 @@ export default function TestimonialsSection() {
         >
           
           {/* Photo Stack Container */}
-          <div className="relative h-72 sm:h-80 w-full flex items-center justify-center">
-            <AnimatePresence mode="popLayout">
-              {activeTestimonials.map((testimonial, index) => {
-                const isCurrent = index === activeIdx % activeTestimonials.length;
-                const offset = (index - (activeIdx % activeTestimonials.length) + activeTestimonials.length) % activeTestimonials.length;
-                
-                if (offset > 2) return null;
+          <div className="relative flex h-72 w-full items-center justify-center sm:h-80">
+            {activeTestimonials.map((testimonial, index) => {
+              // offset 0 = sabse aage wala card, 1/2 = peeche wale
+              const active = activeIdx % activeTestimonials.length;
+              const offset =
+                (index - active + activeTestimonials.length) % activeTestimonials.length;
 
-                return (
-                  <motion.div
+              // Sirf 3 cards render karo — baaki dikhte hi nahi
+              if (offset > 2) return null;
+
+              return (
+                  <div
                     key={testimonial._id}
-                    initial={{ opacity: 0, scale: 0.9, rotate: Math.random() * 10 - 5 }}
-                    animate={{
-                      opacity: isCurrent ? 1 : 0.7 - offset * 0.2,
-                      scale: 1 - offset * 0.06,
-                      zIndex: activeTestimonials.length - offset,
-                      rotate: isCurrent ? 0 : (index % 2 === 0 ? 4 : -4) * offset,
-                      y: offset * 12,
+                    /* Card stack — pehle framer-motion spring se position
+                       hoti thi. Ab offset se seedhe transform: front card
+                       poora size, peeche wale chhote aur halke. CSS
+                       transition smoothing kar deti hai. */
+                    style={{
+                      zIndex: 30 - offset * 10,
+                      transform: `translateY(${offset * -14}px) scale(${1 - offset * 0.06}) rotate(${offset === 0 ? 0 : offset % 2 ? 3 : -3}deg)`,
+                      opacity: offset === 0 ? 1 : 0.55 - offset * 0.15,
                     }}
-                    exit={{ opacity: 0, scale: 0.8, rotate: Math.random() * 20 - 10 }}
-                    transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-                    className="absolute inset-0 max-w-[280px] sm:max-w-[320px] mx-auto h-[320px] rounded-2xl overflow-hidden shadow-2xl border-4 border-white bg-white"
+                    className="absolute inset-0 mx-auto h-[320px] max-w-[280px] overflow-hidden rounded-2xl border-4 border-white bg-white shadow-2xl transition-all duration-700 ease-editorial sm:max-w-[320px]"
                   >
                     {testimonial.photo_url ? (
                       <Image
@@ -123,10 +130,9 @@ export default function TestimonialsSection() {
                         <p className="font-body text-sm text-white/70">{testimonial.client_name}</p>
                       </div>
                     )}
-                  </motion.div>
+                  </div>
                 );
               })}
-            </AnimatePresence>
           </div>
 
           {/* Testimonial Quote Content */}
@@ -140,18 +146,14 @@ export default function TestimonialsSection() {
                 &ldquo;
               </span>
 
-              <AnimatePresence mode="wait">
-                <motion.p
-                  key={current._id}
-                  initial={{ opacity: 0, y: 15 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -15 }}
-                  transition={{ duration: 0.3 }}
-                  className="font-display text-lg sm:text-xl text-[#142433] leading-relaxed italic mb-6 min-h-[80px]"
-                >
-                  {current.review_text}
-                </motion.p>
-              </AnimatePresence>
+              {/* key badalne par remount hota hai, jisse CSS fade-in
+                  har naye review par dobara chalti hai */}
+              <p
+                key={current._id}
+                className="mb-6 min-h-[80px] animate-fade-in-up font-display text-lg italic leading-relaxed text-ink sm:text-xl"
+              >
+                {current.review_text}
+              </p>
             </div>
 
             <div>

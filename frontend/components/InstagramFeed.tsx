@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import useSWR from 'swr';
 import Image from 'next/image';
-import { motion } from 'framer-motion';
 import { fetcher } from '@/lib/fetcher';
 import { blurUrl } from '@/lib/cloudinary';
 import type { Photo, SiteConfig } from '@/lib/types';
@@ -91,12 +90,9 @@ function InstaCard({ photo, index }: { photo: Photo; index: number }) {
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.95 }}
-      whileInView={{ opacity: 1, scale: 1 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.4, delay: index * 0.08 }}
-      className="relative aspect-square rounded-xl sm:rounded-2xl overflow-hidden cursor-pointer group"
+    <div
+      style={{ transitionDelay: `${index * 0.08}s` }}
+      className="reveal-scale relative aspect-square rounded-xl sm:rounded-2xl overflow-hidden cursor-pointer group"
       onDoubleClick={handleDoubleClick}
     >
       <Image
@@ -122,17 +118,14 @@ function InstaCard({ photo, index }: { photo: Photo; index: number }) {
 
       {/* Double-tap heart animation */}
       {showHeart && (
-        <motion.div
-          initial={{ scale: 0, opacity: 1 }}
-          animate={{ scale: 1.5, opacity: 0 }}
-          transition={{ duration: 0.6 }}
+        <div
           className="absolute inset-0 flex items-center justify-center pointer-events-none"
         >
           <svg width="60" height="60" viewBox="0 0 24 24" fill="#FF3B5C">
             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
           </svg>
-        </motion.div>
+        </div>
       )}
-    </motion.div>
+    </div>
   );
 }

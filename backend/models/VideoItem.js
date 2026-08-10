@@ -23,6 +23,12 @@ const videoItemSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
+  // Cloudinary par mirror kiye gaye thumbnail ka public_id — video
+  // delete karte waqt is image ko bhi hataane ke liye.
+  thumbnail_public_id: {
+    type: String,
+    default: ''
+  },
   category: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Category',
@@ -58,7 +64,10 @@ function extractVideoInfo(url) {
   if (url.includes('instagram.com')) {
     const match = url.match(/(?:p|reel|reels)\/([a-zA-Z0-9_-]+)/);
     if (match) {
-      return { platform: 'instagram', id: match[1], thumbnail: '/images/instagram-placeholder.png' };
+      // Thumbnail async mirror hota hai — yaha khaali rakho.
+      // Pehle '/images/instagram-placeholder.png' set hota tha, jo file
+      // public/ me exist hi nahi karti, to browser me 404 aata tha.
+      return { platform: 'instagram', id: match[1], thumbnail: '' };
     }
   }
 
@@ -77,29 +86,50 @@ function extractVideoInfo(url) {
   return null;
 }
 
-const { getInstagramThumbnail } = require('../utils/instagram');
+const { mirrorInstagramThumbnail } = require('../utils/instagram');
 
-// Pre-validate hook: extract id and set thumbnail before validation runs
-videoItemSchema.pre('validate', async function(next) {
-  if (this.isModified('youtube_url')) {
-    const info = extractVideoInfo(this.youtube_url);
-    if (!info) {
-      return next(new Error('Invalid video URL. Could not extract video ID.'));
-    }
-    this.youtube_id = info.id;
-    this.platform = info.platform;
-    
-    if (info.platform === 'youtube') {
-      if (!this.thumbnail_url || this.thumbnail_url === '/images/instagram-placeholder.png') {
-        this.thumbnail_url = info.thumbnail;
-      }
-    } else if (info.platform === 'instagram') {
-      if (!this.thumbnail_url || this.thumbnail_url === '/images/instagram-placeholder.png') {
-        const autoThumb = await getInstagramThumbnail(info.id);
-        this.thumbnail_url = autoThumb || '/images/instagram-placeholder.png';
-      }
+// Purani DB entries jinme dead placeholder path pada hai
+const DEAD_PLACEHOLDER = '/images/instagram-placeholder.png';
+
+/**
+ * URL badalne par video id, platform aur thumbnail set karo.
+ *
+ * Instagram ke liye thumbnail Cloudinary par mirror hota hai — kyunki
+ * Instagram ke apne CDN URLs signed hote hain aur ghanton me expire ho
+ * jaate hain (isi wajah se reels grey dikh rahi thi).
+ */
+videoItemSchema.pre('validate', async function (next) {
+  if (!this.isModified('youtube_url')) return next();
+
+  const info = extractVideoInfo(this.youtube_url);
+  if (!info) {
+    return next(new Error('Invalid video URL. Could not extract video ID.'));
+  }
+
+  this.youtube_id = info.id;
+  this.platform = info.platform;
+
+  const hasUsableThumb = this.thumbnail_url && this.thumbnail_url !== DEAD_PLACEHOLDER;
+
+  if (info.platform === 'youtube') {
+    // YouTube ke img.youtube.com URLs stable hain — mirror ki zarurat nahi
+    if (!hasUsableThumb) this.thumbnail_url = info.thumbnail;
+    return next();
+  }
+
+  if (info.platform === 'instagram' && !hasUsableThumb) {
+    const mirrored = await mirrorInstagramThumbnail(info.id);
+    if (mirrored) {
+      this.thumbnail_url = mirrored.url;
+      this.thumbnail_public_id = mirrored.public_id;
+    } else {
+      // Kuch nahi mila — khaali chhodo. Frontend ek saaf branded
+      // placeholder dikhata hai, toota hua image nahi.
+      this.thumbnail_url = '';
+      this.thumbnail_public_id = '';
     }
   }
+
   next();
 });
 

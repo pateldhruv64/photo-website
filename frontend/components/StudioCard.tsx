@@ -2,7 +2,6 @@
 
 import type { SiteConfig } from '@/lib/types';
 import { getWhatsAppNumber } from '@/lib/whatsapp';
-import { motion, AnimatePresence } from 'framer-motion';
 
 interface StudioCardProps {
   config: SiteConfig;
@@ -35,19 +34,14 @@ export default function StudioCard({ config, isOpen, onClose }: StudioCardProps)
   };
 
   return (
-    <AnimatePresence>
-      <div 
+          <div 
         className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
         onClick={(e) => {
           e.stopPropagation();
           onClose();
         }}
       >
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95, y: 10 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: 10 }}
-          transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+        <div
           onClick={(e) => e.stopPropagation()}
           className="relative w-full max-w-[340px] bg-[#F7FBFC] border border-[#D6E6F2] rounded-[2rem] p-7 text-[#142433] shadow-2xl flex flex-col items-center select-none"
         >
@@ -227,8 +221,7 @@ export default function StudioCard({ config, isOpen, onClose }: StudioCardProps)
               </a>
             )}
           </div>
-        </motion.div>
+        </div>
       </div>
-    </AnimatePresence>
   );
 }

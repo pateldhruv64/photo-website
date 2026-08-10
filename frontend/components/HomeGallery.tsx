@@ -1,134 +1,137 @@
 'use client';
 
-import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
-import useSWR from 'swr';
-import { motion } from 'framer-motion';
+import { useState, useCallback, useMemo, useEffect } from 'react';
+import useSWRInfinite from 'swr/infinite';
 import PhotoGrid from './PhotoGrid';
 import Lightbox from './Lightbox';
 import VideoCard from './VideoCard';
 import VideoLightbox from './VideoLightbox';
 import InfiniteScroll from './InfiniteScroll';
 import { fetcher } from '@/lib/fetcher';
-import { setPreloadedCategoryPhotos } from '@/lib/preloadedStore';
-import type { Category, Photo, VideoItem } from '@/lib/types';
+import type { Category, Photo, VideoItem, PaginatedPhotos } from '@/lib/types';
 
 interface Props {
   categories: Category[];
   initialPhotos?: Photo[];
   initialVideos?: VideoItem[];
+  initialPagination?: { page: number; limit: number; total: number; hasMore: boolean };
 }
 
-interface HomepageBulkData {
-  photos: Photo[];
-  videos: VideoItem[];
-}
+const PAGE_SIZE = 24;
 
-export default function HomeGallery({ categories, initialPhotos = [], initialVideos = [] }: Props) {
-  const galleryRef = useRef<HTMLDivElement>(null);
-
-  const [activeCategory, setActiveCategory] = useState<string>('all');
+/**
+ * ─────────────────────────────────────────────────────────────────────
+ *  HOME GALLERY
+ * ─────────────────────────────────────────────────────────────────────
+ *  Purana design do wajah se dheere tha:
+ *
+ *  1. Server pehle hi saari photos bhej chuka hota tha, phir yeh component
+ *     mount hote hi `useSWR('/homepage')` se WAHI data dobara maangta tha.
+ *     Har visit par payload do baar.
+ *
+ *  2. Category filtering client par hoti thi — matlab kaam karne ke liye
+ *     har photo ka browser me hona zaroori tha. 500 photos par yeh
+ *     unusable ho jaata.
+ *
+ *  Ab: server pehla page deta hai (SWR ka fallback), aur "load more" /
+ *  category switch server se sirf utna hi maangte hain jitna chahiye.
+ *  SWR har category ka response cache karta hai, to dobara tab par
+ *  jaana instant hai.
+ */
+export default function HomeGallery({
+  categories,
+  initialPhotos = [],
+  initialVideos = [],
+  initialPagination,
+}: Props) {
+  const [activeSlug, setActiveSlug] = useState<string>('all');
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const [videoLightbox, setVideoLightbox] = useState<VideoItem | null>(null);
 
-  // Background fetch latest photos & videos to bypass Next.js build cache
-  const { data: bulkData } = useSWR<HomepageBulkData>('/homepage', fetcher, {
-    fallbackData: { photos: initialPhotos, videos: initialVideos },
+  const getKey = useCallback(
+    (pageIndex: number, previous: PaginatedPhotos | null) => {
+      if (previous && !previous.pagination.hasMore) return null;
+      const base = `/photos?page=${pageIndex + 1}&limit=${PAGE_SIZE}`;
+      return activeSlug === 'all' ? base : `${base}&category=${activeSlug}`;
+    },
+    [activeSlug]
+  );
+
+  const { data, size, setSize, isValidating } = useSWRInfinite<PaginatedPhotos>(getKey, fetcher, {
+    // "All work" ka pehla page server se aa chuka hai — dobara mat maango
+    fallbackData:
+      activeSlug === 'all' && initialPhotos.length
+        ? [
+            {
+              photos: initialPhotos,
+              pagination: {
+                page: 1,
+                limit: initialPagination?.limit ?? initialPhotos.length,
+                total: initialPagination?.total ?? initialPhotos.length,
+                pages: 1,
+                hasMore: initialPagination?.hasMore ?? false,
+              },
+            },
+          ]
+        : undefined,
+    revalidateFirstPage: false,
     revalidateOnFocus: false,
-    dedupingInterval: 10000,
+    revalidateOnMount: activeSlug !== 'all',
+    persistSize: false,
   });
 
-  const latestPhotos = bulkData?.photos || initialPhotos;
-  const latestVideos = bulkData?.videos || initialVideos;
+  const photos = useMemo(() => (data ? data.flatMap((p) => p.photos) : []), [data]);
+  const last = data?.[data.length - 1]?.pagination;
+  const hasMore = last?.hasMore ?? false;
+  const total = last?.total ?? initialPagination?.total ?? photos.length;
 
+  // Category switch par page count reset — warna nayi category page 3 se shuru hoti
+  const selectCategory = useCallback(
+    (slug: string) => {
+      setActiveSlug(slug);
+      setSize(1);
+    },
+    [setSize]
+  );
+
+  // Navbar / URL se category select karne ka support
   useEffect(() => {
-    if (!latestPhotos || latestPhotos.length === 0) return;
-    
-    categories.forEach((cat) => {
-      const catPhotos = latestPhotos.filter((p) => {
-        if (!p.category) return false;
-        if (typeof p.category === 'string') return p.category === cat._id;
-        return p.category._id === cat._id;
-      });
-      setPreloadedCategoryPhotos(cat.slug, catPhotos);
-    });
-  }, [latestPhotos, categories]);
-
-  // In-memory pagination visible limit
-  const [visibleLimit, setVisibleLimit] = useState(20);
-
-  // Reset pagination limit when category changes to start fresh
-  const handleCategoryChange = (categoryId: string) => {
-    setActiveCategory(categoryId);
-    setVisibleLimit(20);
-  };
-
-  // Sync category state from Navbar clicks & URL query params
-  useEffect(() => {
-    const handleCategoryEvent = (e: Event) => {
-      const catId = (e as CustomEvent).detail;
-      setActiveCategory(catId);
-      setVisibleLimit(20);
+    const onEvent = (e: Event) => {
+      const slug = (e as CustomEvent).detail;
+      if (typeof slug === 'string') selectCategory(slug);
     };
-    window.addEventListener('categoryChange', handleCategoryEvent);
+    window.addEventListener('categoryChange', onEvent);
 
-    // Read query parameter on mount/load
-    const params = new URLSearchParams(window.location.search);
-    const catSlug = params.get('cat');
-    if (catSlug) {
-      const matchedCat = categories.find(c => c.slug === catSlug);
-      if (matchedCat) {
-        setActiveCategory(matchedCat._id);
-        setTimeout(() => {
-          document.getElementById('gallery-section')?.scrollIntoView({ behavior: 'smooth' });
-        }, 150);
-      }
+    const slug = new URLSearchParams(window.location.search).get('cat');
+    if (slug && categories.some((c) => c.slug === slug)) {
+      selectCategory(slug);
+      document.getElementById('gallery-section')?.scrollIntoView({ behavior: 'smooth' });
     }
 
-    return () => {
-      window.removeEventListener('categoryChange', handleCategoryEvent);
-    };
-  }, [categories]);
+    return () => window.removeEventListener('categoryChange', onEvent);
+  }, [categories, selectCategory]);
 
-  // Filter photos in memory based on category selection
-  const filteredPhotos = useMemo(() => {
-    if (activeCategory === 'all') return latestPhotos;
-    return latestPhotos.filter((p) => {
-      if (!p.category) return false;
-      if (typeof p.category === 'string') return p.category === activeCategory;
-      return p.category._id === activeCategory;
-    });
-  }, [activeCategory, latestPhotos]);
-
-  // Filter active videos in memory based on category selection
-  const activeVideos = useMemo(() => {
-    const activeOnly = latestVideos.filter((v) => v.is_active);
-    if (activeCategory === 'all') return activeOnly;
-    return activeOnly.filter((v) => {
-      if (!v.category) return false;
-      if (typeof v.category === 'string') return v.category === activeCategory;
-      return v.category._id === activeCategory;
-    });
-  }, [activeCategory, latestVideos]);
-
-  // Paginated chunk of photos to display
-  const currentPhotos = useMemo(() => {
-    return filteredPhotos.slice(0, visibleLimit);
-  }, [filteredPhotos, visibleLimit]);
-
-  const hasMore = visibleLimit < filteredPhotos.length;
-
-  const loadMore = useCallback(() => {
-    setVisibleLimit((prev) => prev + 20);
-  }, []);
+  const videos = useMemo(() => {
+    const active = initialVideos.filter((v) => v.is_active);
+    if (activeSlug === 'all') return active;
+    return active.filter((v) =>
+      typeof v.category === 'object' ? v.category?.slug === activeSlug : false
+    );
+  }, [activeSlug, initialVideos]);
 
   const openLightbox = (photo: Photo) => {
-    const index = filteredPhotos.findIndex((p) => p._id === photo._id);
-    setLightboxIndex(index >= 0 ? index : 0);
+    const i = photos.findIndex((p) => p._id === photo._id);
+    setLightboxIndex(i >= 0 ? i : 0);
     setLightboxOpen(true);
   };
 
-  const allCategories = [{ _id: 'all', name: 'All Work', slug: 'all' }, ...categories];
+  const tabs = [
+    { slug: 'all', name: 'All Work', count: initialPagination?.total ?? photos.length },
+    ...categories.map((c) => ({ slug: c.slug, name: c.name, count: c.photoCount ?? 0 })),
+  ];
+
+  const loading = isValidating && photos.length === 0;
 
   return (
     <section
@@ -136,9 +139,7 @@ export default function HomeGallery({ categories, initialPhotos = [], initialVid
       id="gallery-section"
       aria-labelledby="gallery-heading"
     >
-      {/* ── Section header ──
-          Pehle yaha seedhe tabs shuru ho jaate the — na koi heading, na
-          rhythm. H2 se page ka structure Google ko bhi saaf dikhta hai. */}
+      {/* ── Section header ── */}
       <div className="mb-8 flex flex-col items-start gap-4 md:mb-10 md:flex-row md:items-end md:justify-between">
         <div>
           <p className="eyebrow">The Portfolio</p>
@@ -151,58 +152,40 @@ export default function HomeGallery({ categories, initialPhotos = [], initialVid
         </div>
 
         <p className="max-w-sm font-body text-[13px] leading-relaxed text-ink-muted md:text-right">
-          {latestPhotos.length > 0
-            ? `${latestPhotos.length} frames across ${categories.length} collections. Tap any photo to view full screen.`
+          {total > 0
+            ? `${total} frames across ${categories.length} collections. Tap any photo to view full screen.`
             : 'Browse the collections below.'}
         </p>
       </div>
 
-      {/* ── Category tabs ──
-          Mobile par scroll hoti hain, edges par fade taki pata chale
-          aur bhi options hain. */}
+      {/* ── Category tabs ── */}
       <div
         role="tablist"
         aria-label="Filter photos by collection"
         className="no-scrollbar -mx-5 mb-9 flex items-center gap-1.5 overflow-x-auto px-5 pb-1 sm:mx-0 sm:px-0 md:mb-11 md:justify-center"
       >
-        {allCategories.map((cat) => {
-          const isActive = activeCategory === cat._id;
-          const count =
-            cat._id === 'all'
-              ? latestPhotos.length
-              : latestPhotos.filter((p) => {
-                  if (!p.category) return false;
-                  if (typeof p.category === 'string') return p.category === cat._id;
-                  return p.category._id === cat._id;
-                }).length;
-
+        {tabs.map((tab) => {
+          const isActive = activeSlug === tab.slug;
           return (
             <button
-              key={cat._id}
+              key={tab.slug}
               role="tab"
               aria-selected={isActive}
-              onClick={() => handleCategoryChange(cat._id)}
-              className={`relative z-10 flex flex-shrink-0 items-center gap-2 rounded-full border px-5 py-2.5 font-body text-[11px] uppercase tracking-[0.16em] transition-colors duration-300 ${
+              onClick={() => selectCategory(tab.slug)}
+              className={`flex flex-shrink-0 items-center gap-2 rounded-full border px-5 py-2.5 font-body text-[11px] uppercase tracking-[0.16em] transition-colors duration-300 ${
                 isActive
-                  ? 'border-transparent text-canvas'
+                  ? 'border-ink bg-ink text-canvas'
                   : 'border-line bg-canvas/70 text-ink-muted hover:border-line-strong hover:text-ink'
               }`}
             >
-              {isActive && (
-                <motion.span
-                  layoutId="activeCategoryPill"
-                  className="absolute inset-0 z-[-1] rounded-full bg-ink"
-                  transition={{ type: 'spring', stiffness: 380, damping: 32 }}
-                />
-              )}
-              <span>{cat.name}</span>
-              {count > 0 && (
+              <span>{tab.name}</span>
+              {tab.count > 0 && (
                 <span
                   className={`tabular text-[10px] font-medium ${
-                    isActive ? 'text-canvas/55' : 'text-ink-muted'
+                    isActive ? 'text-canvas/55' : 'text-ink-muted/60'
                   }`}
                 >
-                  {count}
+                  {tab.count}
                 </span>
               )}
             </button>
@@ -210,32 +193,37 @@ export default function HomeGallery({ categories, initialPhotos = [], initialVid
         })}
       </div>
 
-      {/* Photo Grid with Client-Side Infinite Scroll + Videos */}
+      {/* ── Grid ── */}
       <div className="min-h-[400px]">
-        {currentPhotos.length > 0 || activeVideos.length > 0 ? (
+        {loading ? (
+          <div className="masonry-grid">
+            {/* Skeleton — spinner se behtar, kyunki layout shift nahi hota */}
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="masonry-grid-column">
+                <div
+                  className="shimmer mb-3 rounded-xl md:mb-5 md:rounded-2xl"
+                  style={{ height: 180 + ((i * 47) % 140) }}
+                />
+              </div>
+            ))}
+          </div>
+        ) : photos.length > 0 || videos.length > 0 ? (
           <InfiniteScroll
-            onLoadMore={loadMore}
+            onLoadMore={() => setSize(size + 1)}
             hasMore={hasMore}
-            isLoading={false}
+            isLoading={isValidating}
           >
-            <div ref={galleryRef} className="w-full">
-              <PhotoGrid photos={currentPhotos} onPhotoClick={openLightbox} />
-            </div>
+            <PhotoGrid photos={photos} onPhotoClick={openLightbox} />
 
-            {/* Videos Section Below Photos */}
-            {activeVideos.length > 0 && (
+            {videos.length > 0 && (
               <div className="mt-14 border-t border-line/70 pt-12">
                 <p className="eyebrow">Motion</p>
                 <h3 className="mb-8 font-display text-2xl font-light text-ink sm:text-3xl">
                   Films &amp; <span className="italic text-ink-soft">reels</span>
                 </h3>
                 <div className="grid w-full grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                  {activeVideos.map((video) => (
-                    <VideoCard
-                      key={video._id}
-                      video={video}
-                      onClick={(v) => setVideoLightbox(v)}
-                    />
+                  {videos.map((video) => (
+                    <VideoCard key={video._id} video={video} onClick={setVideoLightbox} />
                   ))}
                 </div>
               </div>
@@ -243,9 +231,7 @@ export default function HomeGallery({ categories, initialPhotos = [], initialVid
           </InfiniteScroll>
         ) : (
           <div className="py-24 text-center">
-            <p className="font-display text-2xl font-light text-ink-soft">
-              Nothing here yet
-            </p>
+            <p className="font-display text-2xl font-light text-ink-soft">Nothing here yet</p>
             <p className="mt-2 font-body text-sm text-ink-muted">
               This collection is still being curated. Try another one above.
             </p>
@@ -253,17 +239,15 @@ export default function HomeGallery({ categories, initialPhotos = [], initialVid
         )}
       </div>
 
-      {/* Photo Lightbox */}
       {lightboxOpen && (
         <Lightbox
-          photos={filteredPhotos}
+          photos={photos}
           currentIndex={lightboxIndex}
           onClose={() => setLightboxOpen(false)}
-          onNavigate={(i) => setLightboxIndex(i)}
+          onNavigate={setLightboxIndex}
         />
       )}
 
-      {/* Video Lightbox */}
       {videoLightbox && (
         <VideoLightbox
           youtubeId={videoLightbox.youtube_id}

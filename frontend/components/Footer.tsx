@@ -1,293 +1,301 @@
 'use client';
 
 import Link from 'next/link';
-import { motion } from 'framer-motion';
 import useSWR from 'swr';
 import { fetcher } from '@/lib/fetcher';
 import type { SiteConfig, Category } from '@/lib/types';
 import { getWhatsAppUrl } from '@/lib/whatsapp';
-import BorderBeam from '@/components/ui/BorderBeam';
 
 interface FooterProps {
   config?: SiteConfig | null;
+  categories?: Category[];
 }
 
-export default function Footer({ config }: FooterProps) {
-  const photographerName = config?.photographer_name || 'Niks Photos';
+/* Social icons — ek jagah define, taki markup saaf rahe */
+const SOCIALS = {
+  instagram: {
+    label: 'Instagram',
+    hover: 'hover:text-[#E1306C]',
+    path: (
+      <>
+        <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+        <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+        <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
+      </>
+    ),
+    stroke: true,
+  },
+  facebook: {
+    label: 'Facebook',
+    hover: 'hover:text-[#1877F2]',
+    path: <path d="M9 8h-3v4h3v12h5v-12h3.642l.358-4h-4v-1.667c0-.955.192-1.333 1.115-1.333h2.885v-5h-3.808c-3.596 0-5.192 1.583-5.192 4.615v3.385z" />,
+    stroke: false,
+  },
+  youtube: {
+    label: 'YouTube',
+    hover: 'hover:text-[#FF0000]',
+    path: <path d="M23.498 6.163c-.272-1.016-1.071-1.815-2.087-2.087C19.565 3.5 12 3.5 12 3.5s-7.565 0-9.411.576c-1.016.272-1.815 1.071-2.087 2.087C0 8.01 0 12 0 12s0 3.99.502 5.837c.272 1.016 1.071 1.815 2.087 2.087C4.435 20.5 12 20.5 12 20.5s7.565 0 9.411-.576c1.016-.272 1.815-1.071 2.087-2.087C24 15.99 24 12 24 12s0-3.99-.502-5.837zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />,
+    stroke: false,
+  },
+} as const;
+
+/**
+ * ─────────────────────────────────────────────────────────────────────
+ *  FOOTER
+ * ─────────────────────────────────────────────────────────────────────
+ *  Naya layout: ek bada "let's work together" CTA sabse upar (footer par
+ *  pahunchne wala user aksar contact hi dhoond raha hota hai), phir
+ *  columns, phir NAP line.
+ *
+ *  Purane version se kya hata:
+ *    - BorderBeam (animated gradient jo hamesha chalta rehta tha)
+ *    - framer-motion (sirf icon hover ke liye — ab CSS)
+ *    - giant watermark text jo mobile par overflow karta tha
+ */
+export default function Footer({ config, categories: initialCategories }: FooterProps) {
+  const brand = config?.photographer_name || 'Photography Studio';
   const whatsappUrl = getWhatsAppUrl(config);
 
-  // Collections ko footer se link karna — user ko har page ke end par
-  // aage ka raasta milta hai. (SEO ke liye server-rendered links
-  // SeoContentSection me already hain.)
   const { data: categories } = useSWR<Category[]>('/categories', fetcher, {
+    fallbackData: initialCategories,
     revalidateOnFocus: false,
     dedupingInterval: 3600000,
   });
   const collections = (categories || []).slice(0, 6);
 
-  const scrollToSection = (id: string) => {
-    const el = document.getElementById(id);
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
+  const scrollTo = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+  const scrollTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
 
-  const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+  const seo = config?.seo;
+  const addressLine = [seo?.street_address, seo?.city, seo?.state, seo?.postal_code]
+    .filter(Boolean)
+    .join(', ');
 
   return (
-    <footer className="relative bg-[#142433] text-white pt-16 md:pt-24 pb-28 sm:pb-24 md:pb-12 border-t border-white/10 overflow-hidden">
-      {/* Inspira UI Moving Border Beam on top edge */}
-      <BorderBeam size={250} duration={8} colorFrom="#769FCD" colorTo="#F7FBFC" />
+    <footer className="relative overflow-hidden border-t border-white/10 bg-obsidian text-white">
+      {/* Static ambient glow — animated nahi, to koi per-frame cost nahi */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 opacity-60"
+        style={{
+          background:
+            'radial-gradient(50rem 26rem at 15% 0%, rgba(118,159,205,0.16), transparent 62%), radial-gradient(40rem 22rem at 85% 40%, rgba(185,215,234,0.09), transparent 60%)',
+        }}
+      />
 
-      {/* Giant Typography Background Watermark */}
-      <div className="absolute top-4 left-1/2 -translate-x-1/2 w-full text-center pointer-events-none select-none overflow-hidden opacity-5">
-        <span className="font-display text-7xl sm:text-9xl md:text-[13rem] font-light tracking-[0.2em] uppercase text-white whitespace-nowrap">
-          {photographerName}
-        </span>
-      </div>
+      <div className="relative mx-auto max-w-7xl px-5 sm:px-6 lg:px-8">
+        {/* ══ CTA band ══ */}
+        <div className="flex flex-col gap-8 border-b border-white/10 py-14 md:flex-row md:items-end md:justify-between md:py-20">
+          <div>
+            <p className="eyebrow text-accent-soft">Let&apos;s create together</p>
+            <h2 className="max-w-xl font-display text-3xl font-light leading-[1.12] text-white sm:text-4xl md:text-5xl">
+              Have a date in mind?
+              <span className="block italic text-white/60">Let&apos;s save it.</span>
+            </h2>
+          </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        
-        {/* Main Footer Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-10 lg:gap-8 pb-14 border-b border-white/10">
-          
-          {/* Col 1: Brand & Tagline (Lg: 5 Cols) */}
-          <div className="lg:col-span-5 flex flex-col justify-between">
-            <div>
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-accent-soft">
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <h3 className="font-display text-2xl font-light text-white tracking-wide">
-                    {photographerName}
-                  </h3>
-                  <span className="w-4 h-4 rounded-full bg-accent-soft text-[#142433] flex items-center justify-center text-[9px] font-bold">
-                    ✓
-                  </span>
-                </div>
-              </div>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            {whatsappUrl && (
+              <a
+                href={whatsappUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-2.5 rounded-full bg-[#25D366] px-7 py-4 font-body text-[12px] uppercase tracking-[0.18em] text-white transition-transform duration-300 ease-editorial hover:-translate-y-0.5 sm:py-3.5"
+              >
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                  <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.514 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.717-1.455L0 24zm6.59-4.846c1.66.986 3.284 1.48 4.961 1.48 5.384 0 9.765-4.382 9.768-9.77 0-2.61-1.015-5.064-2.858-6.911-1.843-1.847-4.293-2.864-6.907-2.864-5.39 0-9.773 4.382-9.776 9.77-.001 1.8.497 3.559 1.44 5.17l-.999 3.648 3.732-.977z" />
+                </svg>
+                WhatsApp
+              </a>
+            )}
+            <button
+              onClick={() => scrollTo('booking-section')}
+              className="rounded-full border border-white/25 px-7 py-4 font-body text-[12px] uppercase tracking-[0.18em] text-white transition-colors duration-300 hover:border-white/60 hover:bg-white/5 sm:py-3.5"
+            >
+              Enquiry form
+            </button>
+          </div>
+        </div>
 
-              <p className="font-body text-xs uppercase tracking-[0.25em] text-accent-soft/80 font-medium mb-4">
-                CREATIVE PHOTOGRAPHY & VISUAL STORYTELLING
+        {/* ══ Columns ══ */}
+        <div className="grid grid-cols-2 gap-x-6 gap-y-10 py-14 md:grid-cols-4 md:py-16">
+          {/* Brand */}
+          <div className="col-span-2 md:col-span-1">
+            <p className="font-display text-2xl font-light text-white">{brand}</p>
+            <p className="mt-2 font-body text-[10px] uppercase tracking-[0.24em] text-accent-soft/80">
+              Photography &amp; Visual Stories
+            </p>
+            {config?.about_text && (
+              <p className="mt-4 max-w-xs font-body text-[13px] leading-relaxed text-white/55">
+                {config.about_text.slice(0, 140)}
+                {config.about_text.length > 140 ? '…' : ''}
               </p>
+            )}
 
-              {config?.about_text && (
-                <p className="font-body text-sm text-white/70 max-w-md leading-relaxed">
-                  {config.about_text}
-                </p>
-              )}
-            </div>
-
-            <div className="mt-6 flex items-center gap-2 text-xs text-white/50">
-              <span className="w-2 h-2 rounded-full bg-[#25D366] animate-pulse" />
-              <span>Accepting new wedding & portrait bookings</span>
+            <div className="mt-6 flex items-center gap-2.5">
+              {(['instagram', 'facebook', 'youtube'] as const).map((key) => {
+                const url = config?.social_links?.[key];
+                if (!url) return null;
+                const s = SOCIALS[key];
+                return (
+                  <a
+                    key={key}
+                    href={url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={s.label}
+                    className={`flex h-10 w-10 items-center justify-center rounded-full border border-white/12 bg-white/5 text-white/70 transition-all duration-300 ease-editorial hover:-translate-y-0.5 hover:bg-white/10 ${s.hover}`}
+                  >
+                    <svg
+                      width="17"
+                      height="17"
+                      viewBox="0 0 24 24"
+                      fill={s.stroke ? 'none' : 'currentColor'}
+                      stroke={s.stroke ? 'currentColor' : 'none'}
+                      strokeWidth={s.stroke ? 1.7 : 0}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-hidden
+                    >
+                      {s.path}
+                    </svg>
+                  </a>
+                );
+              })}
             </div>
           </div>
 
-          {/* Col 2: Collections + page sections (Lg: 3 Cols) */}
-          <div className="lg:col-span-3">
-            {collections.length > 0 && (
-              <>
-                <h4 className="mb-5 font-body text-xs font-semibold uppercase tracking-[0.25em] text-white/50">
-                  Collections
-                </h4>
-                <ul className="mb-8 space-y-3 font-body text-sm text-white/80">
-                  {collections.map((cat) => (
-                    <li key={cat._id}>
-                      <Link
-                        href={`/${cat.slug}`}
-                        className="group inline-flex items-center gap-2 transition-colors hover:text-accent-soft"
+          {/* Collections */}
+          {collections.length > 0 && (
+            <nav aria-label="Collections">
+              <h3 className="font-body text-[10px] font-semibold uppercase tracking-[0.24em] text-white/40">
+                Collections
+              </h3>
+              <ul className="mt-5 space-y-2.5">
+                {collections.map((cat) => (
+                  <li key={cat._id}>
+                    <Link
+                      href={`/${cat.slug}`}
+                      className="group inline-flex items-center gap-1.5 font-body text-[13px] text-white/75 transition-colors hover:text-accent-soft"
+                    >
+                      {cat.name}
+                      <span
+                        aria-hidden
+                        className="translate-x-0 opacity-0 transition-all duration-300 group-hover:translate-x-0.5 group-hover:opacity-100"
                       >
-                        {cat.name}
-                        <span
-                          aria-hidden
-                          className="opacity-0 transition-all duration-300 group-hover:translate-x-0.5 group-hover:opacity-100"
-                        >
-                          →
-                        </span>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </>
-            )}
+                        →
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          )}
 
-            <h4 className="mb-5 font-body text-xs font-semibold uppercase tracking-[0.25em] text-white/50">
+          {/* Explore */}
+          <nav aria-label="Sections">
+            <h3 className="font-body text-[10px] font-semibold uppercase tracking-[0.24em] text-white/40">
               Explore
-            </h4>
-            <ul className="space-y-3 font-body text-sm text-white/80">
+            </h3>
+            <ul className="mt-5 space-y-2.5">
               {[
-                { label: 'Home', action: scrollToTop },
-                { label: 'About the studio', action: () => scrollToSection('about-section') },
-                { label: 'Investment & packages', action: () => scrollToSection('pricing-section') },
-                { label: 'Client experiences', action: () => scrollToSection('testimonials-section') },
-                { label: 'Book a session', action: () => scrollToSection('booking-section') },
-                { label: 'FAQ', action: () => scrollToSection('faq-section') },
+                { label: 'Home', action: scrollTop },
+                { label: 'About', action: () => scrollTo('about-section') },
+                { label: 'Packages', action: () => scrollTo('pricing-section') },
+                { label: 'Reviews', action: () => scrollTo('testimonials-section') },
+                { label: 'FAQ', action: () => scrollTo('faq-section') },
               ].map((item) => (
                 <li key={item.label}>
-                  <button onClick={item.action} className="transition-colors hover:text-accent-soft">
+                  <button
+                    onClick={item.action}
+                    className="font-body text-[13px] text-white/75 transition-colors hover:text-accent-soft"
+                  >
                     {item.label}
                   </button>
                 </li>
               ))}
             </ul>
-          </div>
+          </nav>
 
-          {/* Col 3: Direct Connect & Social Dock (Lg: 4 Cols) */}
-          <div className="lg:col-span-4 flex flex-col justify-between">
-            <div>
-              <h4 className="font-body text-xs font-semibold tracking-[0.25em] uppercase text-white/50 mb-5">
-                Connect Directly
-              </h4>
-
-              {whatsappUrl && (
-                <a
-                  href={whatsappUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-3 px-5 py-3 rounded-full bg-[#25D366] text-white font-body text-xs font-semibold shadow-lg hover:bg-[#20ba59] transition-all mb-6"
-                >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.514 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.717-1.455L0 24zm6.59-4.846c1.66.986 3.284 1.48 4.961 1.48 5.384 0 9.765-4.382 9.768-9.77 0-2.61-1.015-5.064-2.858-6.911-1.843-1.847-4.293-2.864-6.907-2.864-5.39 0-9.773 4.382-9.776 9.77-.001 1.8.497 3.559 1.44 5.17l-.999 3.648 3.732-.977z" />
-                  </svg>
-                  <span>Chat on WhatsApp</span>
-                </a>
+          {/* Contact */}
+          <div>
+            <h3 className="font-body text-[10px] font-semibold uppercase tracking-[0.24em] text-white/40">
+              Get in touch
+            </h3>
+            <ul className="mt-5 space-y-2.5 font-body text-[13px]">
+              {config?.studio_phone && (
+                <li>
+                  <a
+                    href={`tel:${config.studio_phone.replace(/\s/g, '')}`}
+                    className="text-white/75 transition-colors hover:text-accent-soft"
+                  >
+                    {config.studio_phone}
+                  </a>
+                </li>
               )}
-
-              {/* Social Icons Dock */}
-              <div className="flex items-center gap-3">
-                {config?.social_links?.instagram && (
-                  <motion.a
-                    whileHover={{ scale: 1.2, y: -3 }}
-                    whileTap={{ scale: 0.9 }}
-                    href={config.social_links.instagram}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-10 h-10 rounded-full bg-white/10 border border-white/15 flex items-center justify-center text-white hover:text-[#E1306C] hover:bg-white/20 transition-all shadow-md"
-                    aria-label="Instagram"
+              {config?.contact_email && (
+                <li>
+                  <a
+                    href={`mailto:${config.contact_email}`}
+                    className="break-all text-white/75 transition-colors hover:text-accent-soft"
                   >
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
-                      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
-                      <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
-                    </svg>
-                  </motion.a>
-                )}
-                {config?.social_links?.facebook && (
-                  <motion.a
-                    whileHover={{ scale: 1.2, y: -3 }}
-                    whileTap={{ scale: 0.9 }}
-                    href={config.social_links.facebook}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-10 h-10 rounded-full bg-white/10 border border-white/15 flex items-center justify-center text-white hover:text-[#1877F2] hover:bg-white/20 transition-all shadow-md"
-                    aria-label="Facebook"
-                  >
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M9 8h-3v4h3v12h5v-12h3.642l.358-4h-4v-1.667c0-.955.192-1.333 1.115-1.333h2.885v-5h-3.808c-3.596 0-5.192 1.583-5.192 4.615v3.385z" />
-                    </svg>
-                  </motion.a>
-                )}
-                {config?.social_links?.youtube && (
-                  <motion.a
-                    whileHover={{ scale: 1.2, y: -3 }}
-                    whileTap={{ scale: 0.9 }}
-                    href={config.social_links.youtube}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-10 h-10 rounded-full bg-white/10 border border-white/15 flex items-center justify-center text-white hover:text-[#FF0000] hover:bg-white/20 transition-all shadow-md"
-                    aria-label="YouTube"
-                  >
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M23.498 6.163c-.272-1.016-1.071-1.815-2.087-2.087C19.565 3.5 12 3.5 12 3.5s-7.565 0-9.411.576c-1.016.272-1.815 1.071-2.087 2.087C0 8.01 0 12 0 12s0 3.99.502 5.837c.272 1.016 1.071 1.815 2.087 2.087C4.435 20.5 12 20.5 12 20.5s7.565 0 9.411-.576c1.016-.272 1.815-1.071 2.087-2.087C24 15.99 24 12 24 12s0-3.99-.502-5.837zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
-                    </svg>
-                  </motion.a>
-                )}
-              </div>
-            </div>
-
-            {/* Studio Location */}
-            {config?.studio_location_url && (
-              <div className="mt-6 bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center gap-4">
-                <div className="w-10 h-10 rounded-full bg-accent/10 border border-accent/30 flex items-center justify-center text-accent-soft flex-shrink-0">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                    <circle cx="12" cy="10" r="3" />
-                  </svg>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-body text-xs text-white/50 uppercase tracking-wider mb-0.5">Studio Location</p>
+                    {config.contact_email}
+                  </a>
+                </li>
+              )}
+              {config?.studio_location_url && (
+                <li>
                   <a
                     href={config.studio_location_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="font-body text-sm text-accent-soft/90 hover:text-accent-soft transition-colors flex items-center gap-1.5"
+                    className="text-white/75 transition-colors hover:text-accent-soft"
                   >
-                    View on Google Maps
-                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                    </svg>
+                    Studio on Google Maps ↗
                   </a>
-                </div>
+                </li>
+              )}
+            </ul>
+
+            {seo?.opening_hours && seo.opening_hours.length > 0 && (
+              <div className="mt-6">
+                <h3 className="font-body text-[10px] font-semibold uppercase tracking-[0.24em] text-white/40">
+                  Hours
+                </h3>
+                <ul className="mt-3 space-y-1 font-body text-[13px] text-white/60">
+                  {seo.opening_hours.map((h) => (
+                    <li key={h}>{h}</li>
+                  ))}
+                </ul>
               </div>
             )}
-
-            {/* Back to Top Button */}
-            <div className="mt-8 flex justify-start lg:justify-end">
-              <button
-                onClick={scrollToTop}
-                className="flex items-center gap-2 text-xs uppercase tracking-widest text-white/60 hover:text-white transition-colors group"
-              >
-                <span>Back to top</span>
-                <span className="w-8 h-8 rounded-full bg-white/10 border border-white/15 flex items-center justify-center group-hover:-translate-y-1 transition-transform">
-                  ↑
-                </span>
-              </button>
-            </div>
           </div>
         </div>
 
-        {/* NAP line — har page par same name/phone/email/address.
-            Local SEO me consistency hi sabse bada trust signal hai. */}
-        {(config?.studio_phone || config?.contact_email || config?.seo?.city) && (
-          <address className="mt-8 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-white/10 pt-6 font-body text-xs not-italic text-white/45">
-            <span className="text-white/70">{config?.studio_name || photographerName}</span>
-            {config?.seo?.city && (
-              <span>
-                {[config.seo.street_address, config.seo.city, config.seo.state, config.seo.postal_code]
-                  .filter(Boolean)
-                  .join(', ')}
-              </span>
-            )}
-            {config?.studio_phone && (
-              <a
-                href={`tel:${config.studio_phone.replace(/\s/g, '')}`}
-                className="transition-colors hover:text-accent-soft"
-              >
-                {config.studio_phone}
-              </a>
-            )}
-            {config?.contact_email && (
-              <a
-                href={`mailto:${config.contact_email}`}
-                className="transition-colors hover:text-accent-soft"
-              >
-                {config.contact_email}
-              </a>
-            )}
+        {/* ══ NAP + legal ══
+            Har page par same name/address/phone — Local SEO ka sabse
+            bada trust signal consistency hi hai. */}
+        <div className="flex flex-col gap-4 border-t border-white/10 py-8 pb-28 sm:pb-24 md:flex-row md:items-center md:justify-between md:pb-8">
+          <address className="font-body text-[11px] not-italic leading-relaxed text-white/40">
+            <span className="text-white/60">{config?.studio_name || brand}</span>
+            {addressLine && <span> · {addressLine}</span>}
           </address>
-        )}
 
-        {/* Bottom Bar */}
-        <div className="mt-6 flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-6 font-body text-xs text-white/45 sm:flex-row">
-          <p>© {new Date().getFullYear()} {photographerName}. All rights reserved.</p>
-          <p className="tracking-wide">Crafted for storytellers</p>
+          <div className="flex items-center gap-5 font-body text-[11px] text-white/40">
+            <span>© {new Date().getFullYear()} {brand}</span>
+            <button
+              onClick={scrollTop}
+              className="group inline-flex items-center gap-1.5 transition-colors hover:text-white"
+            >
+              Top
+              <span
+                aria-hidden
+                className="transition-transform duration-300 group-hover:-translate-y-0.5"
+              >
+                ↑
+              </span>
+            </button>
+          </div>
         </div>
       </div>
     </footer>

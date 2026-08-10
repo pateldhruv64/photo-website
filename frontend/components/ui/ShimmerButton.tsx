@@ -1,15 +1,20 @@
 'use client';
 
 import React from 'react';
-import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
-interface ShimmerButtonProps extends React.ComponentPropsWithoutRef<typeof motion.button> {
+interface ShimmerButtonProps extends React.ComponentPropsWithoutRef<'button'> {
   children: React.ReactNode;
   className?: string;
   href?: string;
 }
 
+/**
+ * Pehle yeh framer-motion ka `motion.button` tha, sirf
+ * `whileHover: scale 1.02` aur `whileTap: scale 0.98` ke liye.
+ * Wo do lines poori animation library ko bundle me le aati thi.
+ * CSS ka `hover:scale-[1.02] active:scale-[0.98]` bilkul wahi karta hai.
+ */
 export default function ShimmerButton({
   children,
   className = '',
@@ -18,26 +23,24 @@ export default function ShimmerButton({
   ...props
 }: ShimmerButtonProps) {
   const content = (
-    <motion.button
-      whileHover={{ scale: 1.02 }}
-      whileTap={{ scale: 0.98 }}
+    <button
       onClick={onClick}
       className={cn(
-        'group relative isolate flex items-center justify-center overflow-hidden rounded-full border border-white/20 bg-[#142433] px-6 py-3 text-sm font-medium text-white shadow-xl transition-all duration-300 hover:border-white/40 hover:shadow-2xl',
+        'group relative isolate flex items-center justify-center overflow-hidden rounded-full border border-white/20 bg-ink px-6 py-3 text-sm font-medium text-white shadow-xl',
+        'transition-transform duration-300 ease-editorial hover:scale-[1.02] active:scale-[0.98]',
+        'hover:border-white/40',
         className
       )}
       {...props}
     >
-      {/* Sparkle / Shimmer Sweep Line */}
-      <div
-        className="pointer-events-none absolute -inset-full top-0 block h-full w-[200%] -rotate-45 bg-gradient-to-r from-transparent via-white/25 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100 group-hover:animate-marquee"
+      {/* Shimmer sweep — hover par ek baar guzarta hai */}
+      <span
+        aria-hidden
+        className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-[900ms] ease-editorial group-hover:translate-x-full"
       />
 
-      {/* Button Content */}
-      <span className="relative z-10 flex items-center gap-2">
-        {children}
-      </span>
-    </motion.button>
+      <span className="relative z-10 flex items-center gap-2">{children}</span>
+    </button>
   );
 
   if (href) {

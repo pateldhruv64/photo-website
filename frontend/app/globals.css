@@ -292,28 +292,110 @@ body {
 }
 
 /* ═══════════════════════════════════════════════════════════════════
+   MOBILE MENU
+   Pehle yeh framer-motion se chalta tha. Navbar har page par load hota
+   hai, to us ek import ki wajah se framer-motion (~35KB gz) MAIN bundle
+   me chala jaata tha — sirf ek fade aur stagger ke liye. Yeh CSS wahi
+   kaam karta hai, zero JS me, aur compositor thread par.
+   ═══════════════════════════════════════════════════════════════════ */
+.menu-overlay {
+  animation: menu-fade 0.28s var(--ease) both;
+}
+
+@keyframes menu-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.menu-item {
+  /* `both` fill-mode zaroori hai — warna delay ke dauraan item
+     pehle se visible dikhta hai aur phir jump karta hai. */
+  animation: menu-item-in 0.45s var(--ease) both;
+}
+
+@keyframes menu-item-in {
+  from { opacity: 0; transform: translateX(-22px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* Hero ka rotating word — pehle framer-motion har LETTER ko alag
+   spring se animate karta tha. Ab ek keyframe, ek element. */
+@keyframes flip-word {
+  from { opacity: 0; transform: translateY(12px); filter: blur(6px); }
+  to   { opacity: 1; transform: translateY(0);    filter: blur(0); }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   TILT CARD
+   JS sirf custom properties set karta hai; smoothing yaha CSS karta
+   hai. Pehle yeh framer-motion ke 4 spring loops par chalta tha.
+   ═══════════════════════════════════════════════════════════════════ */
+.tilt-card {
+  position: relative;
+  transform: perspective(1000px) rotateX(var(--tilt-x)) rotateY(var(--tilt-y));
+  transform-style: preserve-3d;
+  transition: transform 0.45s var(--ease);
+  will-change: transform;
+}
+
+.tilt-card__spot {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: var(--spot-opacity);
+  transition: opacity 0.4s var(--ease);
+  background: radial-gradient(
+    circle at var(--spot-x) var(--spot-y),
+    var(--spot-color),
+    transparent 45%
+  );
+}
+
+/* Touch devices par tilt ka koi matlab nahi — hover hi nahi hota */
+@media (hover: none) {
+  .tilt-card { transform: none !important; }
+  .tilt-card__spot { display: none; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
    SCROLL REVEAL
    ═══════════════════════════════════════════════════════════════════ */
-.reveal {
-  opacity: 0;
-  transform: translateY(32px);
-  transition: opacity 0.9s var(--ease), transform 0.9s var(--ease);
-}
-.reveal.visible { opacity: 1; transform: translateY(0); }
+/* Default: sab kuch VISIBLE hai.
+   Hide sirf tab hota hai jab <html class="js"> ho — wo class layout ke
+   inline script se lagti hai, paint se pehle.
 
-.reveal-left {
-  opacity: 0;
-  transform: translateX(-36px);
-  transition: opacity 0.9s var(--ease), transform 0.9s var(--ease);
-}
-.reveal-left.visible { opacity: 1; transform: translateX(0); }
-
+   Kyun? Pehle `.reveal { opacity: 0 }` unconditional tha. Agar JS block
+   ho jaaye, dheere aaye, ya observer fail ho — poora page permanently
+   invisible. Ab worst case content bina animation ke dikhega, gayab
+   nahi hoga. */
+.reveal,
+.reveal-left,
 .reveal-scale {
-  opacity: 0;
-  transform: scale(0.955);
-  transition: opacity 0.8s var(--ease), transform 0.8s var(--ease);
+  opacity: 1;
+  transform: none;
 }
-.reveal-scale.visible { opacity: 1; transform: scale(1); }
+
+.js .reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.7s var(--ease), transform 0.7s var(--ease);
+}
+.js .reveal.visible { opacity: 1; transform: translateY(0); }
+
+.js .reveal-left {
+  opacity: 0;
+  transform: translateX(-32px);
+  transition: opacity 0.7s var(--ease), transform 0.7s var(--ease);
+}
+.js .reveal-left.visible { opacity: 1; transform: translateX(0); }
+
+.js .reveal-scale {
+  opacity: 0;
+  transform: scale(0.96);
+  transition: opacity 0.6s var(--ease), transform 0.6s var(--ease);
+}
+.js .reveal-scale.visible { opacity: 1; transform: scale(1); }
 
 .stagger-reveal > *:nth-child(1) { transition-delay: 0s; }
 .stagger-reveal > *:nth-child(2) { transition-delay: 0.08s; }
@@ -612,9 +694,9 @@ html::after {
     transition-duration: 0.001ms !important;
   }
 
-  .reveal,
-  .reveal-left,
-  .reveal-scale {
+  .js .reveal,
+  .js .reveal-left,
+  .js .reveal-scale {
     opacity: 1 !important;
     transform: none !important;
   }

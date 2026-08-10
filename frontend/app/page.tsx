@@ -5,38 +5,27 @@ import Marquee from '@/components/Marquee';
 import Footer from '@/components/Footer';
 import dynamic from 'next/dynamic';
 
-const TestimonialsSection = dynamic(() => import('@/components/TestimonialsSection'), {
-  ssr: false,
-  loading: () => <div className="h-64 bg-[#F7FBFC]" />,
-});
-const StatsSection = dynamic(() => import('@/components/StatsSection'), {
-  ssr: false,
-  loading: () => <div className="h-48 bg-[#142433]" />,
-});
-const PricingSection = dynamic(() => import('@/components/PricingSection'), {
-  ssr: false,
-  loading: () => <div className="h-96 bg-[#FFFFFF]" />,
-});
-const RetouchShowcase = dynamic(() => import('@/components/RetouchShowcase'), {
-  ssr: false,
-  loading: () => <div className="h-96 bg-[#142433]" />,
-});
-const BookingForm = dynamic(() => import('@/components/BookingForm'), {
-  ssr: false,
-  loading: () => <div className="h-80 bg-[#F7FBFC]" />,
-});
-const ProcessTimeline = dynamic(() => import('@/components/ProcessTimeline'), {
-  ssr: false,
-  loading: () => <div className="h-96 bg-[#142433]" />,
-});
-const FAQSection = dynamic(() => import('@/components/FAQSection'), {
-  ssr: false,
-  loading: () => <div className="h-80 bg-[#F7FBFC]" />,
-});
-const InstagramFeed = dynamic(() => import('@/components/InstagramFeed'), {
-  ssr: false,
-  loading: () => <div className="h-80 bg-[#F7FBFC]" />,
-});
+/* ─── Below-the-fold sections ────────────────────────────────────────
+   Pehle in sab par `ssr: false` tha. Iska matlab tha:
+
+     - Server ki HTML me yeh sections hote hi NAHI the
+     - Browser pehle khaali rang ke boxes dikhata tha
+     - Phir JS download → parse → hydrate → tab content aata tha
+
+   Isi wajah se site "loading wali glitch" jaisi lagti thi, aur Google ko
+   pricing/FAQ/testimonials ka koi text bhi nahi milta tha.
+
+   Ab default (ssr on) hai: content pehli hi HTML response me aata hai.
+   `dynamic()` abhi bhi code-split karta hai — JS alag chunk me hi
+   rehta hai — bas pehla paint ab khaali nahi hota.                    */
+const TestimonialsSection = dynamic(() => import('@/components/TestimonialsSection'));
+const StatsSection = dynamic(() => import('@/components/StatsSection'));
+const PricingSection = dynamic(() => import('@/components/PricingSection'));
+const RetouchShowcase = dynamic(() => import('@/components/RetouchShowcase'));
+const BookingForm = dynamic(() => import('@/components/BookingForm'));
+const ProcessTimeline = dynamic(() => import('@/components/ProcessTimeline'));
+const FAQSection = dynamic(() => import('@/components/FAQSection'));
+const InstagramFeed = dynamic(() => import('@/components/InstagramFeed'));
 import JsonLd from '@/components/JsonLd';
 import SeoContentSection from '@/components/SeoContentSection';
 import { FAQ_DATA } from '@/lib/faq';
@@ -49,7 +38,7 @@ import {
   SITE_URL,
 } from '@/lib/seo';
 import type { Metadata } from 'next';
-import type { SiteConfig, Category, Photo, VideoItem } from '@/lib/types';
+import type { SiteConfig, Category, Photo, VideoItem, Testimonial } from '@/lib/types';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
@@ -68,6 +57,8 @@ interface HomepageData {
   featuredPhotos: Photo[];
   photos: Photo[];
   videos: VideoItem[];
+  testimonials?: Testimonial[];
+  pagination?: { page: number; limit: number; total: number; hasMore: boolean };
 }
 
 async function getHomepageData(): Promise<HomepageData | null> {
@@ -163,13 +154,12 @@ export default async function HomePage() {
         )}
 
         {/* Unified Gallery with Category Tabs */}
-        <div className="reveal">
-          <HomeGallery
-            categories={categories}
-            initialPhotos={initialPhotos}
-            initialVideos={initialVideos}
-          />
-        </div>
+        <HomeGallery
+          categories={categories}
+          initialPhotos={initialPhotos}
+          initialVideos={initialVideos}
+          initialPagination={data?.pagination}
+        />
 
         {/* Server-rendered About/Services — crawlable text + internal links */}
         <SeoContentSection seo={seo} />
@@ -181,7 +171,7 @@ export default async function HomePage() {
 
         {/* Testimonials Section */}
         <div className="reveal">
-          <TestimonialsSection />
+          <TestimonialsSection initialTestimonials={data?.testimonials} />
         </div>
 
         <div className="reveal">
@@ -213,7 +203,7 @@ export default async function HomePage() {
         </div>
 
         {/* Footer */}
-        <Footer config={config} />
+        <Footer config={config} categories={categories} />
       </div>
     </main>
   );

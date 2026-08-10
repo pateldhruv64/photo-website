@@ -1,6 +1,5 @@
 'use client';
 
-import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
 interface AnimatedTextProps {
@@ -23,15 +22,11 @@ export default function AnimatedText({
   if (variant === 'blur') {
     return (
       <Component className={cn('inline-block', className)}>
-        <motion.span
-          initial={{ opacity: 0, filter: 'blur(12px)', y: 15 }}
-          whileInView={{ opacity: 1, filter: 'blur(0px)', y: 0 }}
-          viewport={{ once: true, margin: '-50px' }}
-          transition={{ duration: 0.8, delay, ease: [0.2, 0.65, 0.3, 0.9] }}
-          className="inline-block"
+        <span
+          className="reveal inline-block"
         >
           {text}
-        </motion.span>
+        </span>
       </Component>
     );
   }
@@ -40,20 +35,13 @@ export default function AnimatedText({
   return (
     <Component className={cn('flex flex-wrap gap-[0.25em] items-center', className)}>
       {words.map((word, index) => (
-        <motion.span
+        <span
           key={index}
-          initial={{ opacity: 0, y: 20, filter: 'blur(8px)' }}
-          whileInView={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-          viewport={{ once: true, margin: '-50px' }}
-          transition={{
-            duration: 0.6,
-            delay: delay + index * 0.08,
-            ease: [0.215, 0.61, 0.355, 1],
-          }}
-          className="inline-block"
+          style={{ transitionDelay: `${delay + index * 0.08}s` }}
+          className="reveal inline-block"
         >
           {word}
-        </motion.span>
+        </span>
       ))}
     </Component>
   );

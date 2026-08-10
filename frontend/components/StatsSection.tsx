@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { motion } from 'framer-motion';
 import BorderBeam from '@/components/ui/BorderBeam';
 
 interface Stat {
@@ -131,13 +130,10 @@ export default function StatsSection() {
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-6">
             {STATS.map((stat, idx) => (
-              <motion.div
+              <div
                 key={stat.label}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: idx * 0.1 }}
-                className="flex flex-col items-center text-center group"
+                style={{ transitionDelay: `${idx * 0.1}s` }}
+                className="reveal flex flex-col items-center text-center group"
               >
                 <div className="w-10 h-10 rounded-full bg-white/10 border border-white/15 flex items-center justify-center mb-3 group-hover:scale-110 group-hover:bg-accent/20 transition-all duration-300 shadow-md">
                   {stat.icon}
@@ -148,7 +144,7 @@ export default function StatsSection() {
                 <p className="font-body text-[10px] md:text-xs tracking-[0.25em] uppercase text-white/60 font-medium">
                   {stat.label}
                 </p>
-              </motion.div>
+              </div>
             ))}
           </div>
         </div>
