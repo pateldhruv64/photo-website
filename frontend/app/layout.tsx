@@ -13,7 +13,10 @@ import LenisProvider from '@/components/LenisProvider';
 import JsonLd from '@/components/JsonLd';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 
+import SWRProvider from '@/components/SWRProvider';
+
 import { getSeo, buildMetadata, buildSchemaGraph } from '@/lib/seo';
+import { getSiteConfig, getCategories } from '@/lib/siteData';
 
 /* ─── Fonts ─────────────────────────────────────────────────────────
    Do fonts: Cormorant (editorial serif) headings ke liye, Raleway body
@@ -80,7 +83,14 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const seo = await getSeo();
+  /* Teeno parallel — ek doosre par depend nahi karte, aur teeno
+     ISR-cached hain. Series me karne se TTFB me faltu round-trips
+     jud jaate. */
+  const [seo, config, categories] = await Promise.all([
+    getSeo(),
+    getSiteConfig(),
+    getCategories(),
+  ]);
   const schema = buildSchemaGraph(seo);
 
   return (
@@ -103,17 +113,19 @@ export default async function RootLayout({
         {/* Site-wide structured data: LocalBusiness + WebSite + Person */}
         <JsonLd id="site-schema" data={schema} />
 
-        <LenisProvider>
-          <BokehBackground />
-          <CameraCursor />
-          <ScrollProgressBar />
-          <BackendPing />
-          {children}
-          <BottomNav />
-          <ScrollRevealProvider />
-          <ServiceWorkerRegister />
-          {process.env.NODE_ENV === 'production' && <SpeedInsights />}
-        </LenisProvider>
+        <SWRProvider config={config} categories={categories}>
+          <LenisProvider>
+            <BokehBackground />
+            <CameraCursor />
+            <ScrollProgressBar />
+            <BackendPing />
+            {children}
+            <BottomNav />
+            <ScrollRevealProvider />
+            <ServiceWorkerRegister />
+            {process.env.NODE_ENV === 'production' && <SpeedInsights />}
+          </LenisProvider>
+        </SWRProvider>
       </body>
     </html>
   );

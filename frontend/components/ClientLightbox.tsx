@@ -2,11 +2,11 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import useSWR from 'swr';
-import { fetcher } from '@/lib/fetcher';
 import { lightboxUrl } from '@/lib/cloudinary';
 import { downloadSinglePhoto } from '@/lib/clientGalleryDownload';
-import type { Photo, SiteConfig } from '@/lib/types';
+import { useSiteConfig } from '@/lib/hooks';
+import { useLightboxGestures } from '@/lib/useLightboxGestures';
+import type { Photo } from '@/lib/types';
 import StudioCard from '@/components/StudioCard';
 
 interface ClientLightboxProps {
@@ -97,14 +97,7 @@ export default function ClientLightbox({
     };
   }, [handleDragMove, handleDragEnd]);
 
-  const { data: config } = useSWR<SiteConfig>('/config', fetcher, {
-    revalidateOnFocus: false,
-    dedupingInterval: 3600000,
-  });
-
-  // Touch swipe state
-  const touchStartX = useRef<number>(0);
-  const touchStartY = useRef<number>(0);
+  const config = useSiteConfig();
 
   const photo = photos[currentIndex];
 
@@ -122,24 +115,10 @@ export default function ClientLightbox({
     }
   }, [currentIndex, onNavigate]);
 
-  // Touch swipe handlers
-  const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    touchStartX.current = e.touches[0].clientX;
-    touchStartY.current = e.touches[0].clientY;
-  }, []);
-
-  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
-    const deltaX = e.changedTouches[0].clientX - touchStartX.current;
-    const deltaY = e.changedTouches[0].clientY - touchStartY.current;
-
-    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 50) {
-      if (deltaX > 50) {
-        goPrev();
-      } else if (deltaX < -50) {
-        goNext();
-      }
-    }
-  }, [goNext, goPrev]);
+  /* Wahi gestures jo public gallery ke lightbox me hain — bagal me
+     swipe se photo badalti hai, neeche swipe se band hota hai. */
+  const { stageRef, overlayRef, onTouchStart, onTouchMove, onTouchEnd, onOverlayClick } =
+    useLightboxGestures({ onClose, onNext: goNext, onPrev: goPrev });
 
   // Download handler
   const handleDownload = useCallback(async () => {
@@ -189,10 +168,12 @@ export default function ClientLightbox({
 
   return createPortal(
     <div
+      ref={overlayRef}
       className="lightbox-overlay z-[9999]"
-      onClick={onClose}
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
+      onClick={onOverlayClick}
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd}
     >
       <div className="relative w-full h-full flex items-center justify-center p-4 md:p-8">
         {/* Top Center Brand Logo Circular Button (Draggable) */}
@@ -306,9 +287,11 @@ export default function ClientLightbox({
           </button>
         )}
 
-        {/* Image — NO right-click protection for client gallery */}
+        {/* Image — NO right-click protection for client gallery.
+            swipe-to-dismiss ke dauraan yahi element chalta hai. */}
         <div
-          className="relative max-w-full max-h-full"
+          ref={stageRef}
+          className="relative max-w-full max-h-full will-change-transform"
           style={{ aspectRatio: `${photo.width}/${photo.height}` }}
           onClick={(e) => e.stopPropagation()}
         >

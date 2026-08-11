@@ -3,10 +3,9 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import useSWR from 'swr';
-import { fetcher } from '@/lib/fetcher';
+import { useSiteConfig } from '@/lib/hooks';
 import { getWhatsAppUrl } from '@/lib/whatsapp';
-import type { SiteConfig } from '@/lib/types';
+import WhatsAppIcon from '@/components/ui/WhatsAppIcon';
 
 const ICON = {
   home: (
@@ -47,11 +46,7 @@ export default function BottomNav() {
   const [active, setActive] = useState<string>('home');
   const navRef = useRef<HTMLElement>(null);
 
-  const { data: config } = useSWR<SiteConfig>('/config', fetcher, {
-    revalidateOnFocus: false,
-    dedupingInterval: 3600000,
-  });
-
+  const config = useSiteConfig();
   const whatsappUrl = getWhatsAppUrl(config);
   const isHome = pathname === '/';
 
@@ -149,7 +144,13 @@ export default function BottomNav() {
       aria-label="Quick navigation"
       className="fixed inset-x-0 bottom-0 z-40 flex justify-center px-4 pb-[calc(env(safe-area-inset-bottom,0px)+0.75rem)] md:hidden"
     >
-      <div className="flex items-center gap-1 rounded-full border border-white/12 bg-obsidian/95 p-1.5 shadow-[0_12px_40px_-8px_rgba(8,16,24,0.6)] backdrop-blur-2xl">
+      {/* `backdrop-blur-2xl` jaan-bujh kar hata diya gaya hai. Yeh nav
+          fixed hai aur poora page iske peeche se guzarta hai, to browser
+          ko har scroll frame par peeche ka hissa dobara blur karna padta
+          tha — mobile GPU par sabse mehnga kaam, wo bhi lagataar. Aur
+          fayda zero tha: background 95% opaque hai, blur uske neeche
+          dikhta hi nahi. Ab bilkul waisa hi dikhta hai, bina us cost ke. */}
+      <div className="flex items-center gap-1 rounded-full border border-white/12 bg-obsidian/95 p-1.5 shadow-[0_12px_40px_-8px_rgba(8,16,24,0.6)]">
         {SECTIONS.map((item) => {
           const isActive = active === item.key;
 
@@ -227,9 +228,7 @@ export default function BottomNav() {
             aria-label="Chat on WhatsApp"
             className="ml-0.5 flex h-12 min-w-[3.25rem] flex-col items-center justify-center gap-[3px] rounded-full bg-[#25D366] px-3 text-white transition-transform duration-200 active:scale-95"
           >
-            <svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-              <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.514 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.717-1.455L0 24zm6.59-4.846c1.66.986 3.284 1.48 4.961 1.48 5.384 0 9.765-4.382 9.768-9.77 0-2.61-1.015-5.064-2.858-6.911-1.843-1.847-4.293-2.864-6.907-2.864-5.39 0-9.773 4.382-9.776 9.77-.001 1.8.497 3.559 1.44 5.17l-.999 3.648 3.732-.977z" />
-            </svg>
+            <WhatsAppIcon size={19} />
             <span className="text-[9px] font-medium tracking-[0.06em]">Chat</span>
           </a>
         ) : (

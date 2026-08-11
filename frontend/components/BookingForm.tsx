@@ -1,10 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import useSWR from 'swr';
-import { fetcher } from '@/lib/fetcher';
+import { useSiteConfig } from '@/lib/hooks';
 import { getWhatsAppNumber } from '@/lib/whatsapp';
-import type { SiteConfig } from '@/lib/types';
 import ShimmerButton from '@/components/ui/ShimmerButton';
 import BorderBeam from '@/components/ui/BorderBeam';
 
@@ -25,10 +23,7 @@ const EVENT_TYPES = [
 ];
 
 export default function BookingForm() {
-  const { data: config } = useSWR<SiteConfig>('/config', fetcher, {
-    revalidateOnFocus: false,
-    dedupingInterval: 3600000,
-  });
+  const config = useSiteConfig();
 
   const [formData, setFormData] = useState<FormData>({
     name: '',

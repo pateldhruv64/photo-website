@@ -2,7 +2,7 @@
 
 /* eslint-disable @next/next/no-img-element */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import useSWR from 'swr';
 import AdminLayoutClient from '@/components/admin/AdminLayout';
 import { fetcher, apiRequest } from '@/lib/fetcher';
@@ -126,9 +126,19 @@ export default function SettingsPage() {
     }
   };
 
-  // Populate form when config loads
+  /* Form ko config se sirf EK BAAR bharo.
+     Pehle yeh effect har `config` reference badalne par chalta tha. SWR
+     background me dobara fetch kare (revalidation, ya kahin aur se aayi
+     cache update) to `config` ka naya object aata hai aur yeh effect
+     admin ke aadhe-adhoore type kiye hue changes ko chup-chaap mita
+     deta tha. `seeded` ref se ab pehli baar hi bharta hai; uske baad
+     form poori tarah admin ka hai. Save ke baad `mutate()` chalta hai,
+     jo alag raasta hai aur usse koi farak nahi padta. */
+  const seeded = useRef(false);
+
   useEffect(() => {
-    if (config) {
+    if (config && !seeded.current) {
+      seeded.current = true;
       setForm({
         photographer_name: config.photographer_name || '',
         hero_title: config.hero_title || '',

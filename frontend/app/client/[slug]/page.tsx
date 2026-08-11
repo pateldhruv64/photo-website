@@ -3,17 +3,16 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import Masonry from 'react-masonry-css';
-import useSWR from 'swr';
 import ClientLightbox from '@/components/ClientLightbox';
 import Footer from '@/components/Footer';
 import { blurUrl } from '@/lib/cloudinary';
-import { fetcher } from '@/lib/fetcher';
+import { useSiteConfig } from '@/lib/hooks';
 import {
   downloadSinglePhoto,
   downloadAllPhotos,
   downloadAsFolder,
 } from '@/lib/clientGalleryDownload';
-import type { Photo, SiteConfig } from '@/lib/types';
+import type { Photo } from '@/lib/types';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
@@ -49,10 +48,7 @@ export default function ClientGalleryPage({ params }: { params: { slug: string }
   const [downloadingFolder, setDownloadingFolder] = useState(false);
   const [downloadingPhotoId, setDownloadingPhotoId] = useState<string | null>(null);
 
-  const { data: config } = useSWR<SiteConfig>('/config', fetcher, {
-    revalidateOnFocus: false,
-    dedupingInterval: 3600000,
-  });
+  const config = useSiteConfig();
 
   // Fetch gallery data using token
   const fetchGallery = useCallback(async (authToken: string) => {

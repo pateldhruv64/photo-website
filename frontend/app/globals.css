@@ -588,27 +588,23 @@ html::after {
 /* ═══════════════════════════════════════════════════════════════════
    PRICING
    ═══════════════════════════════════════════════════════════════════ */
+/* "Most Popular" card ka glow.
+
+   Pehle yahan `pricingPulse` naam ka infinite animation tha jo box-shadow
+   ko 3.5s me ghata-badhata tha. box-shadow ek PAINT property hai —
+   transform/opacity ki tarah compositor par nahi chalti. Matlab browser
+   is card ko (aur uske neeche ke bade blurred shadow ko) har frame
+   dobara paint karta tha, hamesha ke liye — chahe card screen par ho
+   ya na ho. Mobile GPU par yeh scroll ke saath seedha compete karta hai.
+
+   Pulse itna halka tha (0.15 → 0.26 opacity) ki koi notice nahi karta
+   tha. Ab wahi glow static hai, dono states ke beech ki value par —
+   dikhne me utna hi rich, par paint ek hi baar hota hai. */
 .pricing-glow {
   box-shadow:
-    0 0 30px rgba(118, 159, 205, 0.15),
-    0 0 60px rgba(118, 159, 205, 0.08),
+    0 0 35px rgba(118, 159, 205, 0.20),
+    0 0 70px rgba(118, 159, 205, 0.10),
     0 20px 60px rgba(0, 0, 0, 0.3);
-  animation: pricingPulse 3.5s ease-in-out infinite;
-}
-
-@keyframes pricingPulse {
-  0%, 100% {
-    box-shadow:
-      0 0 30px rgba(118, 159, 205, 0.15),
-      0 0 60px rgba(118, 159, 205, 0.08),
-      0 20px 60px rgba(0, 0, 0, 0.3);
-  }
-  50% {
-    box-shadow:
-      0 0 40px rgba(118, 159, 205, 0.26),
-      0 0 80px rgba(118, 159, 205, 0.13),
-      0 20px 60px rgba(0, 0, 0, 0.3);
-  }
 }
 
 /* ═══════════════════════════════════════════════════════════════════

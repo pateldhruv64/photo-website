@@ -12,6 +12,7 @@ import VideoCard from '@/components/VideoCard';
 import VideoLightbox from '@/components/VideoLightbox';
 import Footer from '@/components/Footer';
 import { fetcher } from '@/lib/fetcher';
+import { useSiteConfig } from '@/lib/hooks';
 import type { Photo, Category, PaginatedPhotos, VideoItem, SiteConfig } from '@/lib/types';
 
 interface Props {
@@ -46,13 +47,7 @@ export default function CategoryPageClient({
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const [videoLightbox, setVideoLightbox] = useState<VideoItem | null>(null);
 
-  // Config aur videos server se aa chuke hain — SWR sirf background
-  // refresh ke liye hai, isliye fallbackData de rahe hain.
-  const { data: config } = useSWR<SiteConfig>('/config', fetcher, {
-    fallbackData: initialConfig,
-    revalidateOnFocus: false,
-    dedupingInterval: 3600000,
-  });
+  const config = useSiteConfig(initialConfig);
 
   const { data: videos } = useSWR<VideoItem[]>(`/videos?category=${categorySlug}`, fetcher, {
     fallbackData: initialVideos,

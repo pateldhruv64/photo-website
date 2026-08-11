@@ -1,10 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import useSWR from 'swr';
-import { fetcher } from '@/lib/fetcher';
+import { useCategories } from '@/lib/hooks';
 import type { SiteConfig, Category } from '@/lib/types';
 import { getWhatsAppUrl } from '@/lib/whatsapp';
+import WhatsAppIcon from '@/components/ui/WhatsAppIcon';
 
 interface FooterProps {
   config?: SiteConfig | null;
@@ -56,11 +56,7 @@ export default function Footer({ config, categories: initialCategories }: Footer
   const brand = config?.photographer_name || 'Photography Studio';
   const whatsappUrl = getWhatsAppUrl(config);
 
-  const { data: categories } = useSWR<Category[]>('/categories', fetcher, {
-    fallbackData: initialCategories,
-    revalidateOnFocus: false,
-    dedupingInterval: 3600000,
-  });
+  const categories = useCategories(initialCategories);
   const collections = (categories || []).slice(0, 6);
 
   const scrollTo = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
@@ -102,9 +98,7 @@ export default function Footer({ config, categories: initialCategories }: Footer
                 rel="noopener noreferrer"
                 className="inline-flex items-center justify-center gap-2.5 rounded-full bg-[#25D366] px-7 py-4 font-body text-[12px] uppercase tracking-[0.18em] text-white transition-transform duration-300 ease-editorial hover:-translate-y-0.5 sm:py-3.5"
               >
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-                  <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.514 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.717-1.455L0 24zm6.59-4.846c1.66.986 3.284 1.48 4.961 1.48 5.384 0 9.765-4.382 9.768-9.77 0-2.61-1.015-5.064-2.858-6.911-1.843-1.847-4.293-2.864-6.907-2.864-5.39 0-9.773 4.382-9.776 9.77-.001 1.8.497 3.559 1.44 5.17l-.999 3.648 3.732-.977z" />
-                </svg>
+                <WhatsAppIcon size={17} />
                 WhatsApp
               </a>
             )}

@@ -4,8 +4,9 @@ import { useState } from 'react';
 import useSWR from 'swr';
 import Image from 'next/image';
 import { fetcher } from '@/lib/fetcher';
+import { useSiteConfig } from '@/lib/hooks';
 import { blurUrl } from '@/lib/cloudinary';
-import type { Photo, SiteConfig } from '@/lib/types';
+import type { Photo } from '@/lib/types';
 
 interface PhotosResponse {
   photos: Photo[];
@@ -18,19 +19,25 @@ interface PhotosResponse {
   };
 }
 
-export default function InstagramFeed() {
-  const { data: photosData } = useSWR<PhotosResponse>('/photos?limit=6', fetcher, {
-    revalidateOnFocus: false,
-    dedupingInterval: 3600000,
-  });
+interface InstagramFeedProps {
+  /* Homepage apni pehli 24 photos pehle hi server par le aata hai —
+     yeh strip unhi me se pehli 6 dikhata hai. Prop mile to koi request
+     nahi jaati; sirf tab fetch hota hai jab yeh component kisi aise
+     page par ho jahan photos pehle se maujood na hon. */
+  photos?: Photo[];
+}
 
-  const { data: config } = useSWR<SiteConfig>('/config', fetcher, {
-    revalidateOnFocus: false,
-    dedupingInterval: 3600000,
-  });
+export default function InstagramFeed({ photos }: InstagramFeedProps = {}) {
+  const { data: photosData } = useSWR<PhotosResponse>(
+    photos ? null : '/photos?limit=6',
+    fetcher,
+    { revalidateIfStale: false, revalidateOnFocus: false }
+  );
+
+  const config = useSiteConfig();
 
   const instagramUrl = config?.social_links?.instagram || '#';
-  const feedPhotos = photosData?.photos?.slice(0, 6) || [];
+  const feedPhotos = (photos ?? photosData?.photos ?? []).slice(0, 6);
 
   if (feedPhotos.length === 0) return null;
 

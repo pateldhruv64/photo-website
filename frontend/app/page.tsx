@@ -197,9 +197,9 @@ export default async function HomePage() {
           <BookingForm />
         </div>
 
-        {/* Instagram Feed */}
+        {/* Instagram Feed — photos server se hi mil jaati hain */}
         <div className="reveal">
-          <InstagramFeed />
+          <InstagramFeed photos={initialPhotos} />
         </div>
 
         {/* Footer */}

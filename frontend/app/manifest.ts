@@ -22,10 +22,16 @@ export default async function manifest(): Promise<MetadataRoute.Manifest> {
     theme_color: '#142433',
     categories: ['photography', 'lifestyle', 'business'],
     lang: 'en-IN',
+    /* Maskable icon alag file hai. Android install ki hui icon ko
+       circle/squircle me kaatta hai — pehle yahi `icon-512` maskable ke
+       roop me diya tha, jiske safed rounded corners kat jaate the aur
+       kinare par safed lakeer dikhti thi. `icon-maskable-512` full-bleed
+       dark hai aur camera glyph safe zone ke andar hai, to kisi bhi
+       shape me saaf katta hai. */
     icons: [
       { src: '/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
       { src: '/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
-      { src: '/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+      { src: '/icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
     ],
   };
 }

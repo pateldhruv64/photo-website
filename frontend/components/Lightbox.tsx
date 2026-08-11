@@ -2,10 +2,10 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import useSWR from 'swr';
-import { fetcher } from '@/lib/fetcher';
+import { useSiteConfig } from '@/lib/hooks';
+import { useLightboxGestures } from '@/lib/useLightboxGestures';
 import { lightboxUrl } from '@/lib/cloudinary';
-import type { Photo, SiteConfig } from '@/lib/types';
+import type { Photo } from '@/lib/types';
 import StudioCard from '@/components/StudioCard';
 
 interface LightboxProps {
@@ -83,14 +83,7 @@ export default function Lightbox({ photos, currentIndex, onClose, onNavigate }: 
     };
   }, [handleDragMove, handleDragEnd]);
 
-  // Touch swipe state
-  const touchStartX = useRef<number>(0);
-  const touchStartY = useRef<number>(0);
-
-  const { data: config } = useSWR<SiteConfig>('/config', fetcher, {
-    revalidateOnFocus: false,
-    dedupingInterval: 3600000,
-  });
+  const config = useSiteConfig();
 
   const photo = photos[currentIndex];
 
@@ -108,25 +101,11 @@ export default function Lightbox({ photos, currentIndex, onClose, onNavigate }: 
     }
   }, [currentIndex, onNavigate]);
 
-  // Touch swipe handlers
-  const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    touchStartX.current = e.touches[0].clientX;
-    touchStartY.current = e.touches[0].clientY;
-  }, []);
-
-  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
-    const deltaX = e.changedTouches[0].clientX - touchStartX.current;
-    const deltaY = e.changedTouches[0].clientY - touchStartY.current;
-
-    // Only trigger swipe if horizontal movement > vertical (not a scroll)
-    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 50) {
-      if (deltaX > 50) {
-        goPrev();
-      } else if (deltaX < -50) {
-        goNext();
-      }
-    }
-  }, [goNext, goPrev]);
+  /* Bagal me swipe = photo badlo, neeche swipe = band. Poori tafseel
+     lib/useLightboxGestures.ts me hai — client gallery bhi wahi hook
+     use karti hai, taki gesture dono jagah ek jaisa lage. */
+  const { stageRef, overlayRef, onTouchStart, onTouchMove, onTouchEnd, onOverlayClick } =
+    useLightboxGestures({ onClose, onNext: goNext, onPrev: goPrev });
 
   // Keyboard navigation
   useEffect(() => {
@@ -170,10 +149,12 @@ export default function Lightbox({ photos, currentIndex, onClose, onNavigate }: 
 
   return createPortal(
     <div
+      ref={overlayRef}
       className="lightbox-overlay z-[9999]"
-      onClick={onClose}
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
+      onClick={onOverlayClick}
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd}
     >
       <div
         className="relative w-full h-full flex items-center justify-center p-4 md:p-8"
@@ -258,9 +239,10 @@ export default function Lightbox({ photos, currentIndex, onClose, onNavigate }: 
           </button>
         )}
 
-        {/* Image */}
-        <div 
-          className="relative max-w-full max-h-full protected-image" 
+        {/* Image — swipe-to-dismiss ke dauraan yahi element chalta hai */}
+        <div
+          ref={stageRef}
+          className="relative max-w-full max-h-full protected-image will-change-transform"
           style={{ aspectRatio: `${photo.width}/${photo.height}` }}
           onClick={(e) => e.stopPropagation()}
           onContextMenu={(e) => e.preventDefault()}
