@@ -1,18 +1,23 @@
 'use client';
 
-import { useState, useCallback, useEffect, useMemo } from 'react';
-import Image from 'next/image';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Masonry from 'react-masonry-css';
-import ClientLightbox from '@/components/ClientLightbox';
 import Footer from '@/components/Footer';
-import { blurUrl } from '@/lib/cloudinary';
+import ClientLightbox, { type LightboxPhoto } from '@/components/ClientLightbox';
+import GalleryUnlock from '@/components/client/GalleryUnlock';
+import DownloadMenu from '@/components/client/DownloadMenu';
+import DownloadDock from '@/components/client/DownloadDock';
+import PhotoTile from '@/components/client/PhotoTile';
+import { CameraIcon, CheckIcon, HeartIcon, SelectIcon } from '@/components/client/icons';
 import { useSiteConfig } from '@/lib/hooks';
+import { useGalleryDownload } from '@/lib/useGalleryDownload';
 import {
+  buildGalleryName,
+  buildPhotoFileName,
   downloadSinglePhoto,
-  downloadAllPhotos,
-  downloadAsFolder,
-} from '@/lib/clientGalleryDownload';
-import type { Photo } from '@/lib/types';
+  probeCdn,
+  type DownloadMode,
+} from '@/lib/galleryDownload';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
@@ -30,101 +35,166 @@ interface GalleryData {
   _id: string;
   title: string;
   client_name: string;
+  event_date?: string | null;
   photos: GalleryPhoto[];
 }
 
+type Filter = 'all' | 'favourites';
+
+const breakpointColumns = { default: 4, 1280: 4, 1024: 3, 640: 2 };
+
+const favouritesKey = (slug: string) => `gallery_favourites_${slug}`;
+
 export default function ClientGalleryPage({ params }: { params: { slug: string } }) {
-  const [step, setStep] = useState<'unlock' | 'gallery'>('unlock');
-  const [password, setPassword] = useState('');
+  const { slug } = params;
+
+  // ─── Auth ─────────────────────────────────────────────────────────
+  const [step, setStep] = useState<'loading' | 'unlock' | 'gallery'>('loading');
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [unlocking, setUnlocking] = useState(false);
   const [gallery, setGallery] = useState<GalleryData | null>(null);
-  const [token, setToken] = useState<string>('');
+  const [token, setToken] = useState('');
+
+  // ─── Gallery UI ───────────────────────────────────────────────────
+  const [filter, setFilter] = useState<Filter>('all');
+  const [selectMode, setSelectMode] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [favourites, setFavourites] = useState<Set<string>>(new Set());
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
+  const [singleDownloadId, setSingleDownloadId] = useState<string | null>(null);
+  const [compact, setCompact] = useState(false);
 
-  // Download states
-  const [downloadingAll, setDownloadingAll] = useState(false);
-  const [downloadingFolder, setDownloadingFolder] = useState(false);
-  const [downloadingPhotoId, setDownloadingPhotoId] = useState<string | null>(null);
-
+  const heroSentinel = useRef<HTMLDivElement>(null);
   const config = useSiteConfig();
 
-  // Fetch gallery data using token
-  const fetchGallery = useCallback(async (authToken: string) => {
-    try {
-      const res = await fetch(`${API_URL}/client-gallery/${params.slug}`, {
-        headers: { Authorization: `Bearer ${authToken}` }
-      });
-
-      if (!res.ok) {
-        sessionStorage.removeItem(`gallery_token_${params.slug}`);
+  // ─── Session ──────────────────────────────────────────────────────
+  const fetchGallery = useCallback(
+    async (authToken: string) => {
+      try {
+        const res = await fetch(`${API_URL}/client-gallery/${slug}`, {
+          headers: { Authorization: `Bearer ${authToken}` },
+        });
+        if (!res.ok) {
+          sessionStorage.removeItem(`gallery_token_${slug}`);
+          setStep('unlock');
+          return;
+        }
+        setGallery(await res.json());
+        setToken(authToken);
+        setStep('gallery');
+      } catch {
+        sessionStorage.removeItem(`gallery_token_${slug}`);
         setStep('unlock');
-        return;
       }
+    },
+    [slug]
+  );
 
-      const data = await res.json();
-      setGallery(data);
-      setToken(authToken);
-      setStep('gallery');
-    } catch {
-      sessionStorage.removeItem(`gallery_token_${params.slug}`);
-      setStep('unlock');
-    }
-  }, [params.slug]);
-
-  // Check if token already exists in sessionStorage
   useEffect(() => {
-    const savedToken = sessionStorage.getItem(`gallery_token_${params.slug}`);
-    if (savedToken) {
-      fetchGallery(savedToken);
+    const saved = sessionStorage.getItem(`gallery_token_${slug}`);
+    if (saved) fetchGallery(saved);
+    else setStep('unlock');
+  }, [slug, fetchGallery]);
+
+  // Favourites client ke device par rehti hain — inke liye account ya
+  // backend ki zaroorat nahi, aur gallery expire hone ke baad bhi client
+  // ki pasand uske paas rehti hai.
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(favouritesKey(slug));
+      if (raw) setFavourites(new Set(JSON.parse(raw) as string[]));
+    } catch {
+      /* storage band hai — favourites bas is session ke liye chalenge */
     }
-  }, [params.slug, fetchGallery]);
+  }, [slug]);
+
+  const persistFavourites = useCallback(
+    (next: Set<string>) => {
+      try {
+        localStorage.setItem(favouritesKey(slug), JSON.stringify(Array.from(next)));
+      } catch {
+        /* ignore */
+      }
+    },
+    [slug]
+  );
 
   const handleSessionExpired = useCallback(() => {
-    sessionStorage.removeItem(`gallery_token_${params.slug}`);
+    sessionStorage.removeItem(`gallery_token_${slug}`);
     setToken('');
     setGallery(null);
+    setSelectMode(false);
+    setSelected(new Set());
     setStep('unlock');
-    setError('Session expired. Please enter password again.');
-  }, [params.slug]);
+    setError('Your session expired. Please enter the password again.');
+  }, [slug]);
 
-  const handleUnlock = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-
-    try {
-      const res = await fetch(`${API_URL}/client-gallery/unlock`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ slug: params.slug, password })
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        setError(data.error || 'Invalid password');
-        setLoading(false);
-        return;
+  const handleUnlock = useCallback(
+    async (password: string) => {
+      setUnlocking(true);
+      setError('');
+      try {
+        const res = await fetch(`${API_URL}/client-gallery/unlock`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ slug, password }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          setError(data.error || 'That password did not work.');
+          return;
+        }
+        sessionStorage.setItem(`gallery_token_${slug}`, data.token);
+        await fetchGallery(data.token);
+      } catch {
+        setError('Could not reach the server. Check your connection and try again.');
+      } finally {
+        setUnlocking(false);
       }
+    },
+    [slug, fetchGallery]
+  );
 
-      // Store token in sessionStorage (cleared when browser closes)
-      sessionStorage.setItem(`gallery_token_${params.slug}`, data.token);
-      await fetchGallery(data.token);
-    } catch {
-      setError('Failed to connect. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
+  // ─── Derived data ─────────────────────────────────────────────────
 
-  // Convert gallery photos to Photo type for ClientLightbox
-  const lightboxPhotos: (Photo & { original_format: string })[] = useMemo(() => {
-    return gallery?.photos
-      ?.slice()
-      .sort((a, b) => a.order - b.order)
-      .map((p) => ({
+  /**
+   * Gallery ka canonical order. Filename ka number isi index se banta
+   * hai, aur backend bhi bilkul yahi order use karta hai — isliye zip me
+   * aur folder me client ko same naam milte hain.
+   */
+  const orderedPhotos = useMemo(() => {
+    const photos = [...(gallery?.photos ?? [])].sort((a, b) => (a.order || 0) - (b.order || 0));
+    return photos.map((photo, index) => ({
+      ...photo,
+      position: index + 1,
+      fileName: buildPhotoFileName(photo, index, photos.length),
+    }));
+  }, [gallery]);
+
+  const visiblePhotos = useMemo(
+    () =>
+      filter === 'favourites'
+        ? orderedPhotos.filter((p) => favourites.has(p.public_id))
+        : orderedPhotos,
+    [orderedPhotos, filter, favourites]
+  );
+
+  const galleryName = useMemo(
+    () => buildGalleryName(gallery?.title || 'gallery'),
+    [gallery?.title]
+  );
+
+  /**
+   * Lightbox apne generic `Photo` type me photos maangta hai. `fileName`
+   * aur `position` saath bhejte hain kyunki favourites filter ke baad
+   * lightbox ka index gallery ke asli number se alag ho jaata hai — aur
+   * download hone wali file ka naam gallery wale number se hi banna
+   * chahiye.
+   */
+  const lightboxPhotos = useMemo<LightboxPhoto[]>(
+    () =>
+      visiblePhotos.map((p) => ({
         _id: p._id,
         public_id: p.public_id,
         width: p.width,
@@ -136,288 +206,446 @@ export default function ClientGalleryPage({ params }: { params: { slug: string }
         original_format: p.original_format || 'jpg',
         category: null as unknown as import('@/lib/types').Category,
         created_at: '',
-      })) || [];
-  }, [gallery]);
+        fileName: p.fileName,
+        position: p.position,
+      })),
+    [visiblePhotos]
+  );
 
-  // Preload lightbox images in the background for instant opening
-  useEffect(() => {
-    if (lightboxPhotos.length === 0) return;
-    
-    const preload = (photosToLoad: typeof lightboxPhotos) => {
-      photosToLoad.forEach((p) => {
-        const img = new window.Image();
-        img.src = `https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload/q_auto,f_auto/${p.public_id}`;
-      });
-    };
-    
-    // Immediately preload first 15 images
-    preload(lightboxPhotos.slice(0, 15));
-    
-    // Preload remaining in batches of 15 every 3 seconds
-    let active = true;
-    const loadRemaining = async () => {
-      let currentIndex = 15;
-      while (currentIndex < lightboxPhotos.length && active) {
-        await new Promise((resolve) => setTimeout(resolve, 3000));
-        if (!active) return;
-        preload(lightboxPhotos.slice(currentIndex, currentIndex + 15));
-        currentIndex += 15;
+  // ─── Downloads ────────────────────────────────────────────────────
+  const { state: downloadState, busy, start, cancel, dismiss } = useGalleryDownload({
+    slug,
+    token,
+    galleryName,
+    onSessionExpired: handleSessionExpired,
+  });
+
+  const startDownload = useCallback(
+    (mode: DownloadMode, scope: 'all' | 'selected' | 'favourites') => {
+      const source =
+        scope === 'selected'
+          ? orderedPhotos.filter((p) => selected.has(p.public_id))
+          : scope === 'favourites'
+            ? orderedPhotos.filter((p) => favourites.has(p.public_id))
+            : orderedPhotos;
+
+      if (!source.length) return;
+
+      start(
+        mode,
+        source.map((p) => ({ publicId: p.public_id, name: p.fileName })),
+        scope !== 'all' || source.length !== orderedPhotos.length
+      );
+    },
+    [orderedPhotos, selected, favourites, start]
+  );
+
+  const handleSingleDownload = useCallback(
+    async (publicId: string, fileName: string, photoId: string) => {
+      if (singleDownloadId) return;
+      setSingleDownloadId(photoId);
+      try {
+        await downloadSinglePhoto(slug, publicId, token, fileName);
+      } catch (err) {
+        if (err instanceof Error && err.message === 'SESSION_EXPIRED') handleSessionExpired();
+      } finally {
+        // CDN link click hone ke baad browser khud sambhal leta hai —
+        // spinner ko yahan lamba rakhna jhoot hoga.
+        setTimeout(() => setSingleDownloadId(null), 600);
       }
-    };
-    
-    loadRemaining();
-    
-    return () => {
-      active = false;
-    };
-  }, [lightboxPhotos]);
+    },
+    [slug, token, singleDownloadId, handleSessionExpired]
+  );
 
-  const openLightbox = useCallback((index: number) => {
-    setLightboxIndex(index);
-    setLightboxOpen(true);
+  // ─── Selection ────────────────────────────────────────────────────
+  const toggleSelected = useCallback((publicId: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(publicId)) next.delete(publicId);
+      else next.add(publicId);
+      return next;
+    });
   }, []);
 
-  // Individual photo download from grid
-  const handlePhotoDownload = async (photo: GalleryPhoto, index: number) => {
-    if (downloadingPhotoId) return;
-    setDownloadingPhotoId(photo._id);
+  const toggleFavourite = useCallback(
+    (publicId: string) => {
+      setFavourites((prev) => {
+        const next = new Set(prev);
+        if (next.has(publicId)) next.delete(publicId);
+        else next.add(publicId);
+        persistFavourites(next);
+        return next;
+      });
+    },
+    [persistFavourites]
+  );
 
-    try {
-      const galleryName = (gallery?.title || 'gallery').replace(/[^a-zA-Z0-9]/g, '_');
-      const format = photo.original_format || 'jpg';
-      const filename = `${galleryName}_${photo.title || index + 1}.${format}`;
-      await downloadSinglePhoto(params.slug, photo.public_id, token, filename);
-    } catch (err: unknown) {
-      if (err instanceof Error && err.message === 'SESSION_EXPIRED') {
-        handleSessionExpired();
-      }
-    } finally {
-      setDownloadingPhotoId(null);
-    }
-  };
+  const selectAllVisible = useCallback(() => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      visiblePhotos.forEach((p) => next.add(p.public_id));
+      return next;
+    });
+  }, [visiblePhotos]);
 
-  // Download All (flat zip)
-  const handleDownloadAll = async () => {
-    if (downloadingAll || !gallery) return;
-    setDownloadingAll(true);
+  const exitSelectMode = useCallback(() => {
+    setSelectMode(false);
+    setSelected(new Set());
+  }, []);
 
-    try {
-      await downloadAllPhotos(params.slug, token, gallery.title);
-    } catch (err: unknown) {
-      if (err instanceof Error && err.message === 'SESSION_EXPIRED') {
-        handleSessionExpired();
-      }
-    } finally {
-      setDownloadingAll(false);
-    }
-  };
+  // Escape se select mode band — chhota sa detail, par jo client 60
+  // photos chun chuka hai uske liye ek galat click bahut mehenga hai,
+  // isliye Escape sirf mode band karta hai, selection nahi mitata.
+  useEffect(() => {
+    if (!selectMode || lightboxOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setSelectMode(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [selectMode, lightboxOpen]);
 
-  // Download as Folder (zip with subfolder)
-  const handleDownloadFolder = async () => {
-    if (downloadingFolder || !gallery) return;
-    setDownloadingFolder(true);
+  // Hero se neeche jaate hi compact sticky bar dikhne lagta hai.
+  useEffect(() => {
+    const node = heroSentinel.current;
+    if (!node) return;
+    // Sirf `isIntersecting` dekhna galat hai — page ke top par sentinel
+    // viewport ke NEECHE hota hai, wahan bhi intersecting false aata hai.
+    // Compact bar tabhi chahiye jab sentinel upar nikal chuka ho.
+    const observer = new IntersectionObserver(
+      ([entry]) =>
+        setCompact(!entry.isIntersecting && entry.boundingClientRect.top < 0),
+      { rootMargin: '-8px 0px 0px 0px' }
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [step]);
 
-    try {
-      await downloadAsFolder(params.slug, token, gallery.title);
-    } catch (err: unknown) {
-      if (err instanceof Error && err.message === 'SESSION_EXPIRED') {
-        handleSessionExpired();
-      }
-    } finally {
-      setDownloadingFolder(false);
-    }
-  };
+  // CDN reachable hai ya nahi — yeh pehle se pata kar lete hain. Warna
+  // client ke pehle download click par ek await lagta hai, aur browser
+  // user-gesture se kata hua download kabhi-kabhi rok deta hai.
+  useEffect(() => {
+    if (orderedPhotos.length) void probeCdn(orderedPhotos[0].public_id);
+  }, [orderedPhotos]);
 
-  // ═══ STEP 1: Unlock Screen ═══
-  if (step === 'unlock') {
+  // Favourites khatam ho jaayein to filter apne aap wapas "all" par.
+  useEffect(() => {
+    if (filter === 'favourites' && favourites.size === 0) setFilter('all');
+  }, [filter, favourites.size]);
+
+  // ─── Render ───────────────────────────────────────────────────────
+
+  if (step === 'loading') {
     return (
-      <div className="min-h-screen bg-[#FFFFFF] text-[#142433] flex items-center justify-center px-4">
-        <div className="max-w-sm w-full text-center">
-          {/* Lock Icon */}
-          <div className="w-16 h-16 bg-[#D6E6F2] rounded-full flex items-center justify-center mx-auto mb-6">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#142433" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-            </svg>
-          </div>
-
-          <h1 className="font-display text-2xl font-light text-text-primary mb-2">
-            Private Gallery
-          </h1>
-          <p className="font-body text-sm text-text-muted mb-8">
-            Enter the password to view your photos
-          </p>
-
-          {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm font-body">
-              {error}
-            </div>
-          )}
-
-          <form onSubmit={handleUnlock} className="space-y-4">
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter password"
-              className="w-full px-4 py-3 font-body text-sm border border-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#142433]/20 transition-all text-center"
-              autoFocus
-              required
-            />
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-3 bg-[#142433] text-white font-body text-sm font-medium rounded-lg hover:bg-gray-800 disabled:opacity-50 transition-all"
-            >
-              {loading ? 'Verifying...' : 'Unlock Gallery'}
-            </button>
-          </form>
-        </div>
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <span className="h-7 w-7 animate-spin rounded-full border-2 border-accent/30 border-t-accent-deep" />
       </div>
     );
   }
 
-  // ═══ STEP 2: Gallery View ═══
-  const breakpointColumns = {
-    default: 4,
-    1024: 3,
-    768: 2,
-  };
+  if (step === 'unlock') {
+    return (
+      <GalleryUnlock
+        config={config}
+        error={error}
+        loading={unlocking}
+        onSubmit={handleUnlock}
+      />
+    );
+  }
+
+  const eventDate = gallery?.event_date
+    ? new Date(gallery.event_date).toLocaleDateString(undefined, {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+      })
+    : '';
+
+  const selectedCount = selected.size;
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Header */}
-      <div className="text-center py-12 border-b border-border">
-        <p className="font-body text-xs tracking-[0.3em] uppercase text-text-muted mb-2">
-          {gallery?.client_name || 'Private Gallery'}
-        </p>
-        <h1 className="font-display text-3xl md:text-4xl font-light text-text-primary">
-          {gallery?.title || 'Your Photos'}
-        </h1>
-        <p className="mt-2 font-body text-sm text-text-muted">
-          {lightboxPhotos.length} photos
-        </p>
-
-        {/* Download Buttons */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-6">
-          <button
-            onClick={handleDownloadAll}
-            disabled={downloadingAll}
-            className="inline-flex items-center gap-2 px-6 py-2.5 bg-neutral-900 text-white text-sm font-body font-medium rounded-lg hover:bg-neutral-800 disabled:opacity-60 transition-all"
+    <div className="min-h-screen bg-background">
+      {/* ── Sticky bar — hero ke baad hi dikhta hai ───────────────── */}
+      <header
+        className={`sticky top-0 z-[100] border-b transition-all duration-500 ease-editorial ${
+          compact
+            ? 'border-line bg-white/85 backdrop-blur-xl'
+            : 'border-transparent bg-transparent'
+        }`}
+      >
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-4 sm:px-6">
+          <div
+            className={`flex min-w-0 items-center gap-3 transition-all duration-500 ease-editorial ${
+              compact ? 'translate-y-0 opacity-100' : '-translate-y-1 opacity-0'
+            }`}
           >
-            {downloadingAll ? (
-              <>
-                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                Preparing Download...
-              </>
-            ) : (
-              <>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                  <polyline points="7 10 12 15 17 10" />
-                  <line x1="12" y1="15" x2="12" y2="3" />
-                </svg>
-                Download All Photos
-              </>
-            )}
-          </button>
-
-          <button
-            onClick={handleDownloadFolder}
-            disabled={downloadingFolder}
-            className="inline-flex items-center gap-2 px-6 py-2.5 border border-neutral-300 text-neutral-700 text-sm font-body font-medium rounded-lg hover:bg-neutral-50 disabled:opacity-60 transition-all"
-          >
-            {downloadingFolder ? (
-              <>
-                <div className="w-4 h-4 border-2 border-neutral-400/30 border-t-neutral-600 rounded-full animate-spin" />
-                Preparing...
-              </>
-            ) : (
-              <>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
-                </svg>
-                Download as Folder
-              </>
-            )}
-          </button>
-        </div>
-
-        {(downloadingAll || downloadingFolder) && (
-          <p className="mt-3 text-xs font-body text-text-muted">
-            Preparing your gallery zip. This may take a minute for large galleries...
-          </p>
-        )}
-      </div>
-
-      {/* Photo Grid — NO right-click protection (client owns these) */}
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <Masonry
-          breakpointCols={breakpointColumns}
-          className="masonry-grid"
-          columnClassName="masonry-grid-column"
-        >
-          {lightboxPhotos.map((photo, index) => (
-            <div
-              key={photo._id}
-              className="mb-1 md:mb-4 break-inside-avoid group relative"
-            >
-              {/* Photo Card */}
-              <div
-                className="photo-card rounded-sm cursor-pointer"
-                style={{ aspectRatio: `${photo.width}/${photo.height}` }}
-                onClick={() => openLightbox(index)}
-              >
-                <Image
-                  src={photo.public_id}
-                  alt={photo.title || 'Photo'}
-                  fill
-                  sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                  placeholder="blur"
-                  blurDataURL={blurUrl(photo.public_id)}
-                  className="object-cover protected-image"
-                  draggable={false}
-                  onContextMenu={(e) => e.preventDefault()}
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full border border-line bg-white">
+              {config?.studio_logo?.secure_url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={config.studio_logo.secure_url}
+                  alt=""
+                  className="h-full w-full object-cover"
                 />
-
-                {/* Download button overlay (bottom-right, visible on hover) */}
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handlePhotoDownload(gallery!.photos[index], index);
-                  }}
-                  className="absolute bottom-2 right-2 z-10 w-8 h-8 bg-black/60 backdrop-blur-sm rounded-full flex items-center justify-center text-white/80 hover:text-white hover:bg-black/80 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all"
-                  title="Download Original"
-                >
-                  {downloadingPhotoId === photo._id ? (
-                    <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  ) : (
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                      <polyline points="7 10 12 15 17 10" />
-                      <line x1="12" y1="15" x2="12" y2="3" />
-                    </svg>
-                  )}
-                </button>
-              </div>
+              ) : (
+                <CameraIcon size={16} className="text-ink-muted" />
+              )}
+            </span>
+            <div className="min-w-0">
+              <p className="truncate font-display text-base leading-tight text-ink">
+                {gallery?.title}
+              </p>
+              <p className="font-body text-[11px] text-ink-muted">
+                {orderedPhotos.length} photos
+              </p>
             </div>
-          ))}
-        </Masonry>
-      </div>
+          </div>
 
-      {/* Inspira Luxury Footer */}
+          <div
+            className={`flex items-center gap-2 transition-opacity duration-500 ${
+              compact ? 'opacity-100' : 'pointer-events-none opacity-0'
+            }`}
+          >
+            <button
+              onClick={() => (selectMode ? exitSelectMode() : setSelectMode(true))}
+              className={`hidden items-center gap-2 rounded-full border px-4 py-2 font-body text-sm transition-all duration-300 sm:inline-flex ${
+                selectMode
+                  ? 'border-accent-deep bg-accent-deep text-white'
+                  : 'border-line-strong bg-white text-ink hover:border-accent'
+              }`}
+            >
+              <SelectIcon size={14} />
+              {selectMode ? 'Done' : 'Select'}
+            </button>
+            <DownloadMenu
+              label="Download"
+
+              disabled={busy}
+              onPick={(mode) => startDownload(mode, 'all')}
+            />
+          </div>
+        </div>
+      </header>
+
+      {/* ── Hero ──────────────────────────────────────────────────── */}
+      <section className="relative -mt-16 overflow-hidden border-b border-line bg-gradient-to-b from-white to-background px-4 pb-12 pt-28 sm:px-6 sm:pb-16 sm:pt-32">
+        <div className="mx-auto max-w-3xl text-center">
+          {gallery?.client_name && (
+            <p className="animate-fade-in font-body text-[11px] uppercase tracking-[0.3em] text-accent-deep">
+              {gallery.client_name}
+            </p>
+          )}
+
+          <h1 className="mt-3 font-display text-display-sm font-light text-ink">
+            {gallery?.title || 'Your Photos'}
+          </h1>
+
+          <p className="mt-3 font-body text-sm text-ink-muted">
+            {orderedPhotos.length} photographs
+            {eventDate && <span className="text-ink-faint"> · {eventDate}</span>}
+          </p>
+
+          <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <DownloadMenu
+              label="Download everything"
+
+              disabled={busy}
+              align="left"
+              onPick={(mode) => startDownload(mode, 'all')}
+            />
+            <button
+              onClick={() => (selectMode ? exitSelectMode() : setSelectMode(true))}
+              className={`inline-flex items-center gap-2 rounded-full border px-5 py-2.5 font-body text-sm font-medium transition-all duration-300 ease-editorial ${
+                selectMode
+                  ? 'border-accent-deep bg-accent-deep text-white'
+                  : 'border-line-strong bg-white text-ink hover:border-accent hover:bg-hover-surface'
+              }`}
+            >
+              <SelectIcon size={15} />
+              {selectMode ? 'Done selecting' : 'Pick a few'}
+            </button>
+          </div>
+
+          <p className="mx-auto mt-5 max-w-md font-body text-xs leading-relaxed text-ink-faint">
+            Every photo here is the full-resolution original — exactly what came
+            out of the camera. Tap the heart to shortlist your favourites.
+          </p>
+        </div>
+      </section>
+
+      <div ref={heroSentinel} aria-hidden />
+
+      {/* ── Filter row ────────────────────────────────────────────── */}
+      {(favourites.size > 0 || selectMode) && (
+        <div className="sticky top-16 z-[90] border-b border-line bg-background/90 backdrop-blur-md">
+          <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-2 px-4 py-3 sm:px-6">
+            {favourites.size > 0 && (
+              <>
+                <button
+                  onClick={() => setFilter('all')}
+                  className={`cg-chip border px-3.5 py-1.5 font-body text-xs font-medium ${
+                    filter === 'all'
+                      ? 'border-ink bg-ink text-white'
+                      : 'border-line-strong bg-white text-ink-soft hover:border-accent'
+                  }`}
+                >
+                  All {orderedPhotos.length}
+                </button>
+                <button
+                  onClick={() => setFilter('favourites')}
+                  className={`cg-chip border px-3.5 py-1.5 font-body text-xs font-medium ${
+                    filter === 'favourites'
+                      ? 'border-ink bg-ink text-white'
+                      : 'border-line-strong bg-white text-ink-soft hover:border-accent'
+                  }`}
+                >
+                  <HeartIcon size={12} filled={filter === 'favourites'} />
+                  Favourites {favourites.size}
+                </button>
+
+                <button
+                  onClick={() => startDownload('zip', 'favourites')}
+                  disabled={busy}
+                  className="cg-chip px-3 py-1.5 font-body text-xs font-medium text-accent-deep underline underline-offset-2 disabled:opacity-40"
+                >
+                  Download favourites
+                </button>
+              </>
+            )}
+
+            {selectMode && (
+              <>
+                {/* Bina is hint ke yeh patti khaali dikhti thi aur client
+                    ko pata hi nahi chalta tha ki ab karna kya hai. */}
+                <p className="font-body text-xs text-ink-muted">
+                  {selected.size
+                    ? `${selected.size} of ${visiblePhotos.length} picked`
+                    : 'Tap any photo to pick it'}
+                </p>
+
+                <div className="ml-auto flex items-center gap-2">
+                  {selected.size > 0 && (
+                    <button
+                      onClick={() => setSelected(new Set())}
+                      className="cg-chip px-3 py-1.5 font-body text-xs font-medium text-ink-muted underline underline-offset-2 hover:text-ink"
+                    >
+                      Clear
+                    </button>
+                  )}
+                  <button
+                    onClick={selectAllVisible}
+                    className="cg-chip border border-line-strong bg-white px-3.5 py-1.5 font-body text-xs font-medium text-ink-soft hover:border-accent"
+                  >
+                    <CheckIcon size={12} />
+                    Select all {filter === 'favourites' ? 'favourites' : visiblePhotos.length}
+                  </button>
+                  <button
+                    onClick={exitSelectMode}
+                    className="cg-chip border border-line-strong bg-white px-3.5 py-1.5 font-body text-xs font-medium text-ink-soft hover:border-accent"
+                  >
+                    Done
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ── Grid ──────────────────────────────────────────────────── */}
+      <main className="mx-auto max-w-7xl px-3 py-8 sm:px-6 sm:py-10">
+        {visiblePhotos.length === 0 ? (
+          <div className="py-24 text-center">
+            <HeartIcon size={26} className="mx-auto text-ink-faint" />
+            <p className="mt-4 font-display text-xl font-light text-ink">
+              No favourites yet
+            </p>
+            <p className="mt-1 font-body text-sm text-ink-muted">
+              Tap the heart on any photo to shortlist it.
+            </p>
+          </div>
+        ) : (
+          <Masonry
+            breakpointCols={breakpointColumns}
+            className="masonry-grid"
+            columnClassName="masonry-grid-column"
+          >
+            {visiblePhotos.map((photo, index) => (
+              <PhotoTile
+                key={photo._id}
+                photo={photo}
+                position={photo.position}
+                index={index}
+                selectMode={selectMode}
+                selected={selected.has(photo.public_id)}
+                favorite={favourites.has(photo.public_id)}
+                downloading={singleDownloadId === photo._id}
+                onOpen={() => {
+                  setLightboxIndex(index);
+                  setLightboxOpen(true);
+                }}
+                onToggleSelect={() => toggleSelected(photo.public_id)}
+                onToggleFavorite={() => toggleFavourite(photo.public_id)}
+                onDownload={() =>
+                  handleSingleDownload(photo.public_id, photo.fileName, photo._id)
+                }
+              />
+            ))}
+          </Masonry>
+        )}
+      </main>
+
       <Footer config={config} />
 
-      {/* Client Lightbox (with download button, no protection) */}
-      {lightboxOpen && (
+      {/* ── Selection bar ─────────────────────────────────────────── */}
+      {selectMode && selectedCount > 0 && (
+        <div className="cg-selection-bar fixed bottom-5 left-1/2 z-[150] w-[min(560px,calc(100vw-1.5rem))] -translate-x-1/2">
+          <div className="flex items-center gap-3 rounded-full border border-white/10 bg-obsidian/95 px-3 py-2.5 pl-5 text-white shadow-lift backdrop-blur-xl">
+            <p className="font-body text-sm">
+              <span className="font-semibold tabular-nums">{selectedCount}</span>
+              <span className="text-white/60"> selected</span>
+            </p>
+            <button
+              onClick={() => setSelected(new Set())}
+              className="font-body text-xs text-white/55 underline underline-offset-2 transition-colors hover:text-white"
+            >
+              Clear
+            </button>
+            <div className="ml-auto flex items-center gap-2">
+              <DownloadMenu
+                label="Download"
+                count={selectedCount}
+                disabled={busy}
+                direction="up"
+                variant="dark"
+                onPick={(mode) => startDownload(mode, 'selected')}
+              />
+              <button
+                onClick={exitSelectMode}
+                className="hidden rounded-full px-3 py-2 font-body text-xs text-white/60 transition-colors hover:text-white sm:block"
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <DownloadDock state={downloadState} onCancel={cancel} onDismiss={dismiss} />
+
+      {lightboxOpen && lightboxPhotos.length > 0 && (
         <ClientLightbox
           photos={lightboxPhotos}
-          currentIndex={lightboxIndex}
+          currentIndex={Math.min(lightboxIndex, lightboxPhotos.length - 1)}
           onClose={() => setLightboxOpen(false)}
           onNavigate={setLightboxIndex}
-          slug={params.slug}
+          slug={slug}
           token={token}
-          galleryTitle={gallery?.title || 'Gallery'}
+          totalInGallery={orderedPhotos.length}
+          favourites={favourites}
+          onToggleFavourite={toggleFavourite}
+          onSessionExpired={handleSessionExpired}
         />
       )}
     </div>

@@ -6,8 +6,12 @@ const VideoItem = require('../models/VideoItem');
 const ClientGallery = require('../models/ClientGallery');
 const jwt = require('jsonwebtoken');
 const axios = require('axios');
-const archiver = require('archiver');
 const { resolveSiteSeo, buildCategorySeo, buildPhotoAlt } = require('../utils/seo');
+const {
+  buildPhotoFileName,
+  originalUrl,
+  streamGalleryZip,
+} = require('../utils/galleryFiles');
 
 /**
  * Verify client gallery JWT token (separate secret from admin JWT)
@@ -519,187 +523,117 @@ exports.getClientGallery = async (req, res) => {
 };
 
 /**
+ * Token verify + gallery load + expiry check — teeno download endpoints
+ * ke liye ek hi jagah. `null` return matlab response already bhej diya.
+ */
+const loadGalleryForClient = async (req, res) => {
+  let decoded;
+  try {
+    decoded = verifyClientToken(req);
+  } catch {
+    res.status(401).json({ error: 'Invalid or expired access token.' });
+    return null;
+  }
+
+  const { slug } = req.params;
+  if (decoded.slug !== slug) {
+    res.status(403).json({ error: 'Token does not match this gallery.' });
+    return null;
+  }
+
+  const gallery = await ClientGallery.findOne({ slug, is_active: true }).lean();
+  if (!gallery) {
+    res.status(404).json({ error: 'Gallery not found.' });
+    return null;
+  }
+
+  if (gallery.expires_at && new Date() > gallery.expires_at) {
+    res.status(410).json({ error: 'This gallery link has expired.' });
+    return null;
+  }
+
+  return gallery;
+};
+
+/**
  * GET /api/client-gallery/:slug/photo/:publicId/download
- * Proxy-stream original quality photo from Cloudinary (zero transforms)
+ *
+ * Ek photo ka original file proxy karke deta hai.
+ *
+ * NOTE: Normal case me frontend yeh endpoint use hi nahi karta — wo
+ * Cloudinary ka `fl_attachment` URL seedha browser ko deta hai, jisse
+ * file CDN se aati hai (hamare server ka ek bhi byte kharch nahi hota,
+ * aur speed 5-10x hoti hai). Yeh route sirf fallback ke liye zinda hai,
+ * agar kisi client ke network par CDN block ho.
  */
 exports.downloadSinglePhoto = async (req, res) => {
   try {
-    let decoded;
-    try {
-      decoded = verifyClientToken(req);
-    } catch {
-      return res.status(401).json({ error: 'Invalid or expired access token.' });
-    }
+    const gallery = await loadGalleryForClient(req, res);
+    if (!gallery) return;
 
-    const { slug, publicId } = req.params;
-
-    if (decoded.slug !== slug) {
-      return res.status(403).json({ error: 'Token does not match this gallery.' });
-    }
-
-    const gallery = await ClientGallery.findOne({ slug, is_active: true }).lean();
-    if (!gallery) {
-      return res.status(404).json({ error: 'Gallery not found.' });
-    }
-
-    // Check expiry
-    if (gallery.expires_at && new Date() > gallery.expires_at) {
-      return res.status(410).json({ error: 'This gallery link has expired.' });
-    }
+    const { publicId } = req.params;
 
     // Security: verify publicId belongs to this gallery
-    const photo = gallery.photos.find(p => p.public_id === publicId);
-    if (!photo) {
+    const ordered = [...(gallery.photos || [])].sort((a, b) => (a.order || 0) - (b.order || 0));
+    const index = ordered.findIndex((p) => p.public_id === publicId);
+    if (index === -1) {
       return res.status(404).json({ error: 'Photo not found in this gallery.' });
     }
 
-    // Original URL — ZERO transformations
-    const cloudinaryUrl = `https://res.cloudinary.com/${process.env.CLOUDINARY_CLOUD_NAME}/image/upload/${publicId}`;
-
-    const response = await axios.get(cloudinaryUrl, {
+    const response = await axios.get(originalUrl(publicId), {
       responseType: 'stream',
-      headers: { 'Accept': '*/*' }
+      timeout: 60000,
+      headers: { Accept: '*/*' },
     });
 
-    const galleryName = gallery.title.replace(/[^a-zA-Z0-9]/g, '_');
-    const format = photo.original_format || 'jpg';
-    const filename = `${galleryName}_${photo.title || publicId.split('/').pop()}.${format}`;
+    const filename = buildPhotoFileName(ordered[index], index, ordered.length);
 
     res.setHeader('Content-Type', response.headers['content-type'] || 'application/octet-stream');
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader('Cache-Control', 'no-store, no-transform');
     if (response.headers['content-length']) {
       res.setHeader('Content-Length', response.headers['content-length']);
     }
 
+    req.on('close', () => response.data.destroy());
     response.data.pipe(res);
   } catch (error) {
     console.error('downloadSinglePhoto error:', error.message);
-    res.status(500).json({ error: 'Failed to download photo.' });
-  }
-};
-
-/**
- * GET /api/client-gallery/:slug/download-all
- * Stream a flat zip of all original photos (no folder structure)
- */
-exports.downloadAllPhotosZip = async (req, res) => {
-  try {
-    let decoded;
-    try {
-      decoded = verifyClientToken(req);
-    } catch {
-      return res.status(401).json({ error: 'Invalid or expired access token.' });
-    }
-
-    const { slug } = req.params;
-
-    if (decoded.slug !== slug) {
-      return res.status(403).json({ error: 'Token does not match this gallery.' });
-    }
-
-    const gallery = await ClientGallery.findOne({ slug, is_active: true }).lean();
-    if (!gallery) {
-      return res.status(404).json({ error: 'Gallery not found.' });
-    }
-
-    if (gallery.expires_at && new Date() > gallery.expires_at) {
-      return res.status(410).json({ error: 'This gallery link has expired.' });
-    }
-
-    const galleryName = gallery.title.replace(/[^a-zA-Z0-9]/g, '_');
-
-    res.setHeader('Content-Type', 'application/zip');
-    res.setHeader('Content-Disposition', `attachment; filename="${galleryName}.zip"`);
-
-    const archive = archiver('zip', { zlib: { level: 0 } });
-    archive.pipe(res);
-
-    archive.on('error', (err) => {
-      console.error('Archiver error:', err);
-      res.status(500).end();
-    });
-
-    // SEQUENTIALLY fetch each photo to avoid Cloudinary rate limits
-    for (const photo of gallery.photos) {
-      const cloudinaryUrl = `https://res.cloudinary.com/${process.env.CLOUDINARY_CLOUD_NAME}/image/upload/${photo.public_id}`;
-      try {
-        const photoResponse = await axios.get(cloudinaryUrl, { responseType: 'stream' });
-        const format = photo.original_format || 'jpg';
-        const filename = `${photo.title || photo.public_id.split('/').pop()}.${format}`;
-        archive.append(photoResponse.data, { name: filename });
-      } catch (err) {
-        console.error(`Failed to fetch photo ${photo.public_id}:`, err.message);
-      }
-    }
-
-    await archive.finalize();
-  } catch (error) {
-    console.error('downloadAllPhotosZip error:', error.message);
     if (!res.headersSent) {
-      res.status(500).json({ error: 'Failed to create zip.' });
+      res.status(500).json({ error: 'Failed to download photo.' });
+    } else {
+      res.destroy();
     }
   }
 };
 
 /**
- * GET /api/client-gallery/:slug/download-folder
- * Stream a zip with gallery-named folder inside (same as download-all but with subfolder)
+ * GET /api/client-gallery/:slug/download-all       → flat zip
+ * GET /api/client-gallery/:slug/download-folder    → zip with a folder inside
+ *
+ * Dono ek hi streaming engine use karte hain (utils/galleryFiles.js).
+ * `?only=id1,id2` bhejo to sirf wahi photos zip hoti hain — "selected
+ * photos download" isi se chalta hai.
  */
-exports.downloadFolderZip = async (req, res) => {
+const zipHandler = (withFolder) => async (req, res) => {
   try {
-    let decoded;
-    try {
-      decoded = verifyClientToken(req);
-    } catch {
-      return res.status(401).json({ error: 'Invalid or expired access token.' });
-    }
+    const gallery = await loadGalleryForClient(req, res);
+    if (!gallery) return;
 
-    const { slug } = req.params;
+    const only = typeof req.query.only === 'string' && req.query.only.trim()
+      ? req.query.only.split(',').map((s) => s.trim()).filter(Boolean)
+      : null;
 
-    if (decoded.slug !== slug) {
-      return res.status(403).json({ error: 'Token does not match this gallery.' });
-    }
-
-    const gallery = await ClientGallery.findOne({ slug, is_active: true }).lean();
-    if (!gallery) {
-      return res.status(404).json({ error: 'Gallery not found.' });
-    }
-
-    if (gallery.expires_at && new Date() > gallery.expires_at) {
-      return res.status(410).json({ error: 'This gallery link has expired.' });
-    }
-
-    const galleryName = gallery.title.replace(/[^a-zA-Z0-9]/g, '_');
-
-    res.setHeader('Content-Type', 'application/zip');
-    res.setHeader('Content-Disposition', `attachment; filename="${galleryName}.zip"`);
-
-    const archive = archiver('zip', { zlib: { level: 0 } });
-    archive.pipe(res);
-
-    archive.on('error', (err) => {
-      console.error('Archiver error:', err);
-      res.status(500).end();
-    });
-
-    // SEQUENTIALLY fetch — photos go inside gallery-named folder
-    for (const photo of gallery.photos) {
-      const cloudinaryUrl = `https://res.cloudinary.com/${process.env.CLOUDINARY_CLOUD_NAME}/image/upload/${photo.public_id}`;
-      try {
-        const photoResponse = await axios.get(cloudinaryUrl, { responseType: 'stream' });
-        const format = photo.original_format || 'jpg';
-        const filename = `${photo.title || photo.public_id.split('/').pop()}.${format}`;
-        archive.append(photoResponse.data, { name: `${galleryName}/${filename}` });
-      } catch (err) {
-        console.error(`Failed to fetch photo ${photo.public_id}:`, err.message);
-      }
-    }
-
-    await archive.finalize();
+    await streamGalleryZip({ req, res, gallery, withFolder, only });
   } catch (error) {
-    console.error('downloadFolderZip error:', error.message);
+    console.error('gallery zip error:', error.message);
     if (!res.headersSent) {
       res.status(500).json({ error: 'Failed to create zip.' });
+    } else {
+      res.destroy();
     }
   }
 };
+
+exports.downloadAllPhotosZip = zipHandler(false);
+exports.downloadFolderZip = zipHandler(true);

@@ -3,20 +3,38 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { lightboxUrl } from '@/lib/cloudinary';
-import { downloadSinglePhoto } from '@/lib/clientGalleryDownload';
+import { downloadSinglePhoto } from '@/lib/galleryDownload';
 import { useSiteConfig } from '@/lib/hooks';
 import { useLightboxGestures } from '@/lib/useLightboxGestures';
 import type { Photo } from '@/lib/types';
 import StudioCard from '@/components/StudioCard';
+import {
+  CameraIcon,
+  CheckIcon,
+  CloseIcon,
+  DownloadIcon,
+  HeartIcon,
+} from '@/components/client/icons';
+
+export interface LightboxPhoto extends Photo {
+  original_format: string;
+  /** Download hone par yahi naam banega — gallery ke order se. */
+  fileName: string;
+  /** Poori gallery me iska number (favourites filter se badalta nahi). */
+  position: number;
+}
 
 interface ClientLightboxProps {
-  photos: (Photo & { original_format?: string })[];
+  photos: LightboxPhoto[];
   currentIndex: number;
   onClose: () => void;
   onNavigate: (index: number) => void;
   slug: string;
   token: string;
-  galleryTitle: string;
+  totalInGallery: number;
+  favourites: Set<string>;
+  onToggleFavourite: (publicId: string) => void;
+  onSessionExpired: () => void;
 }
 
 export default function ClientLightbox({
@@ -26,7 +44,10 @@ export default function ClientLightbox({
   onNavigate,
   slug,
   token,
-  galleryTitle,
+  totalInGallery,
+  favourites,
+  onToggleFavourite,
+  onSessionExpired,
 }: ClientLightboxProps) {
   const [loaded, setLoaded] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -36,7 +57,13 @@ export default function ClientLightbox({
 
   // Draggable logo button state
   const [position, setPosition] = useState({ x: 0, y: 0 });
-  const dragRef = useRef<{ startX: number; startY: number; posX: number; posY: number; moved: boolean } | null>(null);
+  const dragRef = useRef<{
+    startX: number;
+    startY: number;
+    posX: number;
+    posY: number;
+    moved: boolean;
+  } | null>(null);
 
   const handleDragStart = (e: React.MouseEvent | React.TouchEvent) => {
     e.stopPropagation();
@@ -55,20 +82,15 @@ export default function ClientLightbox({
     if (!dragRef.current) return;
     const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
     const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
-    
-    const dy = clientY - dragRef.current.startY;
+
     const dx = clientX - dragRef.current.startX;
-    
-    if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
-      dragRef.current.moved = true;
-    }
-    
-    const initialX = dragRef.current.posX;
-    const initialY = dragRef.current.posY;
+    const dy = clientY - dragRef.current.startY;
+
+    if (Math.abs(dx) > 5 || Math.abs(dy) > 5) dragRef.current.moved = true;
 
     setPosition({
-      x: initialX + dx,
-      y: initialY + dy,
+      x: dragRef.current.posX + dx,
+      y: dragRef.current.posY + dy,
     });
   }, []);
 
@@ -98,7 +120,6 @@ export default function ClientLightbox({
   }, [handleDragMove, handleDragEnd]);
 
   const config = useSiteConfig();
-
   const photo = photos[currentIndex];
 
   const goNext = useCallback(() => {
@@ -120,38 +141,55 @@ export default function ClientLightbox({
   const { stageRef, overlayRef, onTouchStart, onTouchMove, onTouchEnd, onOverlayClick } =
     useLightboxGestures({ onClose, onNext: goNext, onPrev: goPrev });
 
-  // Download handler
+  /**
+   * Sirf aas-paas ki photos preload hoti hain.
+   *
+   * Pehle gallery page poori gallery ki full-size images background me
+   * preload karta tha — 200 photos wali gallery me yeh sainkdon MB
+   * bekaar kharch karta tha aur usi bandwidth ko khaata tha jo client ke
+   * asli download ko chahiye hoti hai. Do aage, ek peeche — bas itna hi
+   * chahiye taaki next/prev instant lage.
+   */
+  useEffect(() => {
+    [currentIndex + 1, currentIndex + 2, currentIndex - 1]
+      .filter((i) => i >= 0 && i < photos.length)
+      .forEach((i) => {
+        const img = new window.Image();
+        img.src = lightboxUrl(photos[i].public_id);
+      });
+  }, [currentIndex, photos]);
+
   const handleDownload = useCallback(async () => {
     if (downloading || !photo) return;
     setDownloading(true);
-    setDownloadMsg('Downloading...');
+    setDownloadMsg('Starting…');
 
     try {
-      const format = photo.original_format || 'jpg';
-      const galleryName = galleryTitle.replace(/[^a-zA-Z0-9]/g, '_');
-      const filename = `${galleryName}_${photo.title || currentIndex + 1}.${format}`;
-      await downloadSinglePhoto(slug, photo.public_id, token, filename);
-      setDownloadMsg('Downloaded!');
+      await downloadSinglePhoto(slug, photo.public_id, token, photo.fileName);
+      setDownloadMsg('Saved');
     } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : '';
-      if (errorMsg === 'SESSION_EXPIRED') {
+      if (err instanceof Error && err.message === 'SESSION_EXPIRED') {
         setDownloadMsg('Session expired');
+        onSessionExpired();
       } else {
         setDownloadMsg('Failed');
       }
     } finally {
       setDownloading(false);
-      setTimeout(() => setDownloadMsg(''), 2000);
+      setTimeout(() => setDownloadMsg(''), 2200);
     }
-  }, [downloading, photo, slug, token, galleryTitle, currentIndex]);
+  }, [downloading, photo, slug, token, onSessionExpired]);
 
-  // Keyboard navigation
   useEffect(() => {
     setMounted(true);
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
       if (e.key === 'ArrowRight') goNext();
       if (e.key === 'ArrowLeft') goPrev();
+      if (e.key === 'd' || e.key === 'D') handleDownload();
+      if (e.key === 'f' || e.key === 'F') {
+        if (photo) onToggleFavourite(photo.public_id);
+      }
     };
 
     document.addEventListener('keydown', handleKeyDown);
@@ -162,9 +200,11 @@ export default function ClientLightbox({
       document.removeEventListener('keydown', handleKeyDown);
       document.body.style.overflow = '';
     };
-  }, [onClose, goNext, goPrev]);
+  }, [onClose, goNext, goPrev, handleDownload, onToggleFavourite, photo]);
 
   if (!mounted || !photo) return null;
+
+  const isFavourite = favourites.has(photo.public_id);
 
   return createPortal(
     <div
@@ -175,11 +215,11 @@ export default function ClientLightbox({
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
     >
-      <div className="relative w-full h-full flex items-center justify-center p-4 md:p-8">
+      <div className="relative flex h-full w-full items-center justify-center p-4 md:p-8">
         {/* Top Center Brand Logo Circular Button (Draggable) */}
-        <div 
-          className={`absolute top-10 md:top-12 left-1/2 z-50 transition-opacity duration-300 cursor-grab active:cursor-grabbing ${
-            studioCardOpen ? 'opacity-0 scale-75 pointer-events-none' : 'opacity-100 scale-100'
+        <div
+          className={`absolute left-1/2 top-10 z-50 cursor-grab transition-opacity duration-300 active:cursor-grabbing md:top-12 ${
+            studioCardOpen ? 'pointer-events-none scale-75 opacity-0' : 'scale-100 opacity-100'
           }`}
           style={{ transform: `translate(calc(-50% + ${position.x}px), ${position.y}px)` }}
           onMouseDown={handleDragStart}
@@ -191,119 +231,122 @@ export default function ClientLightbox({
               if (dragRef.current?.moved) return;
               setStudioCardOpen(true);
             }}
-            className="w-16 h-16 rounded-full bg-white border border-[#D6E6F2] shadow-lg flex items-center justify-center overflow-hidden active:scale-95 transition-transform"
+            className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full border border-[#D6E6F2] bg-white shadow-lg transition-transform active:scale-95"
             title="Open Studio Info"
           >
             {config?.studio_logo?.secure_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={config.studio_logo.secure_url}
                 alt="Studio Logo"
-                className="object-cover w-full h-full pointer-events-none"
+                className="pointer-events-none h-full w-full object-cover"
               />
             ) : (
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#476485" strokeWidth="2" className="pointer-events-none">
-                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-                <circle cx="12" cy="13" r="4" />
-              </svg>
+              <CameraIcon size={24} className="pointer-events-none text-[#476485]" />
             )}
           </button>
         </div>
-        {/* Top Right: Close + Download */}
-        <div className="absolute top-4 right-4 z-50 flex items-center gap-2">
-          {/* Download status message */}
+
+        {/* Top Right: favourite + download + close */}
+        <div className="absolute right-4 top-4 z-50 flex items-center gap-1">
           {downloadMsg && (
-            <span className="text-white/80 text-xs font-body bg-black/50 px-3 py-1 rounded-full backdrop-blur-sm">
+            <span className="mr-1 flex items-center gap-1.5 rounded-full bg-black/55 px-3 py-1 font-body text-xs text-white/85 backdrop-blur-sm">
+              {downloadMsg === 'Saved' && <CheckIcon size={12} />}
               {downloadMsg}
             </span>
           )}
 
-          {/* Download Button */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleFavourite(photo.public_id);
+            }}
+            className={`flex h-10 w-10 items-center justify-center rounded-full transition-colors ${
+              isFavourite ? 'text-red-400' : 'text-white/70 hover:text-white'
+            }`}
+            aria-label={isFavourite ? 'Remove from favourites' : 'Mark as favourite'}
+            title="Favourite (F)"
+          >
+            <HeartIcon size={21} filled={isFavourite} />
+          </button>
+
           <button
             onClick={(e) => {
               e.stopPropagation();
               handleDownload();
             }}
             disabled={downloading}
-            className="w-10 h-10 flex items-center justify-center text-white/80 hover:text-white transition-colors disabled:opacity-50"
+            className="flex h-10 w-10 items-center justify-center text-white/70 transition-colors hover:text-white disabled:opacity-50"
             aria-label="Download original"
-            title="Download Original"
+            title="Download original (D)"
           >
             {downloading ? (
-              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              <span className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
             ) : (
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                <polyline points="7 10 12 15 17 10" />
-                <line x1="12" y1="15" x2="12" y2="3" />
-              </svg>
+              <DownloadIcon size={21} strokeWidth={1.5} />
             )}
           </button>
 
-          {/* Close Button */}
           <button
             onClick={(e) => {
               e.stopPropagation();
               onClose();
             }}
-            className="w-10 h-10 flex items-center justify-center text-white/80 hover:text-white transition-colors"
+            className="flex h-10 w-10 items-center justify-center text-white/70 transition-colors hover:text-white"
             aria-label="Close lightbox"
           >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
+            <CloseIcon size={22} strokeWidth={1.5} />
           </button>
         </div>
 
-        {/* Prev Button */}
         {currentIndex > 0 && (
           <button
             onClick={(e) => {
               e.stopPropagation();
               goPrev();
             }}
-            className="absolute left-2 md:left-6 top-1/2 -translate-y-1/2 z-50 w-12 h-12 flex items-center justify-center text-white/60 hover:text-white transition-colors"
+            className="absolute left-2 top-1/2 z-50 flex h-12 w-12 -translate-y-1/2 items-center justify-center text-white/60 transition-colors hover:text-white md:left-6"
             aria-label="Previous photo"
           >
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
               <polyline points="15 18 9 12 15 6" />
             </svg>
           </button>
         )}
 
-        {/* Next Button */}
         {currentIndex < photos.length - 1 && (
           <button
             onClick={(e) => {
               e.stopPropagation();
               goNext();
             }}
-            className="absolute right-2 md:right-6 top-1/2 -translate-y-1/2 z-50 w-12 h-12 flex items-center justify-center text-white/60 hover:text-white transition-colors"
+            className="absolute right-2 top-1/2 z-50 flex h-12 w-12 -translate-y-1/2 items-center justify-center text-white/60 transition-colors hover:text-white md:right-6"
             aria-label="Next photo"
           >
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
               <polyline points="9 18 15 12 9 6" />
             </svg>
           </button>
         )}
 
-        {/* Image — NO right-click protection for client gallery.
-            swipe-to-dismiss ke dauraan yahi element chalta hai. */}
+        {/* Image — client apni photos ka maalik hai, isliye yahan koi
+            right-click protection nahi hai. */}
         <div
           ref={stageRef}
-          className="relative max-w-full max-h-full will-change-transform"
+          className="relative max-h-full max-w-full will-change-transform"
           style={{ aspectRatio: `${photo.width}/${photo.height}` }}
           onClick={(e) => e.stopPropagation()}
         >
           {!loaded && (
             <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-8 h-8 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              <span className="h-8 w-8 animate-spin rounded-full border-2 border-white/30 border-t-white" />
             </div>
           )}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={lightboxUrl(photo.public_id)}
-            alt={photo.title || 'Photo'}
-            className={`max-h-[85vh] w-auto h-auto object-contain transition-opacity duration-300 ${
+            alt={photo.title || `Photo ${photo.position}`}
+            className={`h-auto max-h-[85vh] w-auto object-contain transition-opacity duration-300 ${
               loaded ? 'opacity-100' : 'opacity-0'
             }`}
             onLoad={() => setLoaded(true)}
@@ -311,20 +354,23 @@ export default function ClientLightbox({
           />
         </div>
 
-        {/* Photo info */}
+        {/* Counter — gallery ka asli number, taaki client aur photographer
+            dono ek hi photo ki baat karein. */}
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-center">
-          <p className="text-white/40 text-xs font-body">
-            {currentIndex + 1} / {photos.length}
+          <p className="font-body text-xs tabular-nums text-white/45">
+            {photo.position} / {totalInGallery}
+            {photos.length !== totalInGallery && (
+              <span className="text-white/30"> · favourites</span>
+            )}
           </p>
         </div>
       </div>
 
-      {/* Studio Info Modal Overlay */}
       {config && (
-        <StudioCard 
-          config={config} 
-          isOpen={studioCardOpen} 
-          onClose={() => setStudioCardOpen(false)} 
+        <StudioCard
+          config={config}
+          isOpen={studioCardOpen}
+          onClose={() => setStudioCardOpen(false)}
         />
       )}
     </div>,
