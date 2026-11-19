@@ -367,11 +367,13 @@ export default function HomeGallery({
             {videos.length > 0 && (isFilmsTab || !hasMore) && (
               <div
                 className={
-                  isFilmsTab ? '' : 'mt-14 border-t border-line/70 pt-12'
+                  isFilmsTab
+                    ? ''
+                    : 'mt-8 border-t border-line/70 pt-8 md:mt-10 md:pt-10'
                 }
               >
                 <p className="eyebrow">Motion</p>
-                <h3 className="mb-8 font-display text-2xl font-light text-ink sm:text-3xl">
+                <h3 className="mb-6 font-display text-2xl font-light text-ink sm:text-3xl">
                   Films &amp;{' '}
                   <span className="italic text-ink-soft">reels</span>
                 </h3>
