@@ -21,7 +21,6 @@ import dynamic from 'next/dynamic';
 const TestimonialsSection = dynamic(() => import('@/components/TestimonialsSection'));
 const StatsSection = dynamic(() => import('@/components/StatsSection'));
 const PricingSection = dynamic(() => import('@/components/PricingSection'));
-const RetouchShowcase = dynamic(() => import('@/components/RetouchShowcase'));
 const HelixSection = dynamic(() => import('@/components/HelixSection'));
 const BookingForm = dynamic(() => import('@/components/BookingForm'));
 const ProcessTimeline = dynamic(() => import('@/components/ProcessTimeline'));
@@ -164,9 +163,6 @@ export default async function HomePage() {
 
         {/* Server-rendered About/Services — crawlable text + internal links */}
         <SeoContentSection seo={seo} />
-
-        {/* Retouching RAW vs Edited Showcase */}
-        <RetouchShowcase />
 
         {/* 3D Spatial Helix Card Carousel */}
         <HelixSection initialPhotos={initialPhotos} />
