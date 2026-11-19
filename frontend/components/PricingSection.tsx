@@ -162,7 +162,7 @@ export default function PricingSection() {
     <section
       id="pricing-section"
       aria-labelledby="pricing-heading"
-      className="relative overflow-hidden bg-gradient-to-b from-[#F7FBFC] via-[#FFFFFF] to-[#F7FBFC] py-16 md:py-24 lg:py-28 text-ink"
+      className="relative overflow-hidden bg-gradient-to-b from-[#F7FBFC] via-[#FFFFFF] to-[#F7FBFC] py-10 md:py-14 lg:py-16 text-ink"
     >
       {/* ── Ambient Liquid Caustics Glow Behind Section ── */}
       <div
@@ -172,7 +172,7 @@ export default function PricingSection() {
 
       <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* ── Section Header ── */}
-        <div className="mx-auto max-w-2xl text-center mb-10 sm:mb-14">
+        <div className="mx-auto max-w-2xl text-center mb-8 sm:mb-10">
           <p className="eyebrow mb-2 justify-center text-accent-deep">
             Investment &amp; Curated Collections
           </p>
@@ -180,10 +180,14 @@ export default function PricingSection() {
             id="pricing-heading"
             className="font-display text-3xl font-light tracking-tight text-ink sm:text-4xl md:text-5xl"
           >
-            Artisanal Craft. <span className="italic text-ink-soft">Transparent Investment.</span>
+            Artisanal Craft.{' '}
+            <span className="italic text-ink-soft">
+              Transparent Investment.
+            </span>
           </h2>
           <p className="mt-3.5 font-body text-sm leading-relaxed text-ink-muted sm:text-base">
-            Every celebration holds an unrepeatable rhythm. Select your creative scope below or let us tailor a bespoke commission for your dates.
+            Every celebration holds an unrepeatable rhythm. Select your creative
+            scope below or let us tailor a bespoke commission for your dates.
           </p>
 
           {/* ─── Apple Water Droplet Category Switcher ─── */}
@@ -216,7 +220,9 @@ export default function PricingSection() {
                 aria-selected={category === 'weddings'}
                 onClick={() => handleCategorySwitch('weddings')}
                 className={`relative z-10 rounded-full px-5 py-2 font-body text-xs uppercase tracking-[0.18em] transition-colors duration-200 active:scale-95 ${
-                  category === 'weddings' ? 'font-bold text-ink' : 'font-medium text-ink-muted hover:text-ink'
+                  category === 'weddings'
+                    ? 'font-bold text-ink'
+                    : 'font-medium text-ink-muted hover:text-ink'
                 }`}
               >
                 Weddings &amp; Events
@@ -228,7 +234,9 @@ export default function PricingSection() {
                 aria-selected={category === 'portraits'}
                 onClick={() => handleCategorySwitch('portraits')}
                 className={`relative z-10 rounded-full px-5 py-2 font-body text-xs uppercase tracking-[0.18em] transition-colors duration-200 active:scale-95 ${
-                  category === 'portraits' ? 'font-bold text-ink' : 'font-medium text-ink-muted hover:text-ink'
+                  category === 'portraits'
+                    ? 'font-bold text-ink'
+                    : 'font-medium text-ink-muted hover:text-ink'
                 }`}
               >
                 Portraits &amp; Editorial
@@ -266,7 +274,9 @@ export default function PricingSection() {
                 <div
                   aria-hidden="true"
                   className={`pointer-events-none absolute inset-x-0 top-0 h-28 rounded-t-3xl bg-gradient-to-b ${
-                    isCenter ? 'from-white/[0.12] to-transparent' : 'from-white/[0.45] to-transparent'
+                    isCenter
+                      ? 'from-white/[0.12] to-transparent'
+                      : 'from-white/[0.45] to-transparent'
                   }`}
                 />
 
@@ -329,7 +339,9 @@ export default function PricingSection() {
                   {/* Coverage Meta */}
                   <div
                     className={`mt-2 inline-flex items-center gap-2 rounded-full px-3 py-1 text-[11px] font-mono ${
-                      isCenter ? 'bg-white/10 text-white/90' : 'bg-surface-alt/70 text-ink-soft'
+                      isCenter
+                        ? 'bg-white/10 text-white/90'
+                        : 'bg-surface-alt/70 text-ink-soft'
                     }`}
                   >
                     <span>{pkg.duration}</span>
@@ -350,14 +362,29 @@ export default function PricingSection() {
                       <li key={feature} className="flex items-start gap-2.5">
                         <span
                           className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full mt-0.5 ${
-                            isCenter ? 'bg-accent/25 text-accent-soft' : 'bg-accent-tint text-accent-deep'
+                            isCenter
+                              ? 'bg-accent/25 text-accent-soft'
+                              : 'bg-accent-tint text-accent-deep'
                           }`}
                         >
-                          <svg width="10" height="8" viewBox="0 0 10 8" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <svg
+                            width="10"
+                            height="8"
+                            viewBox="0 0 10 8"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
                             <polyline points="1 4 3.5 6.5 9 1" />
                           </svg>
                         </span>
-                        <span className={isCenter ? 'text-white/90' : 'text-ink-soft'}>
+                        <span
+                          className={
+                            isCenter ? 'text-white/90' : 'text-ink-soft'
+                          }
+                        >
                           {feature}
                         </span>
                       </li>
@@ -384,7 +411,11 @@ export default function PricingSection() {
                       stroke="currentColor"
                       strokeWidth={2}
                     >
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M14 5l7 7m0 0l-7 7m7-7H3"
+                      />
                     </svg>
                   </button>
                 </div>
@@ -394,13 +425,25 @@ export default function PricingSection() {
         </div>
 
         {/* ── Bespoke Tailoring Note ── */}
-        <div className="mt-14 text-center">
+        <div className="mt-8 text-center">
           <p className="font-body text-xs text-ink-muted flex items-center justify-center gap-2">
-            <svg className="h-4 w-4 text-accent-deep" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <svg
+              className="h-4 w-4 text-accent-deep"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={1.75}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
             </svg>
             <span>
-              Planning a destination wedding or multi-day editorial campaign? Every collection can be custom-tailored with bespoke film cinematography and studio lighting.
+              Planning a destination wedding or multi-day editorial campaign?
+              Every collection can be custom-tailored with bespoke film
+              cinematography and studio lighting.
             </span>
           </p>
         </div>
@@ -426,7 +469,8 @@ export default function PricingSection() {
           }
         }
         .animate-water-wobble {
-          animation: waterWobble 0.42s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+          animation: waterWobble 0.42s cubic-bezier(0.175, 0.885, 0.32, 1.275)
+            forwards;
         }
       `}</style>
     </section>
