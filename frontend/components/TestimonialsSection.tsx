@@ -73,13 +73,11 @@ export default function TestimonialsSection({ initialTestimonials }: Props = {})
   const [velocity, setVelocity] = useState(0);
   const [flingDirection, setFlingDirection] = useState<'left' | 'right' | null>(null);
   const [isWobbling, setIsWobbling] = useState(false);
-  const [mousePos, setMousePos] = useState({ x: 50, y: 50 });
 
   const dragStartRef = useRef<{ x: number; y: number; time: number }>({ x: 0, y: 0, time: 0 });
   const lastSampleRef = useRef<{ x: number; time: number }>({ x: 0, time: 0 });
   const wobbleTimerRef = useRef<NodeJS.Timeout | null>(null);
   const flingTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const slabRef = useRef<HTMLDivElement | null>(null);
 
   // Filter or fallback to luxury reviews
   const rawActive = testimonials?.filter((t) => t.is_active) || [];
@@ -143,17 +141,7 @@ export default function TestimonialsSection({ initialTestimonials }: Props = {})
   };
 
   const handlePointerMove = (e: React.PointerEvent) => {
-    if (!isDragging) {
-      // Dynamic Apple Caustics tracking across the slab
-      if (slabRef.current) {
-        const rect = slabRef.current.getBoundingClientRect();
-        setMousePos({
-          x: Math.round(e.clientX - rect.left),
-          y: Math.round(e.clientY - rect.top),
-        });
-      }
-      return;
-    }
+    if (!isDragging) return;
 
     const now = performance.now();
     const dx = e.clientX - dragStartRef.current.x;
@@ -278,20 +266,10 @@ export default function TestimonialsSection({ initialTestimonials }: Props = {})
 
         {/* ── Main Apple Optical Glass Monolith Slab ── */}
         <div
-          ref={slabRef}
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
           className="relative overflow-hidden rounded-[2.2rem] border border-white/80 bg-white/45 p-6 sm:p-10 lg:p-12 shadow-[0_24px_64px_rgba(20,36,51,0.08),inset_0_1.5px_2px_rgba(255,255,255,0.95),inset_0_-1px_2px_rgba(255,255,255,0.3)] backdrop-blur-[6px] transition-all duration-300"
         >
-          {/* Dynamic Optical Caustic Radial Spotlight */}
-          <div
-            className="pointer-events-none absolute -inset-px transition-opacity duration-300"
-            style={{
-              background: `radial-gradient(550px circle at ${mousePos.x}px ${mousePos.y}px, rgba(255, 255, 255, 0.55), transparent 70%)`,
-            }}
-            aria-hidden="true"
-          />
-
           <div className="relative grid grid-cols-1 items-center gap-10 lg:grid-cols-12 lg:gap-14">
             {/* ═════════════════════════════════════════════════════════════
                 LEFT COLUMN: Kinetic Physical Apple Glass Card Deck

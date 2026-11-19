@@ -27,8 +27,7 @@ interface TiltCardProps {
 export default function TiltCard({
   children,
   className = '',
-  maxTilt = 10,
-  spotlightColor = 'rgba(255,255,255,0.15)',
+  maxTilt = 8,
   onClick,
 }: TiltCardProps) {
   const ref = useRef<HTMLDivElement>(null);
@@ -50,8 +49,6 @@ export default function TiltCard({
 
         el.style.setProperty('--tilt-x', `${-y * maxTilt}deg`);
         el.style.setProperty('--tilt-y', `${x * maxTilt}deg`);
-        el.style.setProperty('--spot-x', `${(x + 0.5) * 100}%`);
-        el.style.setProperty('--spot-y', `${(y + 0.5) * 100}%`);
       });
     },
     [maxTilt]
@@ -66,18 +63,12 @@ export default function TiltCard({
     }
     el.style.setProperty('--tilt-x', '0deg');
     el.style.setProperty('--tilt-y', '0deg');
-    el.style.setProperty('--spot-opacity', '0');
-  }, []);
-
-  const onEnter = useCallback(() => {
-    ref.current?.style.setProperty('--spot-opacity', '1');
   }, []);
 
   return (
     <div
       ref={ref}
       onMouseMove={onMove}
-      onMouseEnter={onEnter}
       onMouseLeave={onLeave}
       onClick={onClick}
       className={cn('tilt-card', className)}
@@ -85,14 +76,9 @@ export default function TiltCard({
         {
           '--tilt-x': '0deg',
           '--tilt-y': '0deg',
-          '--spot-x': '50%',
-          '--spot-y': '50%',
-          '--spot-opacity': '0',
-          '--spot-color': spotlightColor,
         } as React.CSSProperties
       }
     >
-      <span aria-hidden className="tilt-card__spot" />
       {children}
     </div>
   );

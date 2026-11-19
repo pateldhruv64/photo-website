@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 
 interface StepItem {
   number: string;
@@ -139,21 +139,6 @@ const STEPS: StepItem[] = [
 export default function ProcessTimeline() {
   const [selectedIdx, setSelectedIdx] = useState<number>(0);
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
-  const [cursorPos, setCursorPos] = useState<Record<number, { x: number; y: number }>>({});
-  const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
-
-  const handleMouseMove = (e: React.MouseEvent, idx: number) => {
-    const el = cardRefs.current[idx];
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
-    setCursorPos((prev) => ({
-      ...prev,
-      [idx]: {
-        x: Math.round(e.clientX - rect.left),
-        y: Math.round(e.clientY - rect.top),
-      },
-    }));
-  };
 
   return (
     <section
@@ -220,7 +205,6 @@ export default function ProcessTimeline() {
               const isHovered = hoveredIdx === idx;
               const isSelected = selectedIdx === idx;
               const active = isHovered || isSelected;
-              const pos = cursorPos[idx] || { x: 150, y: 80 };
 
               return (
                 <li
@@ -239,26 +223,12 @@ export default function ProcessTimeline() {
                     }`}
                   >
                     <div
-                      ref={(el) => {
-                        cardRefs.current[idx] = el;
-                      }}
-                      onMouseMove={(e) => handleMouseMove(e, idx)}
                       className={`group relative overflow-hidden rounded-[1.8rem] border p-6 sm:p-8 backdrop-blur-[6px] transition-all duration-500 ${
                         active
                           ? 'border-white/50 bg-white/[0.12] shadow-[0_24px_60px_rgba(0,0,0,0.6),inset_0_1.5px_2px_rgba(255,255,255,0.7),inset_0_-1px_1.5px_rgba(255,255,255,0.2)] -translate-y-1 scale-[1.02]'
                           : 'border-white/15 bg-white/[0.05] shadow-[0_12px_32px_rgba(0,0,0,0.4),inset_0_1px_1.5px_rgba(255,255,255,0.35)] hover:border-white/30 hover:bg-white/[0.08]'
                       }`}
                     >
-                      {/* Dynamic Caustic Spotlight tracking cursor inside card */}
-                      <div
-                        className="pointer-events-none absolute -inset-px transition-opacity duration-300"
-                        style={{
-                          background: `radial-gradient(350px circle at ${pos.x}px ${pos.y}px, rgba(255, 255, 255, 0.18), transparent 70%)`,
-                          opacity: active ? 1 : 0,
-                        }}
-                        aria-hidden="true"
-                      />
-
                       {/* Viewfinder Camera Reticle Brackets (4 corners) */}
                       <div
                         aria-hidden="true"

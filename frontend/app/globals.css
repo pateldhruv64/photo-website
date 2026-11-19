@@ -338,24 +338,9 @@ body {
   will-change: transform;
 }
 
-.tilt-card__spot {
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-  opacity: var(--spot-opacity);
-  transition: opacity 0.4s var(--ease);
-  background: radial-gradient(
-    circle at var(--spot-x) var(--spot-y),
-    var(--spot-color),
-    transparent 45%
-  );
-}
-
 /* Touch devices par tilt ka koi matlab nahi — hover hi nahi hota */
 @media (hover: none) {
   .tilt-card { transform: none !important; }
-  .tilt-card__spot { display: none; }
 }
 
 /* ═══════════════════════════════════════════════════════════════════

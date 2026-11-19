@@ -245,8 +245,7 @@ export default function PricingSection() {
             return (
               <TiltCard
                 key={pkg.id}
-                maxTilt={5}
-                spotlightColor={isCenter ? 'rgba(255, 255, 255, 0.22)' : 'rgba(118, 159, 205, 0.16)'}
+                maxTilt={4}
                 className={`group relative flex flex-col justify-between rounded-3xl p-7 sm:p-8 transition-all duration-500 will-change-transform ${
                   isCenter
                     ? 'bg-[#0E1F30]/85 text-white shadow-[0_28px_64px_-12px_rgba(14,31,48,0.45)] md:-translate-y-2 md:scale-[1.03]'
