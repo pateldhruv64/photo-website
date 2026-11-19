@@ -138,11 +138,11 @@ export default function Compare({
     <div className="flex flex-col gap-4">
       {/* Precision Mode & Preset Controls Toolbar */}
       <div className="flex flex-wrap items-center justify-between gap-3 text-xs">
-        {/* Inspection Mode Switcher */}
+        {/* Mode Switcher (Split vs Loupe) — Apple Liquid Glass Capsule */}
         <div
           role="radiogroup"
-          aria-label="Retouch inspection view mode"
-          className="inline-flex rounded-full border border-white/15 bg-ink/70 p-1 shadow-inner backdrop-blur-md"
+          aria-label="Inspection mode"
+          className="inline-flex rounded-full border border-white/25 bg-white/[0.08] p-1 shadow-[0_4px_16px_rgba(0,0,0,0.25),inset_0_1px_1.5px_rgba(255,255,255,0.4)] backdrop-blur-[6px]"
         >
           <button
             type="button"
@@ -154,8 +154,8 @@ export default function Compare({
             }}
             className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 font-mono text-[11px] uppercase tracking-wider transition-all duration-300 ${
               mode === 'split'
-                ? 'bg-accent text-white shadow-sm font-medium'
-                : 'text-white/70 hover:text-white'
+                ? 'bg-white text-ink shadow-[0_2px_10px_rgba(255,255,255,0.35),inset_0_1px_1.5px_rgba(255,255,255,1)] font-bold'
+                : 'text-white/75 hover:text-white'
             }`}
           >
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -171,8 +171,8 @@ export default function Compare({
             onClick={() => setMode('loupe')}
             className={`hidden sm:flex items-center gap-1.5 rounded-full px-3.5 py-1.5 font-mono text-[11px] uppercase tracking-wider transition-all duration-300 ${
               mode === 'loupe'
-                ? 'bg-accent text-white shadow-sm font-medium'
-                : 'text-white/70 hover:text-white'
+                ? 'bg-white text-ink shadow-[0_2px_10px_rgba(255,255,255,0.35),inset_0_1px_1.5px_rgba(255,255,255,1)] font-bold'
+                : 'text-white/75 hover:text-white'
             }`}
           >
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -191,12 +191,12 @@ export default function Compare({
             <span className="font-mono text-[10px] uppercase tracking-widest text-white/50 hidden sm:inline">
               Snap to:
             </span>
-            <div className="inline-flex rounded-full border border-white/10 bg-ink/50 p-0.5 backdrop-blur-sm">
+            <div className="inline-flex rounded-full border border-white/20 bg-white/[0.08] p-1 shadow-[0_2px_10px_rgba(0,0,0,0.2),inset_0_1px_1px_rgba(255,255,255,0.3)] backdrop-blur-[6px]">
               <button
                 type="button"
                 onClick={() => setSliderPosition(0)}
-                className={`rounded-full px-2.5 py-1 font-mono text-[10px] uppercase tracking-wider transition-colors ${
-                  sliderPosition === 0 ? 'bg-white/20 text-white font-medium' : 'text-white/60 hover:text-white'
+                className={`rounded-full px-2.5 py-1 font-mono text-[10px] uppercase tracking-wider transition-all duration-200 ${
+                  sliderPosition === 0 ? 'bg-white/25 text-white font-semibold shadow-sm' : 'text-white/60 hover:text-white'
                 }`}
               >
                 100% RAW
@@ -204,8 +204,8 @@ export default function Compare({
               <button
                 type="button"
                 onClick={() => setSliderPosition(50)}
-                className={`rounded-full px-2.5 py-1 font-mono text-[10px] uppercase tracking-wider transition-colors ${
-                  sliderPosition === 50 ? 'bg-white/20 text-white font-medium' : 'text-white/60 hover:text-white'
+                className={`rounded-full px-2.5 py-1 font-mono text-[10px] uppercase tracking-wider transition-all duration-200 ${
+                  sliderPosition === 50 ? 'bg-white/25 text-white font-semibold shadow-sm' : 'text-white/60 hover:text-white'
                 }`}
               >
                 50/50
@@ -213,8 +213,8 @@ export default function Compare({
               <button
                 type="button"
                 onClick={() => setSliderPosition(100)}
-                className={`rounded-full px-2.5 py-1 font-mono text-[10px] uppercase tracking-wider transition-colors ${
-                  sliderPosition === 100 ? 'bg-white/20 text-white font-medium' : 'text-white/60 hover:text-white'
+                className={`rounded-full px-2.5 py-1 font-mono text-[10px] uppercase tracking-wider transition-all duration-200 ${
+                  sliderPosition === 100 ? 'bg-white/25 text-white font-semibold shadow-sm' : 'text-white/60 hover:text-white'
                 }`}
               >
                 Master
@@ -292,11 +292,17 @@ export default function Compare({
             className="pointer-events-none absolute bottom-0 top-0 w-0.5 bg-white shadow-[0_0_12px_rgba(255,255,255,0.9)] z-30 transition-transform duration-75"
             style={{ left: `${sliderPosition}%` }}
           >
-            {/* Center Dial Knob */}
+            {/* Center Dial Knob — Apple Liquid Glass Optical Lens */}
             <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center">
-              <div className="relative flex h-11 w-11 items-center justify-center rounded-full border-2 border-white/80 bg-ink/85 text-white shadow-[0_4px_24px_rgba(0,0,0,0.5)] backdrop-blur-md transition-transform duration-200 group-hover:scale-110 group-active:scale-95">
+              <div
+                className="relative flex h-12 w-12 items-center justify-center rounded-full border border-white/95 text-ink shadow-[0_8px_24px_rgba(0,0,0,0.35),inset_0_2px_3px_rgba(255,255,255,1),inset_0_-1.5px_2px_rgba(0,0,0,0.18)] backdrop-blur-[4px] transition-transform duration-200 group-hover:scale-110 group-active:scale-95"
+                style={{
+                  background:
+                    'radial-gradient(110% 110% at 30% 20%, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.55) 55%, rgba(255, 255, 255, 0.25) 100%)',
+                }}
+              >
                 <svg
-                  className="h-4 w-4 text-white"
+                  className="h-4 w-4 text-[#0A121A]"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -304,8 +310,8 @@ export default function Compare({
                 >
                   <path strokeLinecap="round" strokeLinejoin="round" d="M8 9l-3 3 3 3m8-6l3 3-3 3" />
                 </svg>
-                {/* Micro Percentage Pip */}
-                <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 rounded bg-black/80 px-1.5 py-0.5 font-mono text-[9px] font-semibold tracking-wider text-white/90 shadow whitespace-nowrap">
+                {/* Glass Percentage Pip */}
+                <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 rounded-full border border-white/40 bg-black/70 px-2 py-0.5 font-mono text-[9px] font-semibold tracking-wider text-white shadow backdrop-blur-[4px] whitespace-nowrap">
                   {Math.round(sliderPosition)}%
                 </span>
               </div>
