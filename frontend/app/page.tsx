@@ -165,42 +165,26 @@ export default async function HomePage() {
         <SeoContentSection seo={seo} />
 
         {/* Retouching RAW vs Edited Showcase */}
-        <div className="reveal">
-          <RetouchShowcase />
-        </div>
+        <RetouchShowcase />
 
         {/* Testimonials Section */}
-        <div className="reveal">
-          <TestimonialsSection initialTestimonials={data?.testimonials} />
-        </div>
+        <TestimonialsSection initialTestimonials={data?.testimonials} />
 
-        <div className="reveal">
-          <StatsSection />
-        </div>
+        <StatsSection />
 
         {/* How It Works — Process Timeline */}
-        <div className="reveal">
-          <ProcessTimeline />
-        </div>
+        <ProcessTimeline />
         
-        <div className="reveal">
-          <PricingSection />
-        </div>
+        <PricingSection />
 
         {/* FAQ Section */}
-        <div className="reveal">
-          <FAQSection />
-        </div>
+        <FAQSection />
 
         {/* Booking Form Section */}
-        <div className="reveal">
-          <BookingForm />
-        </div>
+        <BookingForm />
 
         {/* Instagram Feed — photos server se hi mil jaati hain */}
-        <div className="reveal">
-          <InstagramFeed photos={initialPhotos} />
-        </div>
+        <InstagramFeed photos={initialPhotos} />
 
         {/* Footer */}
         <Footer config={config} categories={categories} />

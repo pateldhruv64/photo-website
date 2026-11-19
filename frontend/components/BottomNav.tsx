@@ -20,22 +20,23 @@ const ICON = {
       <polyline points="21 15 16 10 5 21" />
     </>
   ),
+  reviews: (
+    <polygon points="12 2.5 14.9 8.4 21.4 9.3 16.7 13.9 17.8 20.3 12 17.3 6.2 20.3 7.3 13.9 2.6 9.3 9.1 8.4 12 2.5" />
+  ),
   pricing: (
     <>
       <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
       <circle cx="7" cy="7" r="1.3" />
     </>
   ),
-  reviews: (
-    <polygon points="12 2.5 14.9 8.4 21.4 9.3 16.7 13.9 17.8 20.3 12 17.3 6.2 20.3 7.3 13.9 2.6 9.3 9.1 8.4 12 2.5" />
-  ),
 };
 
+// ─── Exact Page Order: Home -> Work -> Reviews -> Pricing -> Chat ───
 const SECTIONS = [
   { key: 'home', label: 'Home', icon: ICON.home, id: null },
   { key: 'gallery', label: 'Work', icon: ICON.gallery, id: 'gallery-section' },
-  { key: 'pricing', label: 'Pricing', icon: ICON.pricing, id: 'pricing-section' },
   { key: 'reviews', label: 'Reviews', icon: ICON.reviews, id: 'testimonials-section' },
+  { key: 'pricing', label: 'Pricing', icon: ICON.pricing, id: 'pricing-section' },
 ] as const;
 
 export default function BottomNav() {
@@ -43,12 +44,12 @@ export default function BottomNav() {
   const [active, setActive] = useState<string>('home');
   const [hoveredKey, setHoveredKey] = useState<string | null>(null);
 
-  // Apple Liquid Glass Sliding Pill state (inside the dock)
+  // Apple Liquid Glass Sliding Capsule Pill state
   const [pillStyle, setPillStyle] = useState<{ left: number; width: number }>({ left: 4, width: 56 });
   const [isDraggingPill, setIsDraggingPill] = useState(false);
   const [dragPillLeft, setDragPillLeft] = useState(0);
 
-  // Water Droplet Physical Deformation state (Volume-Preserving Elastic Shear)
+  // Water Droplet Physical Deformation state (Volume Conservation & Elastic Shear)
   const [waterDeform, setWaterDeform] = useState<{ scaleX: number; scaleY: number; skewX: number }>({
     scaleX: 1,
     scaleY: 1,
@@ -58,10 +59,11 @@ export default function BottomNav() {
 
   const trackRef = useRef<HTMLDivElement>(null);
   const itemRefs = useRef<(HTMLElement | null)[]>([]);
-  const isInteracting = useRef(false);
+  const isPointerDown = useRef(false);
+  const hasMovedEnough = useRef(false);
+  const startX = useRef(0);
   const lastX = useRef(0);
   const lastTime = useRef(0);
-  const didDragRef = useRef(false);
   const wobbleTimer = useRef<NodeJS.Timeout | null>(null);
 
   const config = useSiteConfig();
@@ -84,7 +86,7 @@ export default function BottomNav() {
     }
   }, [active]);
 
-  // Active section scroll spy
+  // Active section scroll spy aligned with Home -> Work -> Reviews -> Pricing
   useEffect(() => {
     if (!isHome) {
       setActive('');
@@ -108,13 +110,13 @@ export default function BottomNav() {
 
     const update = () => {
       frame = 0;
-      if (!offsets.length || isInteracting.current) return;
+      if (!offsets.length || isPointerDown.current) return;
 
       const probe = window.scrollY + window.innerHeight / 2;
       const atBottom =
-        window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4;
+        window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 6;
       if (atBottom) {
-        setActive('reviews');
+        setActive('pricing');
         return;
       }
 
@@ -159,39 +161,58 @@ export default function BottomNav() {
 
   if (pathname?.startsWith('/admin') || pathname?.startsWith('/client')) return null;
 
-  // ─── Real Water Droplet Drag Physics (Volume Conservation & Elastic Shear) ───
+  // ─── Instant, Reliable Click Navigation ───
+  const handleTabClick = (key: string, id: string | null) => {
+    setActive(key);
+    setHoveredKey(null);
+    setIsWobbling(true);
+    if (wobbleTimer.current) clearTimeout(wobbleTimer.current);
+    wobbleTimer.current = setTimeout(() => setIsWobbling(false), 450);
+
+    if (key === 'home') {
+      if (isHome) {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        window.location.href = '/';
+      }
+    } else if (id) {
+      if (isHome) {
+        const el = document.getElementById(id);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth' });
+        }
+      } else {
+        window.location.href = `/#${id}`;
+      }
+    }
+  };
+
+  // ─── Real Apple Fluid Drag & Physics Scrubbing ───
   const onPointerDown = (e: React.PointerEvent) => {
-    if (!trackRef.current) return;
-    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-    isInteracting.current = true;
-    didDragRef.current = false;
+    isPointerDown.current = true;
+    hasMovedEnough.current = false;
+    startX.current = e.clientX;
     lastX.current = e.clientX;
     lastTime.current = performance.now();
-
-    if (wobbleTimer.current) clearTimeout(wobbleTimer.current);
-    setIsWobbling(false);
-
-    const trackRect = trackRef.current.getBoundingClientRect();
-    const fingerX = e.clientX - trackRect.left;
-
-    setIsDraggingPill(true);
-    setDragPillLeft(Math.max(0, Math.min(trackRect.width - pillStyle.width, fingerX - pillStyle.width / 2)));
-    setWaterDeform({ scaleX: 1.05, scaleY: 0.95, skewX: 0 });
   };
 
   const onPointerMove = (e: React.PointerEvent) => {
-    if (!isInteracting.current || !trackRef.current) return;
+    if (!isPointerDown.current || !trackRef.current) return;
+
+    const deltaX = Math.abs(e.clientX - startX.current);
+    if (!hasMovedEnough.current && deltaX > 6) {
+      // Threshold passed: engage drag scrub mode
+      hasMovedEnough.current = true;
+      setIsDraggingPill(true);
+      (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
+    }
+
+    if (!hasMovedEnough.current) return;
 
     const now = performance.now();
     const dt = Math.max(1, now - lastTime.current);
     const dx = e.clientX - lastX.current;
-
-    // Instantaneous horizontal velocity in px/ms
-    const vx = dx / dt;
-
-    if (Math.abs(dx) > 3) {
-      didDragRef.current = true;
-    }
+    const vx = dx / dt; // Instantaneous velocity (px/ms)
 
     lastX.current = e.clientX;
     lastTime.current = now;
@@ -199,21 +220,20 @@ export default function BottomNav() {
     const trackRect = trackRef.current.getBoundingClientRect();
     const fingerX = e.clientX - trackRect.left;
 
-    // Fluid drag clamp
+    // Fluid drag clamp inside dock
     const maxLeft = trackRect.width - pillStyle.width;
     const clampedLeft = Math.max(0, Math.min(maxLeft, fingerX - pillStyle.width / 2));
 
-    // ─── Physical Water Droplet Deformation Equation ───
-    // Elongates horizontally with speed; compresses vertically to conserve fluid volume
-    const speed = Math.min(3.5, Math.abs(vx) * 2.2);
+    // Conservation of Volume Equation: Stretch horizontally, squeeze vertically
+    const speed = Math.min(3.2, Math.abs(vx) * 2.2);
     const scaleX = 1 + speed * 0.12;
-    const scaleY = 1 / Math.sqrt(scaleX); // Exact conservation of volume
-    const skewX = Math.max(-10, Math.min(10, -vx * 8)); // Fluid viscous drag tilt
+    const scaleY = 1 / Math.sqrt(scaleX);
+    const skewX = Math.max(-10, Math.min(10, -vx * 7));
 
     setDragPillLeft(clampedLeft);
     setWaterDeform({ scaleX, scaleY, skewX });
 
-    // Find nearest tab under finger and highlight
+    // Highlight closest tab under scrub
     let closestIndex = 0;
     let minDistance = Infinity;
 
@@ -234,75 +254,45 @@ export default function BottomNav() {
   };
 
   const onPointerUp = (e: React.PointerEvent) => {
-    if (!isInteracting.current || !trackRef.current) return;
-    isInteracting.current = false;
-    setIsDraggingPill(false);
-    setHoveredKey(null);
+    if (!isPointerDown.current) return;
+    isPointerDown.current = false;
 
-    // Trigger organic water droplet wobble settle
-    setIsWobbling(true);
-    setWaterDeform({ scaleX: 1, scaleY: 1, skewX: 0 });
-
-    if (wobbleTimer.current) clearTimeout(wobbleTimer.current);
-    wobbleTimer.current = setTimeout(() => {
-      setIsWobbling(false);
-    }, 450);
-
-    const trackRect = trackRef.current.getBoundingClientRect();
-    const releaseFingerX = e.clientX - trackRect.left;
-
-    // Find closest tab to release point
-    let closestIndex = 0;
-    let minDistance = Infinity;
-
-    itemRefs.current.forEach((el, idx) => {
-      if (!el) return;
-      const itemRect = el.getBoundingClientRect();
-      const itemCenter = itemRect.left - trackRect.left + itemRect.width / 2;
-      const dist = Math.abs(releaseFingerX - itemCenter);
-      if (dist < minDistance) {
-        minDistance = dist;
-        closestIndex = idx;
+    if (hasMovedEnough.current && trackRef.current) {
+      try {
+        (e.currentTarget as HTMLElement).releasePointerCapture?.(e.pointerId);
+      } catch {
+        // ignore
       }
-    });
 
-    const targetSection = SECTIONS[closestIndex];
-    if (targetSection) {
-      setActive(targetSection.key);
-      if (targetSection.key === 'home') {
-        if (isHome) {
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        } else {
-          window.location.href = '/';
+      setIsDraggingPill(false);
+      setHoveredKey(null);
+
+      // Trigger organic liquid settling wobble
+      setIsWobbling(true);
+      setWaterDeform({ scaleX: 1, scaleY: 1, skewX: 0 });
+      if (wobbleTimer.current) clearTimeout(wobbleTimer.current);
+      wobbleTimer.current = setTimeout(() => setIsWobbling(false), 450);
+
+      const trackRect = trackRef.current.getBoundingClientRect();
+      const releaseFingerX = e.clientX - trackRect.left;
+
+      let closestIndex = 0;
+      let minDistance = Infinity;
+
+      itemRefs.current.forEach((el, idx) => {
+        if (!el) return;
+        const itemRect = el.getBoundingClientRect();
+        const itemCenter = itemRect.left - trackRect.left + itemRect.width / 2;
+        const dist = Math.abs(releaseFingerX - itemCenter);
+        if (dist < minDistance) {
+          minDistance = dist;
+          closestIndex = idx;
         }
-      } else if (targetSection.id) {
-        if (isHome) {
-          document.getElementById(targetSection.id)?.scrollIntoView({ behavior: 'smooth' });
-        } else {
-          window.location.href = `/#${targetSection.id}`;
-        }
-      }
-    }
-  };
+      });
 
-  const handleTabClick = (key: string, id: string | null) => {
-    if (didDragRef.current) return;
-    setActive(key);
-    setIsWobbling(true);
-    if (wobbleTimer.current) clearTimeout(wobbleTimer.current);
-    wobbleTimer.current = setTimeout(() => setIsWobbling(false), 450);
-
-    if (key === 'home') {
-      if (isHome) {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      } else {
-        window.location.href = '/';
-      }
-    } else if (id) {
-      if (isHome) {
-        document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
-      } else {
-        window.location.href = `/#${id}`;
+      const target = SECTIONS[closestIndex];
+      if (target) {
+        handleTabClick(target.key, target.id);
       }
     }
   };
@@ -322,24 +312,24 @@ export default function BottomNav() {
         {/* Layer 1: Pure Transparent Optical Glass (Minimal 4px Blur + High Clarity Tint) */}
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-0 rounded-full bg-white/[0.14] backdrop-blur-[4px] backdrop-saturate-[180%] backdrop-contrast-[105%]"
+          className="pointer-events-none absolute inset-0 rounded-full bg-white/[0.18] backdrop-blur-[4px] backdrop-saturate-[180%] backdrop-contrast-[105%]"
           style={{
-            border: '1px solid rgba(255, 255, 255, 0.55)',
+            border: '1px solid rgba(255, 255, 255, 0.65)',
             boxShadow:
-              'inset 0 1.5px 2px 0 rgba(255, 255, 255, 0.85), inset 0 -1px 2px 0 rgba(0, 0, 0, 0.12), 0 8px 32px rgba(10, 20, 30, 0.18)',
+              'inset 0 1.5px 2px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 2px 0 rgba(0, 0, 0, 0.12), 0 8px 32px rgba(10, 20, 30, 0.18)',
           }}
         />
 
-        {/* Layer 2: Interactive Segmented Control Track (Slide & Drag Left/Right Inside) */}
+        {/* Layer 2: Interactive Segmented Control Track */}
         <div
           ref={trackRef}
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
           onPointerCancel={onPointerUp}
-          className="relative z-10 flex items-center gap-1 cursor-pointer touch-none"
+          className="relative z-10 flex items-center gap-1 touch-none"
         >
-          {/* ─── Water Droplet Liquid Knob (Pure Liquid Fluidity & Wobble) ─── */}
+          {/* ─── Apple Liquid Glass Capsule Knob (Exact HIG Capsule Pill Shape) ─── */}
           <div
             aria-hidden="true"
             className={`pointer-events-none absolute top-0.5 bottom-0.5 rounded-full will-change-transform ${
@@ -352,19 +342,20 @@ export default function BottomNav() {
                 ? `scale(${waterDeform.scaleX}, ${waterDeform.scaleY}) skewX(${waterDeform.skewX}deg)`
                 : 'scale(1, 1)',
               background:
-                'radial-gradient(110% 110% at 32% 26%, rgba(255, 255, 255, 0.70) 0%, rgba(255, 255, 255, 0.28) 45%, rgba(255, 255, 255, 0.10) 100%)',
-              border: '1.5px solid rgba(255, 255, 255, 0.85)',
+                'radial-gradient(110% 110% at 30% 20%, rgba(255, 255, 255, 0.92) 0%, rgba(255, 255, 255, 0.45) 50%, rgba(255, 255, 255, 0.20) 100%)',
+              border: '1.5px solid rgba(255, 255, 255, 0.95)',
               boxShadow:
-                'inset 0 2px 4px 0 rgba(255, 255, 255, 0.95), inset 0 -1.5px 2px 0 rgba(0, 0, 0, 0.18), 0 4px 18px rgba(0, 0, 0, 0.22)',
+                'inset 0 2px 3px 0 rgba(255, 255, 255, 1), inset 0 -1.5px 2px 0 rgba(0, 0, 0, 0.16), 0 4px 18px rgba(0, 0, 0, 0.22)',
               backdropFilter: 'blur(2px)',
               WebkitBackdropFilter: 'blur(2px)',
+              borderRadius: '9999px',
               transition: isDraggingPill
                 ? 'none'
-                : 'left 0.4s cubic-bezier(0.16, 1, 0.3, 1), width 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+                : 'left 0.35s cubic-bezier(0.16, 1, 0.3, 1), width 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
             }}
           />
 
-          {/* Nav Item Buttons */}
+          {/* Nav Item Buttons — Exact order: Home, Work, Reviews, Pricing */}
           {SECTIONS.map((item, idx) => {
             const isSelected = currentDisplayKey === item.key;
 
@@ -376,13 +367,13 @@ export default function BottomNav() {
                 }}
                 type="button"
                 onClick={() => handleTabClick(item.key, item.id)}
-                className={`relative flex h-12 min-w-[3.35rem] flex-col items-center justify-center gap-[3px] rounded-full px-3 transition-colors duration-200 active:scale-95 ${
+                className={`relative flex h-12 min-w-[3.35rem] flex-col items-center justify-center gap-[3px] rounded-full px-3 transition-colors duration-200 active:scale-95 outline-none focus:outline-none focus-visible:outline-none ${
                   isSelected
                     ? 'text-ink font-bold drop-shadow-[0_1px_2px_rgba(255,255,255,0.9)]'
                     : 'text-ink-soft/85 hover:text-ink drop-shadow-[0_1px_2px_rgba(255,255,255,0.7)]'
                 }`}
               >
-                <span className="relative z-10">
+                <span className="relative z-10 pointer-events-none">
                   <svg
                     width="19"
                     height="19"
@@ -396,13 +387,13 @@ export default function BottomNav() {
                     {item.icon}
                   </svg>
                 </span>
-                <span className="relative z-10 text-[9px] tracking-[0.06em]">{item.label}</span>
+                <span className="relative z-10 text-[9px] tracking-[0.06em] pointer-events-none">{item.label}</span>
               </button>
             );
           })}
         </div>
 
-        {/* Separator Line (Conforming to Apple Toolbar fixed spacer HIG) */}
+        {/* Separator Line */}
         <div aria-hidden="true" className="relative z-10 h-7 w-px bg-white/40" />
 
         {/* WhatsApp CTA Pill */}
@@ -420,7 +411,7 @@ export default function BottomNav() {
         )}
       </div>
 
-      {/* Inline styles for water droplet wobble spring oscillation */}
+      {/* ── Water Droplet Wobble Keyframe ── */}
       <style jsx>{`
         @keyframes waterWobble {
           0% {
@@ -440,7 +431,7 @@ export default function BottomNav() {
           }
         }
         .animate-water-wobble {
-          animation: waterWobble 0.42s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+          animation: waterWobble 0.44s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
         }
       `}</style>
     </nav>

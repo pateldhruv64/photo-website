@@ -45,7 +45,7 @@ export default function FAQSection() {
             return (
               <div
                 key={item.question}
-                className={`reveal overflow-hidden rounded-2xl border transition-colors duration-300 ${
+                className={`overflow-hidden rounded-2xl border transition-colors duration-300 ${
                   isOpen
                     ? 'border-accent/40 bg-canvas shadow-soft'
                     : 'border-line bg-canvas/60 hover:border-line-strong'
