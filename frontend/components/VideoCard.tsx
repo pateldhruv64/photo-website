@@ -42,7 +42,7 @@ export default function VideoCard({ video, onClick }: VideoCardProps) {
       type="button"
       onClick={() => onClick(video)}
       aria-label={`Play ${video.title || (isReel ? 'reel' : 'video')}`}
-      className="group relative block w-full overflow-hidden rounded-xl bg-hover-surface shadow-soft transition-shadow duration-500 hover:shadow-lift focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-deep focus-visible:ring-offset-2"
+      className="group relative block w-full overflow-hidden rounded-2xl bg-hover-surface shadow-[0_4px_20px_-4px_rgba(20,36,51,0.12)] transition-all duration-500 ease-editorial hover:shadow-[0_20px_48px_-12px_rgba(20,36,51,0.26)] active:scale-[0.985] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-deep focus-visible:ring-offset-2"
       style={{ aspectRatio: '16/9' }}
     >
       {thumb ? (
@@ -90,9 +90,12 @@ export default function VideoCard({ video, onClick }: VideoCardProps) {
         </div>
       )}
 
+      {/* Subtle Specular Inner Rim */}
+      <span aria-hidden="true" className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-inset ring-white/20 transition-colors group-hover:ring-white/40" />
+
       {/* Play button */}
       <span className="absolute inset-0 flex items-center justify-center bg-ink/15 transition-colors duration-500 group-hover:bg-ink/35">
-        <span className="flex h-14 w-14 items-center justify-center rounded-full bg-white/92 shadow-lift backdrop-blur-sm transition-transform duration-500 ease-editorial group-hover:scale-110">
+        <span className="flex h-14 w-14 items-center justify-center rounded-full bg-white/92 shadow-2xl backdrop-blur-md border border-white/50 transition-transform duration-500 ease-editorial group-hover:scale-110 active:scale-95">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" className="ml-0.5 text-ink">
             <polygon points="5 3 19 12 5 21 5 3" />
           </svg>
