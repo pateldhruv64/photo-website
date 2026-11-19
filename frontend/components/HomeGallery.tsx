@@ -158,39 +158,41 @@ export default function HomeGallery({
         </p>
       </div>
 
-      {/* ── Category tabs ── */}
-      <div
-        role="tablist"
-        aria-label="Filter photos by collection"
-        className="no-scrollbar -mx-5 mb-9 flex items-center gap-1.5 overflow-x-auto px-5 pb-1 sm:mx-0 sm:px-0 md:mb-11 md:justify-center"
-      >
-        {tabs.map((tab) => {
-          const isActive = activeSlug === tab.slug;
-          return (
-            <button
-              key={tab.slug}
-              role="tab"
-              aria-selected={isActive}
-              onClick={() => selectCategory(tab.slug)}
-              className={`flex flex-shrink-0 items-center gap-2 rounded-full border px-5 py-2.5 font-body text-[11px] uppercase tracking-[0.16em] transition-colors duration-300 ${
-                isActive
-                  ? 'border-ink bg-ink text-canvas'
-                  : 'border-line bg-canvas/70 text-ink-muted hover:border-line-strong hover:text-ink'
-              }`}
-            >
-              <span>{tab.name}</span>
-              {tab.count > 0 && (
-                <span
-                  className={`tabular text-[10px] font-medium ${
-                    isActive ? 'text-canvas/55' : 'text-ink-muted/60'
-                  }`}
-                >
-                  {tab.count}
-                </span>
-              )}
-            </button>
-          );
-        })}
+      {/* ── Category tabs (Apple HIG Segmented Control) ── */}
+      <div className="no-scrollbar -mx-5 mb-9 flex items-center overflow-x-auto px-5 pb-1 sm:mx-0 sm:px-0 md:mb-11 md:justify-center">
+        <div
+          role="tablist"
+          aria-label="Filter photos by collection"
+          className="inline-flex items-center gap-1 rounded-full border border-line/80 bg-canvas/80 p-1.5 shadow-[inset_0_1px_2px_rgba(20,36,51,0.05),0_2px_12px_rgba(20,36,51,0.04)] backdrop-blur-xl"
+        >
+          {tabs.map((tab) => {
+            const isActive = activeSlug === tab.slug;
+            return (
+              <button
+                key={tab.slug}
+                role="tab"
+                aria-selected={isActive}
+                onClick={() => selectCategory(tab.slug)}
+                className={`relative flex flex-shrink-0 items-center gap-2 rounded-full px-4 py-2 font-body text-[11px] uppercase tracking-[0.16em] transition-all duration-300 ease-editorial active:scale-[0.96] ${
+                  isActive
+                    ? 'bg-ink text-canvas shadow-[0_2px_10px_rgba(20,36,51,0.22),inset_0_1px_0_rgba(255,255,255,0.18)] font-semibold'
+                    : 'text-ink-muted hover:text-ink hover:bg-black/[0.04]'
+                }`}
+              >
+                <span>{tab.name}</span>
+                {tab.count > 0 && (
+                  <span
+                    className={`tabular rounded-full px-1.5 py-0.5 text-[10px] font-medium transition-colors ${
+                      isActive ? 'bg-white/20 text-canvas' : 'bg-line/70 text-ink-muted'
+                    }`}
+                  >
+                    {tab.count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* ── Grid ── */}

@@ -159,16 +159,16 @@ export default function Lightbox({ photos, currentIndex, onClose, onNavigate }: 
       <div
         className="relative w-full h-full flex items-center justify-center p-4 md:p-8"
       >
-        {/* Close Button */}
+        {/* Close Button — Apple HIG Frosted Glass Pill */}
         <button
           onClick={(e) => {
             e.stopPropagation();
             onClose();
           }}
-          className="absolute top-4 right-4 z-50 w-10 h-10 flex items-center justify-center text-white/80 hover:text-white transition-colors"
+          className="absolute top-4 right-4 z-50 h-11 w-11 rounded-full bg-black/40 hover:bg-black/60 active:scale-90 text-white/80 hover:text-white backdrop-blur-2xl border border-white/20 flex items-center justify-center shadow-2xl transition-all duration-300"
           aria-label="Close lightbox"
         >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <line x1="18" y1="6" x2="6" y2="18" />
             <line x1="6" y1="6" x2="18" y2="18" />
           </svg>
@@ -207,37 +207,50 @@ export default function Lightbox({ photos, currentIndex, onClose, onNavigate }: 
           </button>
         </div>
 
-        {/* Prev Button */}
+        {/* Prev Button — Apple HIG Glass Pill */}
         {currentIndex > 0 && (
           <button
             onClick={(e) => {
               e.stopPropagation();
               goPrev();
             }}
-            className="absolute left-2 md:left-6 top-1/2 -translate-y-1/2 z-50 w-12 h-12 flex items-center justify-center text-white/60 hover:text-white transition-colors"
+            className="absolute left-2.5 md:left-6 top-1/2 -translate-y-1/2 z-50 h-12 w-12 rounded-full bg-black/40 hover:bg-black/60 active:scale-90 text-white/80 hover:text-white backdrop-blur-2xl border border-white/20 flex items-center justify-center shadow-2xl transition-all duration-300"
             aria-label="Previous photo"
           >
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="15 18 9 12 15 6" />
             </svg>
           </button>
         )}
 
-        {/* Next Button */}
+        {/* Next Button — Apple HIG Glass Pill */}
         {currentIndex < photos.length - 1 && (
           <button
             onClick={(e) => {
               e.stopPropagation();
               goNext();
             }}
-            className="absolute right-2 md:right-6 top-1/2 -translate-y-1/2 z-50 w-12 h-12 flex items-center justify-center text-white/60 hover:text-white transition-colors"
+            className="absolute right-2.5 md:right-6 top-1/2 -translate-y-1/2 z-50 h-12 w-12 rounded-full bg-black/40 hover:bg-black/60 active:scale-90 text-white/80 hover:text-white backdrop-blur-2xl border border-white/20 flex items-center justify-center shadow-2xl transition-all duration-300"
             aria-label="Next photo"
           >
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="9 18 15 12 9 6" />
             </svg>
           </button>
         )}
+
+        {/* Bottom Apple HIG Telemetry Capsule */}
+        <div className="pointer-events-none absolute bottom-5 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2.5 rounded-full bg-black/50 px-4 py-1.5 text-white/90 backdrop-blur-2xl border border-white/15 shadow-2xl">
+          <span className="font-mono text-[11px] tabular text-white/70">
+            {currentIndex + 1} / {photos.length}
+          </span>
+          {photo?.title && <span className="h-3 w-px bg-white/20" />}
+          {photo?.title && (
+            <span className="font-display italic text-xs truncate max-w-[180px] sm:max-w-xs text-white/90">
+              {photo.title}
+            </span>
+          )}
+        </div>
 
         {/* Image — swipe-to-dismiss ke dauraan yahi element chalta hai */}
         <div

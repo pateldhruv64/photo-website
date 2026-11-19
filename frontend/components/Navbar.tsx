@@ -127,9 +127,9 @@ export default function Navbar({ config: initialConfig, categories: initialCateg
     <>
       {/* ═══ Desktop / shared header ═══ */}
       <header
-        className={`fixed inset-x-0 top-0 z-50 transition-[background-color,backdrop-filter,border-color,padding] duration-500 ease-editorial ${
+        className={`fixed inset-x-0 top-0 z-50 transition-[background-color,backdrop-filter,border-color,padding,box-shadow] duration-500 ease-editorial ${
           solid
-            ? 'border-b border-line/70 bg-background/85 py-3 backdrop-blur-xl'
+            ? 'border-b border-line/80 bg-background/80 py-3 backdrop-blur-2xl shadow-[0_4px_24px_-4px_rgba(20,36,51,0.06)]'
             : 'border-b border-transparent bg-transparent py-5'
         }`}
       >
@@ -236,10 +236,10 @@ export default function Navbar({ config: initialConfig, categories: initialCateg
             <Link
               href="/#booking-section"
               onClick={scrollToBooking}
-              className={`group relative overflow-hidden rounded-full px-6 py-2.5 font-body text-[11px] uppercase tracking-[0.16em] transition-all duration-500 ease-editorial hover:-translate-y-0.5 ${
+              className={`group relative overflow-hidden rounded-full px-6 py-2.5 font-body text-[11px] uppercase tracking-[0.16em] transition-all duration-500 ease-editorial hover:-translate-y-0.5 active:scale-[0.96] ${
                 solid
-                  ? 'bg-ink text-canvas'
-                  : 'border border-white/40 bg-white/10 text-white backdrop-blur-md hover:bg-white/20'
+                  ? 'bg-ink text-canvas shadow-[0_2px_12px_rgba(20,36,51,0.22),inset_0_1px_0_rgba(255,255,255,0.18)]'
+                  : 'border border-white/40 bg-white/10 text-white backdrop-blur-md hover:bg-white/20 shadow-sm'
               }`}
             >
               <span className="relative z-10">Book Session</span>
