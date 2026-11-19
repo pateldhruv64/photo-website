@@ -85,12 +85,19 @@ Date: ${formData.eventDate}${formData.message ? `\nMessage: ${formData.message}`
 
   if (submitted) {
     return (
-      <section className="py-16 md:py-24 bg-surface" id="booking-section">
+      <section className="py-10 md:py-14 bg-surface" id="booking-section">
         <div className="max-w-xl mx-auto px-4 text-center">
-          <div
-            className="w-20 h-20 bg-[#25D366] rounded-full flex items-center justify-center mx-auto mb-6 shadow-2xl animate-scale-in"
-          >
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <div className="w-20 h-20 bg-[#25D366] rounded-full flex items-center justify-center mx-auto mb-6 shadow-2xl animate-scale-in">
+            <svg
+              width="40"
+              height="40"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="white"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <polyline points="20 6 9 17 4 12" />
             </svg>
           </div>
@@ -98,7 +105,8 @@ Date: ${formData.eventDate}${formData.message ? `\nMessage: ${formData.message}`
             Message Sent!
           </h3>
           <p className="font-body text-base text-text-muted">
-            Your booking request has been sent via WhatsApp. We&apos;ll connect with you right away!
+            Your booking request has been sent via WhatsApp. We&apos;ll connect
+            with you right away!
           </p>
         </div>
       </section>
@@ -106,36 +114,56 @@ Date: ${formData.eventDate}${formData.message ? `\nMessage: ${formData.message}`
   }
 
   return (
-    <section className="py-14 md:py-24 bg-surface relative overflow-hidden" id="booking-section">
+    <section
+      className="py-10 md:py-14 bg-surface relative overflow-hidden"
+      id="booking-section"
+    >
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        
         {/* Section Header */}
-        <div className="text-center mb-14 flex flex-col items-center">
-          <p className="eyebrow justify-center mb-2">
-            Get in Touch
-          </p>
+        <div className="text-center mb-8 flex flex-col items-center">
+          <p className="eyebrow justify-center mb-2">Get in Touch</p>
           <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-light text-text-primary">
             Book a Session
           </h2>
           <p className="mt-3 font-body text-sm md:text-base text-text-muted max-w-md">
-            Fill out your event details below and we&apos;ll connect directly via WhatsApp
+            Fill out your event details below and we&apos;ll connect directly
+            via WhatsApp
           </p>
-          <div className="divider-line mx-auto mt-6 max-w-[80px]" />
+          <div className="divider-line mx-auto mt-4 max-w-[80px]" />
         </div>
 
         {/* 2-Column Layout: Left Studio Info Card + Right Booking Form */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           {/* Left Column: Direct Info Card */}
-          <div className="lg:col-span-5 relative rounded-3xl bg-[#142433] text-white p-8 sm:p-10 shadow-2xl border border-white/10 overflow-hidden flex flex-col justify-between min-h-[480px]">
+          <div className="lg:col-span-5 relative rounded-3xl bg-[#142433] text-white p-6 sm:p-8 shadow-2xl border border-white/10 overflow-hidden flex flex-col justify-between">
             {/* Inspira Border Beam */}
-            <BorderBeam size={200} duration={7} colorFrom="#769FCD" colorTo="#FFFFFF" />
+            <BorderBeam
+              size={200}
+              duration={7}
+              colorFrom="#769FCD"
+              colorTo="#FFFFFF"
+            />
 
             <div>
               <div className="w-12 h-12 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center mb-6">
-                <svg className="w-6 h-6 text-accent-soft" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                <svg
+                  className="w-6 h-6 text-accent-soft"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1.5}
+                    d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1.5}
+                    d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
                 </svg>
               </div>
 
@@ -143,7 +171,9 @@ Date: ${formData.eventDate}${formData.message ? `\nMessage: ${formData.message}`
                 Let&apos;s Create Something Beautiful
               </h3>
               <p className="font-body text-sm text-white/70 leading-relaxed mb-8">
-                Have questions about availability, pricing, or custom packages? Send us a quick note and let&apos;s capture your precious moments.
+                Have questions about availability, pricing, or custom packages?
+                Send us a quick note and let&apos;s capture your precious
+                moments.
               </p>
 
               {/* Badges */}
@@ -153,8 +183,18 @@ Date: ${formData.eventDate}${formData.message ? `\nMessage: ${formData.message}`
                   <span>Available for Bookings</span>
                 </div>
                 <div className="flex items-center gap-3 text-sm text-white/80">
-                  <svg className="w-4 h-4 text-accent-soft" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  <svg
+                    className="w-4 h-4 text-accent-soft"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
                   </svg>
                   <span>Quick response on WhatsApp</span>
                 </div>
@@ -162,7 +202,7 @@ Date: ${formData.eventDate}${formData.message ? `\nMessage: ${formData.message}`
             </div>
 
             {/* Direct WhatsApp Callout */}
-            <div className="mt-10 pt-6 border-t border-white/10">
+            <div className="mt-8 pt-5 border-t border-white/10">
               <p className="font-body text-xs uppercase tracking-widest text-white/50 mb-2">
                 Direct Contact
               </p>
@@ -173,17 +213,26 @@ Date: ${formData.eventDate}${formData.message ? `\nMessage: ${formData.message}`
                 className="font-display text-xl text-accent-soft hover:underline flex items-center gap-2"
               >
                 <span>+{cleanNumber}</span>
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M14 5l7 7m0 0l-7 7m7-7H3"
+                  />
                 </svg>
               </a>
             </div>
           </div>
 
           {/* Right Column: Form */}
-          <div className="lg:col-span-7 bg-white/80 backdrop-blur-md rounded-3xl p-6 sm:p-10 border border-border shadow-xl">
-            <form onSubmit={handleSubmit} className="space-y-6">
-              
+          <div className="lg:col-span-7 bg-white/80 backdrop-blur-md rounded-3xl p-5 sm:p-8 border border-border shadow-xl">
+            <form onSubmit={handleSubmit} className="space-y-5">
               {/* Event Type Interactive Pills */}
               <div>
                 <label className="block font-body text-xs tracking-wider uppercase text-text-muted font-semibold mb-3">
@@ -208,13 +257,20 @@ Date: ${formData.eventDate}${formData.message ? `\nMessage: ${formData.message}`
                     );
                   })}
                 </div>
-                {errors.eventType && <p className="mt-1.5 font-body text-xs text-red-500">{errors.eventType}</p>}
+                {errors.eventType && (
+                  <p className="mt-1.5 font-body text-xs text-red-500">
+                    {errors.eventType}
+                  </p>
+                )}
               </div>
 
               {/* Full Name & Phone in 2-Cols */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div>
-                  <label htmlFor="booking-name" className="block font-body text-xs tracking-wider uppercase text-text-muted font-semibold mb-2">
+                  <label
+                    htmlFor="booking-name"
+                    className="block font-body text-xs tracking-wider uppercase text-text-muted font-semibold mb-2"
+                  >
                     2. Full Name *
                   </label>
                   <input
@@ -227,11 +283,18 @@ Date: ${formData.eventDate}${formData.message ? `\nMessage: ${formData.message}`
                       errors.name ? 'border-red-400' : 'border-border'
                     }`}
                   />
-                  {errors.name && <p className="mt-1.5 font-body text-xs text-red-500">{errors.name}</p>}
+                  {errors.name && (
+                    <p className="mt-1.5 font-body text-xs text-red-500">
+                      {errors.name}
+                    </p>
+                  )}
                 </div>
 
                 <div>
-                  <label htmlFor="booking-phone" className="block font-body text-xs tracking-wider uppercase text-text-muted font-semibold mb-2">
+                  <label
+                    htmlFor="booking-phone"
+                    className="block font-body text-xs tracking-wider uppercase text-text-muted font-semibold mb-2"
+                  >
                     3. Phone Number *
                   </label>
                   <input
@@ -244,13 +307,20 @@ Date: ${formData.eventDate}${formData.message ? `\nMessage: ${formData.message}`
                       errors.phone ? 'border-red-400' : 'border-border'
                     }`}
                   />
-                  {errors.phone && <p className="mt-1.5 font-body text-xs text-red-500">{errors.phone}</p>}
+                  {errors.phone && (
+                    <p className="mt-1.5 font-body text-xs text-red-500">
+                      {errors.phone}
+                    </p>
+                  )}
                 </div>
               </div>
 
               {/* Event Date */}
               <div>
-                <label htmlFor="booking-date" className="block font-body text-xs tracking-wider uppercase text-text-muted font-semibold mb-2">
+                <label
+                  htmlFor="booking-date"
+                  className="block font-body text-xs tracking-wider uppercase text-text-muted font-semibold mb-2"
+                >
                   4. Event Date *
                 </label>
                 <input
@@ -262,11 +332,25 @@ Date: ${formData.eventDate}${formData.message ? `\nMessage: ${formData.message}`
                     errors.eventDate ? 'border-red-400' : 'border-border'
                   }`}
                 />
-                {errors.eventDate && <p className="mt-1.5 font-body text-xs text-red-500">{errors.eventDate}</p>}
+                {errors.eventDate && (
+                  <p className="mt-1.5 font-body text-xs text-red-500">
+                    {errors.eventDate}
+                  </p>
+                )}
                 {!errors.eventDate && (
                   <p className="mt-1.5 font-body text-xs text-text-muted/60 flex items-center gap-1.5">
-                    <svg className="w-3.5 h-3.5 text-accent-deep" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    <svg
+                      className="w-3.5 h-3.5 text-accent-deep"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
                     </svg>
                     Weekends fill fast — book early for your preferred date!
                   </p>
@@ -275,8 +359,14 @@ Date: ${formData.eventDate}${formData.message ? `\nMessage: ${formData.message}`
 
               {/* Message */}
               <div>
-                <label htmlFor="booking-message" className="block font-body text-xs tracking-wider uppercase text-text-muted font-semibold mb-2">
-                  5. Additional Details <span className="font-normal text-text-muted/70">(Optional)</span>
+                <label
+                  htmlFor="booking-message"
+                  className="block font-body text-xs tracking-wider uppercase text-text-muted font-semibold mb-2"
+                >
+                  5. Additional Details{' '}
+                  <span className="font-normal text-text-muted/70">
+                    (Optional)
+                  </span>
                 </label>
                 <textarea
                   id="booking-message"
@@ -293,8 +383,13 @@ Date: ${formData.eventDate}${formData.message ? `\nMessage: ${formData.message}`
                 type="submit"
                 className="w-full py-4 bg-[#142433] text-white font-body text-sm font-medium rounded-full shadow-xl hover:bg-[#1E3446]"
               >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                >
+                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" />
                 </svg>
                 <span>Send via WhatsApp</span>
               </ShimmerButton>
