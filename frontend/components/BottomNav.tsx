@@ -9,7 +9,7 @@ import WhatsAppIcon from '@/components/ui/WhatsAppIcon';
 
 /**
  * ─────────────────────────────────────────────────────────────────────
- *  LIQUID GLASS BOTTOM NAV
+ *  LIQUID GLASS BOTTOM NAV  (v2)
  * ─────────────────────────────────────────────────────────────────────
  *
  *  Built from what Apple says in "Meet Liquid Glass" (WWDC25 session 219):
@@ -18,42 +18,64 @@ import WhatsAppIcon from '@/components/ui/WhatsAppIcon';
  *  2. LENSING: the glass bends the light behind it. Strong at the rim, clear in
  *     the middle. (Real refraction on Chromium browsers. Safari/Firefox get a
  *     frosted-glass fallback, because they cannot refract with CSS.)
- *  3. Rest state is quiet: the selected tab is only a soft fill. When you touch
- *     it, it "lifts" into a glass lens, grows, and glows from under the finger.
+ *  3. Rest state is quiet: the selected tab is only a soft dark pill. When you touch
+ *     it, it "lifts" into a glass lens and grows.
  *  4. Gel-like motion: the lens is moved by a spring. It stretches with speed
  *     (volume stays the same), overshoots a little and settles.
  *  5. Highlights: a bright rim that turns with the movement.
- *  6. Adaptive: the dock flips between light glass and dark glass depending on
- *     what is behind it, and the icons flip with it.
- *  7. No glass on glass: only the lens gets the glass effect, the WhatsApp
- *     button is a plain tinted fill.
- *  8. Accessibility: Reduce Motion removes stretch and bounce.
- *     Reduce Transparency makes the dock frostier and turns refraction off.
+ *  6. Adaptive: the dock flips between light glass and dark glass.
+ *  7. No glass on glass: only the lens gets the glass effect.
+ *  8. Accessibility: Reduce Motion / Reduce Transparency are respected.
+ *
+ *  WHAT CHANGED IN v2 (compared with the real iOS 26 screenshots):
+ *  - The lens now MAGNIFIES the icons + labels under it on EVERY browser
+ *    (iPhone Safari too). We draw a second, bigger, white copy of the tab row
+ *    inside the lens. The normal icons get a "hole" (clip-path) under the lens,
+ *    so you never see two icons on top of each other.
+ *  - The glass itself is clear now. The old white wash / white glow is gone.
+ *  - Refraction is smoother: wider bezel, smaller bend, so the rim does not
+ *    smear the icons into rainbow dots any more.
+ *  - Soft rainbow edge also works without SVG filters (fake dispersion).
  */
 
 // ─── TWEAKABLE CONSTANTS ──────────────────────────────────────────
 const TAB_W = 58; // width of one tab (px)
 const TAB_H = 50; // height of one tab (px)
-const KNOB_W = 54; // lens width (px)
-const KNOB_H = 46; // lens height (px)
+const KNOB_W = 66; // lens width at rest (px). Real iOS pill is clearly wider than one tab
+const KNOB_H = 52; // lens height at rest (px). Real iOS: almost the full height of the bar
+const KNOB_TOP = (TAB_H - KNOB_H) / 2; // lens top inside the track (px)
 
 const TONE_MODE: 'auto' | 'light' | 'dark' = 'auto'; // force a look, or let it adapt
 
 // Physics (spring = stiffness k, damping c). Lower c = more bounce.
 const SPRING = { k: 330, c: 27 }; // moving between tabs
-const DRAG_SPRING = { k: 900, c: 52 }; // following the finger
-const LIFT_SCALE = 0.15; // how much the lens grows when touched
+const DRAG_SPRING = { k: 760, c: 46 }; // following the finger (a little gel lag)
+// Real iOS 26: on touch the lens pops wider and taller than the resting pill, so it
+// sticks out above and below the bar.
+const LIFT_X = 0.3; // how much wider the lens gets when touched
+const LIFT_Y = 0.36; // how much taller the lens gets when touched
 const STRETCH_SPEED = 3200; // px/s of speed that gives the maximum stretch
-const MAX_STRETCH = 0.32; // max horizontal stretch (0.32 = 32%)
+const MAX_STRETCH = 0.22; // max horizontal stretch (0.22 = 22%)
 const MAX_SKEW = 7; // max lean in degrees while moving
 const RUBBER = 0.3; // resistance when dragging past the ends
 
+// Widening while held / dragged
+const DRAG_WIDEN = 0.32; // EXTRA width once you drag (on top of LIFT_X). Real iOS: lens turns into a wide capsule
+const WIDEN_ONLY_ON_DRAG = true; // true = extra width only while dragging
+const WIDEN_SPRING = { k: 380, c: 22 }; // gel feel for the widening. Lower c = more bounce
+const EDGE_ROOM = 10; // px the lens may stick out past the dock's first/last tab
+
 // Refraction (Chromium only)
 const REFRACTION = true; // set false to use the frosted look everywhere
-const DOCK_BEZEL = 16; // px of the dock rim that bends light
-const DOCK_BEND = 14; // how many px the rim shifts the picture
-const KNOB_BEZEL = 14;
-const KNOB_BEND = 22;
+const DOCK_BEZEL = 22; // px of the dock rim that bends light
+const DOCK_BEND = 18; // how many px the rim shifts the picture
+const KNOB_BEZEL = 20; // thick glass edge of the lens
+const KNOB_BEND = 12; // max px the lens edge shifts the picture (keep it below the bezel)
+const KNOB_BG_MAGNIFY = 1.1; // page behind the lens gets magnified a little (Chromium only)
+const KNOB_CA = 0.22; // rainbow edge (chromatic aberration). 0 = off
+
+// Magnified copy of icons + labels inside the lens (ALL browsers, incl. iPhone Safari)
+const KNOB_MAGNIFY = 1.16; // 1 = off. Real iOS is about 1.15 to 1.2
 
 // ─── ICONS ────────────────────────────────────────────────────────
 const ICON = {
@@ -147,7 +169,13 @@ function engineCanRefract() {
  * Inside the rim the picture is pulled toward the middle, strongest at the very
  * edge and fading to nothing. That is what makes a glass edge look thick.
  */
-function makeLensMap(w: number, h: number, bezel: number): string {
+function makeLensMap(
+  w: number,
+  h: number,
+  bezel: number,
+  bend: number,
+  magnify = 1,
+): string {
   const res = 2;
   const W = Math.max(2, Math.round(w * res));
   const H = Math.max(2, Math.round(h * res));
@@ -162,6 +190,9 @@ function makeLensMap(w: number, h: number, bezel: number): string {
   const hy = H / 2;
   const r = Math.min(hx, hy);
   const b = bezel * res;
+  // Convex-lens magnification: every pixel samples from a point a bit closer to the
+  // centre (distance / magnify). `lin` converts that into map units.
+  const lin = magnify > 1 ? (1 - 1 / magnify) / bend : 0;
 
   for (let y = 0; y < H; y++) {
     for (let x = 0; x < W; x++) {
@@ -193,11 +224,15 @@ function makeLensMap(w: number, h: number, bezel: number): string {
         }
         nx = -gx; // pointing inward
         ny = -gy;
-        m = Math.pow(1 - depth / b, 2.2);
+        // smooth convex falloff: strong at the very edge, gone at the inner bezel line
+        const t = depth / b;
+        m = Math.pow(1 - t, 2.4);
       }
       const i = (y * W + x) * 4;
-      d[i] = 128 + 127 * m * nx;
-      d[i + 1] = 128 + 127 * m * ny;
+      const vx = clamp(m * nx - (px / res) * lin, -1, 1);
+      const vy = clamp(m * ny - (py / res) * lin, -1, 1);
+      d[i] = 128 + 127 * vx;
+      d[i + 1] = 128 + 127 * vy;
       d[i + 2] = 128;
       d[i + 3] = 255;
     }
@@ -249,14 +284,14 @@ const CSS = `
   --lg-fg:#142433;--lg-fg-soft:rgba(20,36,51,.6);
   --lg-tint:rgba(255,255,255,.30);--lg-tint-solid:rgba(247,249,252,.94);
   --lg-edge:rgba(255,255,255,.98);--lg-edge-soft:rgba(255,255,255,.18);
-  --lg-outline:rgba(20,36,51,.10);--lg-knob:rgba(20,36,51,.09);--lg-lens:rgba(255,255,255,.16);
+  --lg-outline:rgba(20,36,51,.10);--lg-knob:rgba(20,36,51,.09);--lg-lens:rgba(255,255,255,.10);
   --lg-shadow:0 12px 32px -8px rgba(15,25,35,.30),0 2px 8px rgba(15,25,35,.10);
 }
 .lg-dock[data-tone="dark"]{
   --lg-fg:#ffffff;--lg-fg-soft:rgba(255,255,255,.74);
-  --lg-tint:rgba(14,20,28,.28);--lg-tint-solid:rgba(22,28,36,.94);
+  --lg-tint:rgba(84,92,104,.40);--lg-tint-solid:rgba(22,28,36,.94);
   --lg-edge:rgba(255,255,255,.80);--lg-edge-soft:rgba(255,255,255,.07);
-  --lg-outline:rgba(0,0,0,.30);--lg-knob:rgba(255,255,255,.17);--lg-lens:rgba(255,255,255,.10);
+  --lg-outline:rgba(0,0,0,.30);--lg-knob:rgba(0,0,0,.38);--lg-lens:rgba(255,255,255,.05);
   --lg-shadow:0 14px 34px -8px rgba(0,0,0,.50),0 2px 8px rgba(0,0,0,.25);
 }
 .lg-dock{box-shadow:var(--lg-shadow);transition:box-shadow .35s ease}
@@ -266,19 +301,36 @@ const CSS = `
 .lg-sheen{position:absolute;inset:0;border-radius:inherit;
   background:linear-gradient(180deg,rgba(255,255,255,.26) 0%,rgba(255,255,255,0) 46%,rgba(255,255,255,.07) 100%)}
 .lg-dockglow{position:absolute;inset:0;border-radius:inherit;opacity:var(--lg-glow);
-  background:radial-gradient(90px 60px at var(--lg-dx) 50%,rgba(255,255,255,.42),rgba(255,255,255,0) 70%)}
+  background:radial-gradient(90px 60px at var(--lg-dx) 50%,rgba(255,255,255,.34),rgba(255,255,255,0) 70%)}
 .lg-rim{position:absolute;inset:0;border-radius:inherit;padding:1.3px;pointer-events:none;
   background:conic-gradient(from var(--lg-a),var(--lg-edge) 0deg,var(--lg-edge-soft) 70deg,var(--lg-edge-soft) 160deg,var(--lg-edge) 180deg,var(--lg-edge-soft) 250deg,var(--lg-edge-soft) 340deg,var(--lg-edge) 360deg);
   -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
   -webkit-mask-composite:xor;
   mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
   mask-composite:exclude}
-.lg-knob{position:absolute;top:${(TAB_H - KNOB_H) / 2}px;left:0;width:${KNOB_W}px;height:${KNOB_H}px;
+.lg-knob{position:absolute;top:${KNOB_TOP}px;left:0;width:${KNOB_W}px;height:${KNOB_H}px;
   border-radius:9999px;pointer-events:none;will-change:transform}
+/* the top copy holds text, so no will-change (keeps the magnified labels sharp) */
+.lg-knob-top{will-change:auto}
 .lg-knob-rest{position:absolute;inset:0;border-radius:inherit;background-color:var(--lg-knob);transition:background-color .35s ease}
+/* clear glass: no white wash, only a soft top light and a dark inner edge */
 .lg-knob-glass{position:absolute;inset:0;border-radius:inherit;opacity:0;background-color:var(--lg-lens);
-  box-shadow:inset 0 1.5px 2px rgba(255,255,255,.9),inset 0 -1.5px 2px rgba(0,0,0,.14),0 8px 22px rgba(10,20,30,.24)}
+  box-shadow:inset 0 1.5px 2px rgba(255,255,255,.55),inset 0 -1.5px 2px rgba(0,0,0,.16),0 0 0 .75px var(--lg-outline),0 10px 26px rgba(10,20,30,.30)}
 .lg-knob-glow{position:absolute;inset:0;border-radius:inherit;opacity:0;pointer-events:none}
+/* magnified copy of the tabs, only visible inside the lens */
+.lg-lens-clip{position:absolute;inset:0;border-radius:inherit;overflow:hidden;isolation:isolate;transform:translateZ(0)}
+.lg-counter{position:absolute;inset:0}
+.lg-clone-row{position:absolute;left:0;top:0;width:${TRACK_W}px;height:${TAB_H}px;display:flex}
+.lg-clone-tab{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--lg-fg)}
+/* soft rainbow rim + inner shade. Works in every browser, Chromium adds real dispersion on top */
+.lg-lens-edge{position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  box-shadow:
+    inset 0 0 0 .75px var(--lg-outline),
+    inset 0 0 9px rgba(0,0,0,.16),
+    inset 2.5px 0 3px -1px rgba(255,80,130,.26),
+    inset -2.5px 0 3px -1px rgba(70,170,255,.26),
+    inset 0 2.5px 3px -1px rgba(255,225,100,.20),
+    inset 0 -2.5px 3px -1px rgba(120,255,210,.18)}
 .lg-fg{color:var(--lg-fg-soft);transition:color .25s ease}
 .lg-fg[aria-current="true"]{color:var(--lg-fg)}
 .lg-btn:focus-visible{outline:2px solid var(--lg-fg);outline-offset:-3px}
@@ -308,10 +360,14 @@ export default function BottomNav() {
   const navRef = useRef<HTMLElement>(null);
   const dockRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
-  const knobRef = useRef<HTMLDivElement>(null);
+  const rowRef = useRef<HTMLDivElement>(null); // the real tab buttons
+  const knobRef = useRef<HTMLDivElement>(null); // lens base: pill + glass (below icons)
   const restRef = useRef<HTMLDivElement>(null);
   const glassRef = useRef<HTMLDivElement>(null);
   const glowRef = useRef<HTMLDivElement>(null);
+  const topRef = useRef<HTMLDivElement>(null); // lens top: magnified icons + rim (above icons)
+  const counterRef = useRef<HTMLDivElement>(null);
+  const cloneRowRef = useRef<HTMLDivElement>(null);
 
   const pressedRef = useRef(false);
   const movedRef = useRef(false);
@@ -342,6 +398,9 @@ export default function BottomNav() {
     pres: 0,
     vpres: 0,
     tpres: 1,
+    wide: 0,
+    vwide: 0,
+    twide: 0,
     gx: KNOB_W / 2,
     gy: KNOB_H / 2,
     angle: 135,
@@ -360,19 +419,35 @@ export default function BottomNav() {
     const lift = clamp(s.lift, 0, 1.25);
     const lift01 = clamp(s.lift, 0, 1);
     const pres = clamp(s.pres, 0, 1);
+    const wide = clamp(s.wide, 0, 1.3);
 
     // gel: stretch with speed, keep volume (wider -> flatter), lean a little
     const stretch = reduced
       ? 0
       : Math.min(Math.abs(s.vx) / STRETCH_SPEED, MAX_STRETCH);
-    const grow = reduced ? 1 + 0.06 * lift01 : 1 + LIFT_SCALE * lift;
+    const growX = reduced ? 1 + 0.06 * lift01 : 1 + LIFT_X * lift;
+    const growY = reduced ? 1 + 0.06 * lift01 : 1 + LIFT_Y * lift;
     const appear = 0.86 + 0.14 * pres;
-    const sx = grow * (1 + stretch) * appear;
-    const sy = (grow / Math.sqrt(1 + stretch)) * appear;
+
+    // the lens gets wider while it is held / dragged (smaller with Reduce Motion)
+    const widen = 1 + (reduced ? 0.15 : DRAG_WIDEN) * wide;
+
+    const sx = growX * (1 + stretch) * widen * appear;
+    const sy = (growY / Math.sqrt(1 + stretch)) * appear;
     const skew = reduced ? 0 : clamp(-s.vx / 260, -MAX_SKEW, MAX_SKEW);
 
-    knob.style.transform = `translate3d(${s.x.toFixed(2)}px,0,0) scale(${sx.toFixed(4)},${sy.toFixed(4)}) skewX(${skew.toFixed(2)}deg)`;
-    knob.style.zIndex = lift01 > 0.04 ? '3' : '1'; // lens sits above the icons while touched
+    // a wide lens grows from its centre, so at the first / last tab it would
+    // poke out of the dock. Push it back in (EDGE_ROOM px of room is allowed).
+    const half = (KNOB_W * sx) / 2;
+    const center = s.x + KNOB_W / 2;
+    let shift = 0;
+    if (center - half < -EDGE_ROOM) shift = -EDGE_ROOM - (center - half);
+    else if (center + half > TRACK_W + EDGE_ROOM)
+      shift = TRACK_W + EDGE_ROOM - (center + half);
+
+    const lensX = s.x + shift; // where the lens really is inside the track
+    const tf = `translate3d(${lensX.toFixed(2)}px,0,0) scale(${sx.toFixed(4)},${sy.toFixed(4)}) skewX(${skew.toFixed(2)}deg)`;
+    knob.style.transform = tf;
 
     if (restRef.current)
       restRef.current.style.opacity = String((1 - lift01) * pres);
@@ -380,8 +455,49 @@ export default function BottomNav() {
       glassRef.current.style.opacity = String(lift01 * pres);
     if (glowRef.current) {
       glowRef.current.style.opacity = String(clamp(s.glow, 0, 1) * pres);
-      glowRef.current.style.background = `radial-gradient(circle at ${s.gx.toFixed(1)}px ${s.gy.toFixed(1)}px,rgba(255,255,255,.75),rgba(255,255,255,0) 62%)`;
+      glowRef.current.style.background = `radial-gradient(circle at ${s.gx.toFixed(1)}px ${s.gy.toFixed(1)}px,rgba(255,255,255,.18),rgba(255,255,255,0) 62%)`;
     }
+
+    // ── magnified copy of the tabs inside the lens ──
+    // The top layer shares the lens transform. The counter layer undoes the lens
+    // stretch / skew, so the icons only get one clean, even magnification.
+    const cover = lift01 * pres;
+    if (topRef.current) {
+      topRef.current.style.transform = tf;
+      topRef.current.style.opacity = String(cover);
+    }
+    if (counterRef.current) {
+      counterRef.current.style.transform = `skewX(${(-skew).toFixed(2)}deg) scale(${(KNOB_MAGNIFY / sx).toFixed(4)},${(KNOB_MAGNIFY / sy).toFixed(4)})`;
+    }
+    if (cloneRowRef.current) {
+      cloneRowRef.current.style.transform = `translate3d(${(-lensX).toFixed(2)}px,${(-KNOB_TOP).toFixed(2)}px,0)`;
+    }
+
+    // ── a hole in the real icon row under the lens (no double icons) ──
+    const row = rowRef.current;
+    if (row) {
+      if (lift01 < 0.02) {
+        row.style.clipPath = 'none';
+        row.style.setProperty('-webkit-clip-path', 'none');
+      } else {
+        const w = KNOB_W * sx * lift01;
+        const h = KNOB_H * sy * lift01;
+        const r = h / 2;
+        const x0 = lensX + KNOB_W / 2 - w / 2;
+        const y0 = TAB_H / 2 - h / 2;
+        const d =
+          `M0,0H${TRACK_W}V${TAB_H}H0Z ` +
+          `M${(x0 + r).toFixed(2)},${y0.toFixed(2)}` +
+          `H${(x0 + w - r).toFixed(2)}` +
+          `A${r.toFixed(2)},${r.toFixed(2)} 0 0 1 ${(x0 + w - r).toFixed(2)},${(y0 + h).toFixed(2)}` +
+          `H${(x0 + r).toFixed(2)}` +
+          `A${r.toFixed(2)},${r.toFixed(2)} 0 0 1 ${(x0 + r).toFixed(2)},${y0.toFixed(2)}Z`;
+        const v = `path(evenodd, "${d}")`;
+        row.style.clipPath = v;
+        row.style.setProperty('-webkit-clip-path', v);
+      }
+    }
+
     const dock = dockRef.current;
     if (dock) {
       dock.style.setProperty('--lg-a', `${s.angle.toFixed(1)}deg`);
@@ -420,6 +536,12 @@ export default function BottomNav() {
       s.glow += s.vglow * h;
       s.vpres += (-300 * (s.pres - s.tpres) - 31 * s.vpres) * h;
       s.pres += s.vpres * h;
+      // widening spring (no bounce with Reduce Motion: critical damping)
+      s.vwide +=
+        (-WIDEN_SPRING.k * (s.wide - s.twide) -
+          (reduced ? 39 : WIDEN_SPRING.c) * s.vwide) *
+        h;
+      s.wide += s.vwide * h;
     }
     // the bright rim turns a little with the movement
     s.tangle = 135 + (reduced ? 0 : clamp(s.vx / 22, -28, 28));
@@ -437,6 +559,8 @@ export default function BottomNav() {
       Math.abs(s.glow - s.tglow) > 0.002 ||
       Math.abs(s.vpres) > 0.01 ||
       Math.abs(s.pres - s.tpres) > 0.002 ||
+      Math.abs(s.vwide) > 0.01 ||
+      Math.abs(s.wide - s.twide) > 0.002 ||
       Math.abs(s.angle - s.tangle) > 0.2;
 
     if (awake) {
@@ -450,6 +574,8 @@ export default function BottomNav() {
       s.vglow = 0;
       s.pres = s.tpres;
       s.vpres = 0;
+      s.wide = s.twide;
+      s.vwide = 0;
       s.angle = s.tangle;
       apply();
       rafRef.current = 0;
@@ -506,10 +632,16 @@ export default function BottomNav() {
       lastW = w;
       lastH = h;
       setMaps({
-        dock: makeLensMap(w, h, DOCK_BEZEL),
+        dock: makeLensMap(w, h, DOCK_BEZEL, DOCK_BEND),
         dockW: w,
         dockH: h,
-        knob: makeLensMap(KNOB_W, KNOB_H, KNOB_BEZEL),
+        knob: makeLensMap(
+          KNOB_W,
+          KNOB_H,
+          KNOB_BEZEL,
+          KNOB_BEND,
+          KNOB_BG_MAGNIFY,
+        ),
       });
     };
     build();
@@ -709,8 +841,9 @@ export default function BottomNav() {
     // the glass lifts and lights up right under the finger
     s.tlift = 1;
     s.tglow = 1;
+    s.twide = WIDEN_ONLY_ON_DRAG ? 0 : 1;
     s.gx = clamp(e.clientX - r.left - s.x, 0, KNOB_W);
-    s.gy = clamp(e.clientY - r.top - (TAB_H - KNOB_H) / 2, 0, KNOB_H);
+    s.gy = clamp(e.clientY - r.top - KNOB_TOP, 0, KNOB_H);
     wake();
   };
 
@@ -724,6 +857,7 @@ export default function BottomNav() {
     if (!movedRef.current && Math.abs(e.clientX - startXRef.current) > 4) {
       movedRef.current = true;
       draggingRef.current = true;
+      s.twide = 1; // dragging has started, make sure the lens is wide
       (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
     }
 
@@ -733,7 +867,7 @@ export default function BottomNav() {
       setPreviewIdx((p) => (p === idx ? p : idx));
     }
     s.gx = clamp(e.clientX - r.left - s.x, 0, KNOB_W);
-    s.gy = clamp(e.clientY - r.top - (TAB_H - KNOB_H) / 2, 0, KNOB_H);
+    s.gy = clamp(e.clientY - r.top - KNOB_TOP, 0, KNOB_H);
     wake();
   };
 
@@ -743,6 +877,7 @@ export default function BottomNav() {
     const s = sim.current;
     s.tlift = 0;
     s.tglow = 0;
+    s.twide = 0; // let go -> lens springs back to its normal width
 
     if (movedRef.current) {
       try {
@@ -774,11 +909,12 @@ export default function BottomNav() {
   // ─── Glass recipes ───
   const useRefraction = refract && maps !== null;
   const dockBackdrop = useRefraction
-    ? 'blur(6px) saturate(1.8) url(#lg-dock-fx)'
-    : 'blur(14px) saturate(1.8)';
+    ? 'blur(3px) saturate(1.5) url(#lg-dock-fx)'
+    : 'blur(12px) saturate(1.6)';
+  // the lens is clear glass: no blur, only a little colour boost
   const knobBackdrop = useRefraction
-    ? 'saturate(1.5) brightness(1.06) url(#lg-knob-fx)'
-    : 'saturate(1.6) brightness(1.08)';
+    ? 'saturate(1.5) brightness(1.04) url(#lg-knob-fx)'
+    : 'saturate(1.5) brightness(1.04)';
 
   return (
     <nav
@@ -843,13 +979,52 @@ export default function BottomNav() {
                 preserveAspectRatio="none"
                 result="map"
               />
+              {/* Rainbow edge: red, green and blue are bent by slightly different
+                  amounts, then merged back. Glass does this in real life. */}
+              <feDisplacementMap
+                in="SourceGraphic"
+                in2="map"
+                scale={KNOB_BEND * 2 * (1 + KNOB_CA)}
+                xChannelSelector="R"
+                yChannelSelector="G"
+                result="dispR"
+              />
+              <feColorMatrix
+                in="dispR"
+                type="matrix"
+                values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0"
+                result="chR"
+              />
               <feDisplacementMap
                 in="SourceGraphic"
                 in2="map"
                 scale={KNOB_BEND * 2}
                 xChannelSelector="R"
                 yChannelSelector="G"
+                result="dispG"
               />
+              <feColorMatrix
+                in="dispG"
+                type="matrix"
+                values="0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0"
+                result="chG"
+              />
+              <feDisplacementMap
+                in="SourceGraphic"
+                in2="map"
+                scale={KNOB_BEND * 2 * (1 - KNOB_CA)}
+                xChannelSelector="R"
+                yChannelSelector="G"
+                result="dispB"
+              />
+              <feColorMatrix
+                in="dispB"
+                type="matrix"
+                values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0"
+                result="chB"
+              />
+              <feBlend in="chR" in2="chG" mode="screen" result="chRG" />
+              <feBlend in="chRG" in2="chB" mode="screen" />
             </filter>
           </defs>
         </svg>
@@ -876,7 +1051,7 @@ export default function BottomNav() {
           <div className="lg-rim" />
         </div>
 
-        {/* Layer 2: tabs + the moving lens */}
+        {/* Layer 2: lens base (z1) < real tabs (z2) < lens top with magnified tabs (z3) */}
         <div
           ref={trackRef}
           onPointerDown={onPointerDown}
@@ -886,7 +1061,8 @@ export default function BottomNav() {
           className="relative z-10 touch-none"
           style={{ width: TRACK_W, height: TAB_H, display: 'flex' }}
         >
-          {/* Lens: quiet fill at rest, real glass while touched */}
+          {/* Lens base: quiet pill at rest, clear glass while touched.
+              It sits UNDER the real icons so the glass never bends them twice. */}
           <div
             ref={knobRef}
             aria-hidden="true"
@@ -901,48 +1077,102 @@ export default function BottomNav() {
                 backdropFilter: knobBackdrop,
                 WebkitBackdropFilter: knobBackdrop,
               }}
-            >
-              <div className="lg-rim" />
-            </div>
+            />
             <div ref={glowRef} className="lg-knob-glow" />
           </div>
 
-          {SECTIONS.map((item, idx) => {
-            const selected = shownKey === item.key;
-            return (
-              <button
-                key={item.key}
-                type="button"
-                aria-current={selected ? 'true' : undefined}
-                onClick={() => {
-                  if (suppressClickRef.current) return;
-                  handleTabClick(idx);
-                }}
-                className="lg-btn lg-fg relative z-[2] flex flex-col items-center justify-center gap-[3px] rounded-full outline-none"
-                style={{ width: TAB_W, height: TAB_H }}
-              >
-                <svg
-                  width="21"
-                  height="21"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth={selected ? 2.2 : 1.7}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="pointer-events-none"
+          {/* Real tabs. A hole is cut in this row under the lens (see apply). */}
+          <div
+            ref={rowRef}
+            className="relative"
+            style={{
+              zIndex: 2,
+              width: TRACK_W,
+              height: TAB_H,
+              display: 'flex',
+            }}
+          >
+            {SECTIONS.map((item, idx) => {
+              const selected = shownKey === item.key;
+              return (
+                <button
+                  key={item.key}
+                  type="button"
+                  aria-current={selected ? 'true' : undefined}
+                  onClick={() => {
+                    if (suppressClickRef.current) return;
+                    handleTabClick(idx);
+                  }}
+                  className="lg-btn lg-fg relative flex flex-col items-center justify-center gap-[3px] rounded-full outline-none"
+                  style={{ width: TAB_W, height: TAB_H }}
                 >
-                  {item.icon}
-                </svg>
-                <span
-                  className="pointer-events-none text-[9.5px] leading-none tracking-[0.04em]"
-                  style={{ fontWeight: selected ? 600 : 500 }}
-                >
-                  {item.label}
-                </span>
-              </button>
-            );
-          })}
+                  <svg
+                    width="21"
+                    height="21"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={selected ? 2.2 : 1.7}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="pointer-events-none"
+                  >
+                    {item.icon}
+                  </svg>
+                  <span
+                    className="pointer-events-none text-[9.5px] leading-none tracking-[0.04em]"
+                    style={{ fontWeight: selected ? 600 : 500 }}
+                  >
+                    {item.label}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Lens top: same shape and movement as the base, but above the icons.
+              Inside it is a bigger white copy of the tabs = the magnifier. */}
+          <div
+            ref={topRef}
+            aria-hidden="true"
+            className="lg-knob lg-knob-top"
+            style={{ zIndex: 3, opacity: 0 }}
+          >
+            <div className="lg-lens-clip">
+              <div ref={counterRef} className="lg-counter">
+                <div ref={cloneRowRef} className="lg-clone-row">
+                  {SECTIONS.map((item) => (
+                    <div
+                      key={item.key}
+                      className="lg-clone-tab"
+                      style={{ width: TAB_W, height: TAB_H }}
+                    >
+                      <svg
+                        width="21"
+                        height="21"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth={2.2}
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        {item.icon}
+                      </svg>
+                      <span
+                        className="text-[9.5px] leading-none tracking-[0.04em]"
+                        style={{ fontWeight: 600 }}
+                      >
+                        {item.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div className="lg-lens-edge" />
+            <div className="lg-rim" />
+          </div>
         </div>
 
         {/* Separator */}
