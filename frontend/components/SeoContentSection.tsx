@@ -23,7 +23,7 @@ export default function SeoContentSection({ seo }: Props) {
 
   const stats = [
     seo.stats.photo_count > 0 && { value: `${seo.stats.photo_count}+`, label: 'Photos delivered' },
-    seo.stats.category_count > 0 && { value: `${seo.stats.category_count}`, label: 'Portfolio collections' },
+    seo.stats.category_count > 0 && { value: `${seo.stats.category_count}`, label: 'Collections' },
     seo.stats.review_count > 0 && { value: `${seo.stats.review_count}+`, label: 'Happy clients' },
     b.founding_year && { value: `Since ${b.founding_year}`, label: 'Capturing stories' },
   ].filter(Boolean) as Array<{ value: string; label: string }>;
@@ -32,10 +32,10 @@ export default function SeoContentSection({ seo }: Props) {
     <section
       id="about-section"
       aria-labelledby="about-heading"
-      className="relative py-16 md:py-24 bg-surface-alt border-t border-line/60"
+      className="relative py-10 md:py-14 bg-surface-alt border-t border-line/60"
     >
       <div className="mx-auto max-w-6xl px-5 sm:px-6 lg:px-8">
-        <div className="grid gap-12 lg:grid-cols-12 lg:gap-16">
+        <div className="grid gap-8 lg:grid-cols-12 lg:gap-12">
           {/* ── Left: the actual prose Google reads ── */}
           <div className="lg:col-span-7">
             <p className="eyebrow">About the studio</p>
@@ -63,19 +63,26 @@ export default function SeoContentSection({ seo }: Props) {
                   We photograph{' '}
                   {services.slice(0, 6).map((s, i, arr) => (
                     <span key={s}>
-                      <strong className="font-medium text-ink">{s.toLowerCase()}</strong>
-                      {i < arr.length - 2 ? ', ' : i === arr.length - 2 ? ' and ' : ''}
+                      <strong className="font-medium text-ink">
+                        {s.toLowerCase()}
+                      </strong>
+                      {i < arr.length - 2
+                        ? ', '
+                        : i === arr.length - 2
+                          ? ' and '
+                          : ''}
                     </span>
                   ))}
-                  {where} and across India — with full-day coverage, a private online gallery and
-                  high-resolution downloads included.
+                  {where} and across India — with full-day coverage, a private
+                  online gallery and high-resolution downloads included.
                 </p>
               )}
 
               {b.service_areas.length > 0 && (
                 <p>
                   <span className="text-ink">Areas we serve:</span>{' '}
-                  {b.service_areas.join(', ')} — and destination shoots on request.
+                  {b.service_areas.join(', ')} — and destination shoots on
+                  request.
                 </p>
               )}
             </div>
@@ -83,7 +90,7 @@ export default function SeoContentSection({ seo }: Props) {
             {/* Internal links — crawler ko category pages tak le jaate hain
                 aur link equity distribute karte hain. */}
             {categories.length > 0 && (
-              <nav aria-label="Photography collections" className="mt-8">
+              <nav aria-label="Photography collections" className="mt-6">
                 <h3 className="font-body text-[11px] font-medium uppercase tracking-[0.28em] text-ink-muted">
                   Explore our work
                 </h3>
@@ -113,12 +120,21 @@ export default function SeoContentSection({ seo }: Props) {
           <div className="lg:col-span-5">
             {stats.length > 0 && (
               <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-line bg-line">
-                {stats.map((s) => (
-                  <div key={s.label} className="bg-canvas px-5 py-6">
+                {stats.map((s, i) => (
+                  <div
+                    key={s.label}
+                    className={`bg-canvas px-5 py-5 ${
+                      stats.length % 2 === 1 && i === stats.length - 1
+                        ? 'col-span-2'
+                        : ''
+                    }`}
+                  >
                     <dt className="font-body text-[11px] uppercase tracking-[0.18em] text-ink-muted">
                       {s.label}
                     </dt>
-                    <dd className="mt-1.5 font-display text-2xl font-light text-ink">{s.value}</dd>
+                    <dd className="mt-1.5 font-display text-2xl font-light text-ink">
+                      {s.value}
+                    </dd>
                   </div>
                 ))}
               </dl>
@@ -127,12 +143,14 @@ export default function SeoContentSection({ seo }: Props) {
             {/* NAP (Name / Address / Phone) — Local SEO ka sabse strong
                 on-page signal. Google isko schema ke saath cross-check karta hai. */}
             {(b.phone || b.email || b.city) && (
-              <address className="mt-6 not-italic rounded-2xl border border-line bg-canvas p-6">
+              <address className="mt-4 not-italic rounded-2xl border border-line bg-canvas p-5">
                 <h3 className="font-body text-[11px] font-medium uppercase tracking-[0.28em] text-ink-muted">
                   Studio details
                 </h3>
 
-                <p className="mt-4 font-display text-xl font-light text-ink">{b.name}</p>
+                <p className="mt-4 font-display text-xl font-light text-ink">
+                  {b.name}
+                </p>
 
                 {(b.street_address || b.city) && (
                   <p className="mt-1.5 font-body text-sm leading-relaxed text-ink-muted">
