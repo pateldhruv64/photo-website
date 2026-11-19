@@ -94,7 +94,7 @@ export default async function RootLayout({
   const schema = buildSchemaGraph(seo);
 
   return (
-    <html lang="en-IN" className={`${raleway.variable} ${cormorant.variable}`}>
+    <html lang="en-IN" className={`${raleway.variable} ${cormorant.variable}`} suppressHydrationWarning>
       <head>
         {/* Cloudinary CDN se pehle connect karo — images fast load hongi */}
         <link rel="preconnect" href="https://res.cloudinary.com" crossOrigin="anonymous" />

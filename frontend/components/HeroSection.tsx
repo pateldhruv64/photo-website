@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
-import { heroUrl, blurUrl } from '@/lib/cloudinary';
+import { blurUrl } from '@/lib/cloudinary';
 import type { SiteConfig } from '@/lib/types';
 import type { SeoPayload } from '@/lib/seo';
 
@@ -12,15 +12,24 @@ interface HeroSectionProps {
 }
 
 export default function HeroSection({ config, seo }: HeroSectionProps) {
-  const hasHeroPhoto = Boolean(config?.hero_photo?.public_id);
+  const rawHeroPhotoId = config?.hero_photo?.public_id || '';
+  const heroPhotoId = rawHeroPhotoId.replace(
+    /^https?:\/\/res\.cloudinary\.com\/[^/]+\/image\/upload\/(?:[a-zA-Z0-9_:,]+\/)?/,
+    ''
+  );
+  const hasHeroPhoto = Boolean(heroPhotoId);
   const textRef = useRef<HTMLDivElement>(null);
   const imgRef = useRef<HTMLDivElement>(null);
+  const hudRef = useRef<HTMLDivElement>(null);
+  const [mounted, setMounted] = useState(false);
 
-  /* Parallax: text upar jaata hai aur fade hota hai, image dheere neeche
-     drift karti hai. Do alag speeds se depth ka ehsaas banta hai.
-     rAF me batch kar rahe hain taki scroll janky na ho.               */
   useEffect(() => {
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    // Mount trigger for smooth editorial aperture un-clip
+    const timer = setTimeout(() => setMounted(true), 60);
+
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      return () => clearTimeout(timer);
+    }
 
     let frame = 0;
     const onScroll = () => {
@@ -28,11 +37,15 @@ export default function HeroSection({ config, seo }: HeroSectionProps) {
       frame = requestAnimationFrame(() => {
         const y = window.scrollY;
         if (textRef.current) {
-          textRef.current.style.transform = `translate3d(0, ${y * 0.14}px, 0)`;
+          textRef.current.style.transform = `translate3d(0, ${y * 0.2}px, 0)`;
           textRef.current.style.opacity = `${Math.max(0, 1 - y / 480)}`;
         }
         if (imgRef.current) {
-          imgRef.current.style.transform = `translate3d(0, ${y * 0.05}px, 0) scale(1.1)`;
+          imgRef.current.style.transform = `translate3d(0, ${y * 0.06}px, 0) scale(1.08)`;
+        }
+        if (hudRef.current) {
+          hudRef.current.style.transform = `translate3d(0, ${-y * 0.08}px, 0)`;
+          hudRef.current.style.opacity = `${Math.max(0, 1 - y / 320)}`;
         }
         frame = 0;
       });
@@ -40,6 +53,7 @@ export default function HeroSection({ config, seo }: HeroSectionProps) {
 
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => {
+      clearTimeout(timer);
       window.removeEventListener('scroll', onScroll);
       if (frame) cancelAnimationFrame(frame);
     };
@@ -54,8 +68,6 @@ export default function HeroSection({ config, seo }: HeroSectionProps) {
   const heroTitle = config?.hero_title || 'Capturing Moments';
   const heroSubtitle = config?.hero_subtitle || 'Photography that tells your story';
 
-  // Top 3 categories — keyword-rich, aur user ko turant pata chalta hai
-  // ki yeh photographer kya shoot karta hai.
   const specialities = (seo?.categories || []).slice(0, 3).map((c) => c.name);
 
   return (
@@ -64,18 +76,25 @@ export default function HeroSection({ config, seo }: HeroSectionProps) {
         aria-label="Introduction"
         className="relative flex h-[92dvh] w-full items-center justify-center overflow-hidden md:h-screen"
       >
-        {/* ── Background ── */}
-        <div ref={imgRef} className="absolute inset-0 scale-110 will-change-transform">
+        {/* ── Background: Cinematic Aperture Reveal & Parallax ── */}
+        <div
+          ref={imgRef}
+          className={`absolute inset-0 will-change-transform transition-[clip-path,transform,filter] duration-[1600ms] ease-[cubic-bezier(0.16,1,0.3,1)] ${
+            mounted
+              ? 'scale-105 filter-none [clip-path:polygon(0_0,100%_0,100%_100%,0_100%)]'
+              : 'scale-115 blur-[2px] [clip-path:polygon(8%_8%,92%_8%,92%_92%,8%_92%)]'
+          }`}
+        >
           {hasHeroPhoto ? (
             <Image
-              src={heroUrl(config.hero_photo!.public_id)}
+              src={heroPhotoId}
               alt={`${brand} — professional photography${location ? ` in ${location}` : ''}`}
               fill
               priority
               fetchPriority="high"
               sizes="100vw"
               placeholder="blur"
-              blurDataURL={blurUrl(config.hero_photo!.public_id)}
+              blurDataURL={blurUrl(heroPhotoId)}
               className="object-cover"
             />
           ) : (
@@ -83,57 +102,87 @@ export default function HeroSection({ config, seo }: HeroSectionProps) {
           )}
         </div>
 
-        {/* ── Scrims ──
-            Photographer site hai — photo hi hero hai, use dabana nahi
-            chahiye. Isliye flat overlay halka (25%) rakha hai aur text
-            ka contrast top/bottom gradient se aata hai, jahan text
-            actually baithta hai. Blue tint bas 12% — itna ki photo brand
-            palette me ghul jaaye, itna nahi ki dhul jaaye. */}
-        <div className="absolute inset-0 bg-ink/25" />
-        <div className="absolute inset-0 bg-gradient-to-b from-ink/50 via-ink/15 to-ink/75" />
-        <div className="absolute inset-0 bg-accent mix-blend-soft-light opacity-[0.12]" />
-
-        {/* Vignette — nazar center par rakhta hai */}
+        {/* ── Cinematic Lens Glare Sweep across the glass ── */}
         <div
           aria-hidden
-          className="absolute inset-0"
+          className={`pointer-events-none absolute inset-0 bg-gradient-to-tr from-transparent via-white/[0.04] to-transparent transition-transform duration-[2200ms] ease-[cubic-bezier(0.16,1,0.3,1)] ${
+            mounted ? 'translate-x-full -translate-y-full' : '-translate-x-full translate-y-full'
+          }`}
+        />
+
+        {/* ── Scrims & Vignette ── */}
+        <div className="absolute inset-0 bg-ink/30" />
+        <div className="absolute inset-0 bg-gradient-to-b from-ink/60 via-ink/20 to-ink/80" />
+        <div className="absolute inset-0 bg-accent mix-blend-soft-light opacity-[0.14]" />
+
+        <div
+          aria-hidden
+          className="absolute inset-0 pointer-events-none"
           style={{
             background:
-              'radial-gradient(ellipse at center, transparent 48%, rgba(8,16,24,0.42) 100%)',
+              'radial-gradient(ellipse at center, transparent 42%, rgba(8,16,24,0.52) 100%)',
           }}
         />
 
-        {/* ── Content ── */}
+        {/* ── Viewfinder HUD Exposure Badge (Photographic authenticity) ── */}
+        <div
+          ref={hudRef}
+          aria-hidden="true"
+          className="pointer-events-none absolute left-6 top-28 z-10 hidden items-center gap-3 rounded-full border border-white/15 bg-ink/40 px-3.5 py-1.5 font-mono text-[9px] uppercase tracking-[0.22em] text-white/70 shadow-sm backdrop-blur-md transition-opacity duration-1000 lg:flex"
+        >
+          <span className="h-1.5 w-1.5 rounded-full bg-accent animate-pulse" />
+          <span>85mm · f/1.4 · 1/250s · ISO 100</span>
+        </div>
+
+        {/* ── Editorial Hero Content ── */}
         <div
           ref={textRef}
           className="relative z-10 flex max-w-4xl flex-col items-center px-5 pt-16 text-center will-change-transform sm:px-6 md:pt-20"
         >
-          {/* Brand chip */}
-          <p className="mb-6 inline-flex items-center gap-2.5 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 font-body text-[10px] uppercase tracking-[0.28em] text-white/90 backdrop-blur-md sm:text-[11px]">
-            <span className="inline-block h-1.5 w-1.5 rounded-full bg-accent-soft" />
-            {brand}
-            {location && <span className="text-white/50">· {location}</span>}
-          </p>
+          {/* Brand chip with subtle optical glow */}
+          <div
+            className={`transition-all duration-1000 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+              mounted ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'
+            }`}
+          >
+            <p className="mb-6 inline-flex items-center gap-2.5 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 font-body text-[10px] uppercase tracking-[0.28em] text-white/90 backdrop-blur-md shadow-sm sm:text-[11px]">
+              <span className="inline-block h-1.5 w-1.5 rounded-full bg-accent-soft animate-ping" />
+              {brand}
+              {location && <span className="text-white/50">· {location}</span>}
+            </p>
+          </div>
 
-          {/* H1 — page ka sabse important SEO element.
-              Server par render hota hai, koi client-only animation nahi
-              jo text ko crawler se chhupa de. */}
-          <h1 className="font-display text-[2.6rem] font-light leading-[1.02] tracking-[-0.02em] text-white drop-shadow-[0_4px_28px_rgba(0,0,0,0.55)] sm:text-6xl md:text-7xl lg:text-[5.5rem]">
-            {heroTitle}
-            {location && (
-              <span className="mt-2 block font-display text-[1.35rem] font-light italic leading-snug tracking-normal text-white/80 sm:text-3xl md:text-4xl">
-                Photographer in {location}
-              </span>
-            )}
-          </h1>
+          {/* H1 Title with Staggered Editorial Reveal */}
+          <div className="overflow-hidden">
+            <h1
+              className={`font-display text-[2.6rem] font-light leading-[1.02] tracking-[-0.02em] text-white drop-shadow-[0_4px_28px_rgba(0,0,0,0.55)] transition-all duration-1000 delay-150 ease-[cubic-bezier(0.16,1,0.3,1)] sm:text-6xl md:text-7xl lg:text-[5.5rem] ${
+                mounted ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'
+              }`}
+            >
+              {heroTitle}
+              {location && (
+                <span className="mt-2 block font-display text-[1.35rem] font-light italic leading-snug tracking-normal text-white/80 sm:text-3xl md:text-4xl">
+                  Photographer in {location}
+                </span>
+              )}
+            </h1>
+          </div>
 
-          <p className="mt-6 max-w-2xl font-body text-[15px] font-light leading-relaxed text-white/85 drop-shadow-[0_2px_12px_rgba(0,0,0,0.5)] sm:text-base md:text-lg">
+          <p
+            className={`mt-6 max-w-2xl font-body text-[15px] font-light leading-relaxed text-white/85 drop-shadow-[0_2px_12px_rgba(0,0,0,0.5)] transition-all duration-1000 delay-300 ease-[cubic-bezier(0.16,1,0.3,1)] sm:text-base md:text-lg ${
+              mounted ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-0'
+            }`}
+          >
             {heroSubtitle}
           </p>
 
-          {/* Speciality pills — crawlable keywords + instant clarity */}
+          {/* Speciality tags */}
           {specialities.length > 0 && (
-            <ul className="mt-6 flex flex-wrap items-center justify-center gap-x-3 gap-y-2 font-body text-[10px] uppercase tracking-[0.2em] text-white/65 sm:text-[11px]">
+            <ul
+              className={`mt-6 flex flex-wrap items-center justify-center gap-x-3 gap-y-2 font-body text-[10px] uppercase tracking-[0.2em] text-white/65 transition-all duration-1000 delay-400 ease-[cubic-bezier(0.16,1,0.3,1)] sm:text-[11px] ${
+                mounted ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'
+              }`}
+            >
               {specialities.map((name, i) => (
                 <li key={name} className="flex items-center gap-3">
                   {i > 0 && <span aria-hidden className="h-1 w-1 rounded-full bg-white/35" />}
@@ -143,16 +192,20 @@ export default function HeroSection({ config, seo }: HeroSectionProps) {
             </ul>
           )}
 
-          {/* ── CTAs ── */}
-          <div className="mt-9 flex w-full flex-col items-center gap-3 sm:w-auto sm:flex-row sm:gap-4">
+          {/* ── Action CTAs with Liquid Glow and Magnetic Hover ── */}
+          <div
+            className={`mt-9 flex w-full flex-col items-center gap-3 transition-all duration-1000 delay-500 ease-[cubic-bezier(0.16,1,0.3,1)] sm:w-auto sm:flex-row sm:gap-4 ${
+              mounted ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-0'
+            }`}
+          >
             <button
               onClick={() => scrollTo('gallery-section')}
-              className="group relative w-full overflow-hidden rounded-full bg-white px-8 py-4 font-body text-[12px] uppercase tracking-[0.2em] text-ink transition-transform duration-500 ease-editorial hover:-translate-y-0.5 sm:w-auto sm:py-3.5"
+              className="group relative w-full overflow-hidden rounded-full bg-white px-8 py-4 font-body text-[12px] uppercase tracking-[0.2em] text-ink shadow-[0_12px_32px_rgba(0,0,0,0.25)] transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-1 hover:shadow-[0_20px_48px_rgba(20,36,51,0.35)] sm:w-auto sm:py-3.5 active:scale-95"
             >
               <span className="relative z-10 flex items-center justify-center gap-2.5">
                 View Portfolio
                 <svg
-                  className="h-3.5 w-3.5 transition-transform duration-500 ease-editorial group-hover:translate-y-0.5"
+                  className="h-3.5 w-3.5 transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:translate-y-1"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -161,18 +214,22 @@ export default function HeroSection({ config, seo }: HeroSectionProps) {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                 </svg>
               </span>
-              {/* Sheen sweep on hover */}
+              {/* Refraction sweep on hover */}
               <span
                 aria-hidden
-                className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-black/[0.06] to-transparent transition-transform duration-[900ms] ease-editorial group-hover:translate-x-full"
+                className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-black/[0.08] to-transparent transition-transform duration-[900ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:translate-x-full"
               />
             </button>
 
             <button
               onClick={() => scrollTo('booking-section')}
-              className="w-full rounded-full border border-white/35 px-8 py-4 font-body text-[12px] uppercase tracking-[0.2em] text-white backdrop-blur-md transition-all duration-500 ease-editorial hover:border-white/70 hover:bg-white/10 sm:w-auto sm:py-3.5"
+              className="group relative w-full overflow-hidden rounded-full border border-white/35 bg-white/10 px-8 py-4 font-body text-[12px] uppercase tracking-[0.2em] text-white shadow-sm backdrop-blur-md transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] hover:border-white/80 hover:bg-white/20 hover:-translate-y-1 sm:w-auto sm:py-3.5 active:scale-95"
             >
-              Book a Session
+              <span className="relative z-10">Book a Session</span>
+              <span
+                aria-hidden
+                className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-[900ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:translate-x-full"
+              />
             </button>
           </div>
         </div>
@@ -181,11 +238,11 @@ export default function HeroSection({ config, seo }: HeroSectionProps) {
         <button
           onClick={() => scrollTo('gallery-section')}
           aria-label="Scroll to gallery"
-          className="absolute bottom-7 left-1/2 z-10 hidden -translate-x-1/2 flex-col items-center gap-2.5 opacity-70 transition-opacity duration-300 hover:opacity-100 md:flex"
+          className="absolute bottom-7 left-1/2 z-10 hidden -translate-x-1/2 flex-col items-center gap-2.5 opacity-70 transition-all duration-300 hover:opacity-100 hover:translate-y-1 md:flex"
         >
           <span className="font-body text-[9px] uppercase tracking-[0.32em] text-white">Scroll</span>
-          <span className="flex h-[30px] w-[18px] justify-center rounded-full border-[1.5px] border-white/75 bg-black/20 p-[3px] backdrop-blur-sm">
-            <span className="scroll-wheel-dot h-[5px] w-[2.5px] rounded-full bg-white" />
+          <span className="flex h-[32px] w-[18px] justify-center rounded-full border-[1.5px] border-white/75 bg-black/20 p-[3px] backdrop-blur-sm shadow-sm">
+            <span className="scroll-wheel-dot h-[5px] w-[2.5px] rounded-full bg-white animate-bounce" />
           </span>
         </button>
       </section>

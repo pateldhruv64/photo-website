@@ -61,15 +61,19 @@ function CountUp({ target, suffix, start }: { target: number; suffix: string; st
 
   useEffect(() => {
     if (!start) return;
+
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setCount(target);
+      return;
+    }
+
     const startTime = performance.now();
-    const duration = 2500;
+    const duration = 2000;
     const animate = (currentTime: number) => {
       const elapsed = currentTime - startTime;
       const progress = Math.min(elapsed / duration, 1);
-      // More dramatic easing: slow start, fast middle, slow end
-      const eased = progress < 0.5
-        ? 4 * progress * progress * progress
-        : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+      // Editorial cubic bezier ease-out
+      const eased = 1 - Math.pow(1 - progress, 3);
       setCount(Math.floor(eased * target));
       if (progress < 1) frameRef.current = requestAnimationFrame(animate);
       else setCount(target);
@@ -82,21 +86,21 @@ function CountUp({ target, suffix, start }: { target: number; suffix: string; st
   const digits = count.toString().split('');
 
   return (
-    <span className="inline-flex items-baseline">
+    <span className="inline-flex items-baseline tabular">
       {digits.map((digit, i) => (
         <span
           key={i}
           className="inline-block transition-all duration-150"
           style={{
-            transform: start ? 'translateY(0)' : 'translateY(20px)',
+            transform: start ? 'translateY(0)' : 'translateY(12px)',
             opacity: start ? 1 : 0,
-            transitionDelay: `${i * 50}ms`,
+            transitionDelay: `${i * 40}ms`,
           }}
         >
           {digit}
         </span>
       ))}
-      <span className="text-accent-soft/70">{suffix}</span>
+      <span className="text-accent-soft/75">{suffix}</span>
     </span>
   );
 }
@@ -119,7 +123,7 @@ export default function StatsSection() {
   }, [started]);
 
   return (
-    <section ref={ref} className="py-14 md:py-20 bg-[#142433] relative overflow-hidden my-6">
+    <section ref={ref} className="py-16 md:py-24 bg-ink relative overflow-hidden my-6">
       {/* Background Ambient Radial Glow */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[300px] bg-accent-deep/10 blur-[120px] rounded-full pointer-events-none" />
 

@@ -22,10 +22,18 @@ const nextConfig = {
   compress: true,
   poweredByHeader: false,
   async headers() {
+    const isProd = process.env.NODE_ENV === 'production';
     return [
       {
         source: '/_next/static/(.*)',
-        headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: isProd
+              ? 'public, max-age=31536000, immutable'
+              : 'no-store, must-revalidate',
+          },
+        ],
       },
       {
         source: '/(.*)',

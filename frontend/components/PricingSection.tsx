@@ -66,17 +66,17 @@ export default function PricingSection() {
             >
               <div>
                 {pkg.highlight && (
-                  <span className="inline-block font-body text-[10px] tracking-[0.25em] uppercase text-accent-soft bg-white/10 px-3 py-1 rounded-full mb-4 border border-accent-soft/30">
-                    ★ Most Popular
+                  <span className="inline-block font-mono text-[9px] tracking-[0.22em] uppercase text-accent-soft bg-white/10 px-3 py-1 rounded-full mb-4 border border-accent-soft/30 font-medium">
+                    Most Requested
                   </span>
                 )}
-                <h3 className={`font-display text-2xl font-light mb-1 ${pkg.highlight ? 'text-white' : 'text-text-primary'}`}>
+                <h3 className={`font-display text-2xl font-light mb-1 ${pkg.highlight ? 'text-white' : 'text-ink'}`}>
                   {pkg.name}
                 </h3>
-                <p className={`font-display text-4xl font-semibold mt-4 mb-2 ${pkg.highlight ? 'text-white' : 'text-text-primary'}`}>
+                <p className={`font-display text-4xl font-semibold mt-4 mb-2 tabular ${pkg.highlight ? 'text-white' : 'text-ink'}`}>
                   {pkg.price}
                 </p>
-                <p className={`font-body text-sm mb-6 ${pkg.highlight ? 'text-white/70' : 'text-text-muted'}`}>
+                <p className={`font-body text-sm mb-6 ${pkg.highlight ? 'text-white/70' : 'text-ink-muted'}`}>
                   {pkg.duration} · {pkg.photos}
                 </p>
                 <div className="h-px bg-current opacity-10 mb-6" />
@@ -96,13 +96,13 @@ export default function PricingSection() {
 
               <div className="mt-6">
                 {pkg.highlight ? (
-                  <ShimmerButton onClick={scrollToBooking} className="w-full bg-white text-[#142433] hover:bg-accent-tint font-semibold border-none py-3.5">
+                  <ShimmerButton onClick={scrollToBooking} className="w-full bg-white text-ink hover:bg-accent-tint font-semibold border-none py-3.5 shadow-md">
                     Book {pkg.name} Package
                   </ShimmerButton>
                 ) : (
                   <button
                     onClick={scrollToBooking}
-                    className="w-full text-center py-3.5 rounded-full border border-[#142433] font-body text-sm font-medium transition-all duration-300 text-[#142433] hover:bg-[#142433] hover:text-white"
+                    className="w-full text-center py-3.5 rounded-full border border-ink/40 font-body text-sm font-medium transition-all duration-300 text-ink hover:bg-ink hover:text-white hover:border-ink focus-visible:ring-2 focus-visible:ring-accent"
                   >
                     Select {pkg.name}
                   </button>
