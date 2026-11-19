@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 
 interface StepItem {
   number: string;
@@ -8,6 +8,7 @@ interface StepItem {
   title: string;
   description: string;
   techMeta: string;
+  aperture: string;
   icon: (active: boolean) => React.ReactNode;
 }
 
@@ -19,9 +20,10 @@ const STEPS: StepItem[] = [
     description:
       'We delve into your story, visual aesthetic, and desired atmosphere — curating a bespoke moodboard, color palette, and location scout.',
     techMeta: 'STORYBOARD · PALETTE · WARDROBE ADVISORY',
+    aperture: 'ƒ/1.2 EXP',
     icon: (active) => (
       <svg
-        className={`h-5 w-5 transition-transform duration-500 ease-editorial ${active ? 'scale-110' : ''}`}
+        className={`h-5 w-5 transition-transform duration-500 ${active ? 'scale-115 text-accent-tint' : 'text-accent-soft'}`}
         fill="none"
         viewBox="0 0 24 24"
         stroke="currentColor"
@@ -42,9 +44,10 @@ const STEPS: StepItem[] = [
     description:
       'Every minute detail mapped with precision — lighting setup, call sheets, prop arrangements, and contingency weather plans.',
     techMeta: 'LIGHTING SCHEMATICS · CALL SHEET · RUN OF SHOW',
+    aperture: 'ƒ/2.0 ISO 100',
     icon: (active) => (
       <svg
-        className={`h-5 w-5 transition-transform duration-500 ease-editorial ${active ? 'scale-110' : ''}`}
+        className={`h-5 w-5 transition-transform duration-500 ${active ? 'scale-115 text-accent-tint' : 'text-accent-soft'}`}
         fill="none"
         viewBox="0 0 24 24"
         stroke="currentColor"
@@ -65,9 +68,10 @@ const STEPS: StepItem[] = [
     description:
       'Where artistry and emotion meet. Guided with effortless, natural direction to capture authentic cinematic moments and raw emotional depth.',
     techMeta: '14-BIT RAW SENSOR · HIGH-SPEED TETHERING',
+    aperture: 'ƒ/1.4 SHUTTER 1/500s',
     icon: (active) => (
       <svg
-        className={`h-5 w-5 transition-transform duration-500 ease-editorial ${active ? 'scale-110' : ''}`}
+        className={`h-5 w-5 transition-transform duration-500 ${active ? 'scale-115 text-accent-tint' : 'text-accent-soft'}`}
         fill="none"
         viewBox="0 0 24 24"
         stroke="currentColor"
@@ -89,9 +93,10 @@ const STEPS: StepItem[] = [
     description:
       'Frame-by-frame 16-bit color mastery, frequency separation skin retouching, and bespoke film emulation for a magazine-grade signature look.',
     techMeta: 'FREQUENCY SEPARATION · FILM CURVES · 16-BIT PRO',
+    aperture: 'DCI-P3 16-BIT',
     icon: (active) => (
       <svg
-        className={`h-5 w-5 transition-transform duration-500 ease-editorial ${active ? 'scale-110' : ''}`}
+        className={`h-5 w-5 transition-transform duration-500 ${active ? 'scale-115 text-accent-tint' : 'text-accent-soft'}`}
         fill="none"
         viewBox="0 0 24 24"
         stroke="currentColor"
@@ -112,9 +117,10 @@ const STEPS: StepItem[] = [
     description:
       'Your private cloud gallery is unlocked with PIN security, full-resolution downloads, and archival fine-art museum print selections.',
     techMeta: 'PIN-ENCRYPTED VAULT · ZERO-COMPRESSION TIFF',
+    aperture: 'ARCHIVAL MASTER',
     icon: (active) => (
       <svg
-        className={`h-5 w-5 transition-transform duration-500 ease-editorial ${active ? 'scale-110' : ''}`}
+        className={`h-5 w-5 transition-transform duration-500 ${active ? 'scale-115 text-accent-tint' : 'text-accent-soft'}`}
         fill="none"
         viewBox="0 0 24 24"
         stroke="currentColor"
@@ -130,176 +136,261 @@ const STEPS: StepItem[] = [
   },
 ];
 
-/**
- * ─────────────────────────────────────────────────────────────────────
- *  BESPOKE PROCESS TIMELINE (Light-Tracing Path & Aperture Nodes)
- * ─────────────────────────────────────────────────────────────────────
- *  - Active Luminous Exposure Beam traveling down the connecting path.
- *  - Optical Shutter Lens Nodes with Aperture Ring expansion on hover.
- *  - Viewfinder Corner Tick-Marks on cards matching site-wide camera motif.
- *  - Connected mobile spine ensuring seamless storytelling on all devices.
- *  - Full semantic <ol> structure & WCAG AAA contrast compliance.
- */
 export default function ProcessTimeline() {
+  const [selectedIdx, setSelectedIdx] = useState<number>(0);
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
+  const [cursorPos, setCursorPos] = useState<Record<number, { x: number; y: number }>>({});
+  const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
+
+  const handleMouseMove = (e: React.MouseEvent, idx: number) => {
+    const el = cardRefs.current[idx];
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    setCursorPos((prev) => ({
+      ...prev,
+      [idx]: {
+        x: Math.round(e.clientX - rect.left),
+        y: Math.round(e.clientY - rect.top),
+      },
+    }));
+  };
 
   return (
-    <section className="relative overflow-hidden bg-ink py-20 text-white md:py-28">
-      {/* Studio Ambient Vignette */}
+    <section
+      id="process-section"
+      aria-labelledby="process-heading"
+      className="relative overflow-hidden bg-[#0A121A] py-20 text-white md:py-28"
+    >
+      {/* ── Ambient Studio Optical Glows ── */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-[500px] w-[800px] rounded-full bg-accent-deep/10 blur-[140px]"
+        className="pointer-events-none absolute left-1/2 top-1/4 -translate-x-1/2 h-[550px] w-[850px] rounded-full bg-accent-deep/12 blur-[150px]"
+      />
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute -bottom-24 right-1/4 h-[400px] w-[600px] rounded-full bg-white/5 blur-[120px]"
       />
 
       <div className="relative z-10 mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-        {/* Section Header */}
+        {/* ── Section Header ── */}
         <div className="mb-16 flex flex-col items-center text-center">
-          <p className="eyebrow mb-2 justify-center text-accent-soft">
-            The Creative Journey
-          </p>
-          <h2 className="font-display text-3xl font-light tracking-tight text-white sm:text-4xl md:text-5xl">
-            From Vision to Timeless Archive
-          </h2>
-          <p className="mt-3.5 max-w-md font-body text-sm text-white/70 sm:text-base">
-            Every bespoke commission follows an uncompromising editorial process designed for
-            perfection.
-          </p>
-          <div className="divider-line mx-auto mt-6 max-w-[80px] bg-accent-soft/40" />
-        </div>
-
-        {/* Timeline Sequence */}
-        <div className="relative">
-          {/* Desktop Central Spine with Continuous Light Trace */}
-          <div
-            aria-hidden="true"
-            className="hidden md:block absolute left-1/2 top-0 bottom-0 w-px -translate-x-1/2 bg-gradient-to-b from-transparent via-white/20 to-transparent"
-          >
-            {/* Luminous Pulsing Exposure Beam */}
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-0.5 h-36 bg-gradient-to-b from-transparent via-accent to-transparent blur-[0.5px] animate-shimmer" />
+          <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/[0.06] px-4 py-1.5 shadow-[0_2px_12px_rgba(0,0,0,0.3),inset_0_1px_1.5px_rgba(255,255,255,0.4)] backdrop-blur-[6px] mb-3">
+            <span className="h-1.5 w-1.5 rounded-full bg-accent-tint animate-pulse" />
+            <span className="font-body text-[11px] font-semibold tracking-[0.24em] text-accent-soft uppercase">
+              The Creative Journey
+            </span>
           </div>
 
-          {/* Mobile Continuous Left Spine */}
+          <h2
+            id="process-heading"
+            className="font-display text-3xl font-light tracking-tight text-white sm:text-4xl md:text-5xl"
+          >
+            From Vision to <span className="italic font-normal font-serif text-accent-tint">Timeless Archive</span>
+          </h2>
+          <p className="mt-3.5 max-w-md font-body text-xs sm:text-sm text-white/70">
+            Every bespoke commission follows an uncompromising editorial process designed for precision. Click any stage to inspect.
+          </p>
+        </div>
+
+        {/* ── Timeline Sequence Container ── */}
+        <div className="relative">
+          {/* Desktop Central Spine with Liquid Glass Light Trace */}
           <div
             aria-hidden="true"
-            className="md:hidden absolute left-5 top-0 bottom-0 w-px bg-gradient-to-b from-transparent via-white/20 to-transparent"
+            className="hidden md:block absolute left-1/2 top-0 bottom-0 w-[2px] -translate-x-1/2 bg-gradient-to-b from-transparent via-white/15 to-transparent"
+          >
+            {/* Liquid Light Photon Drop traveling continuously */}
+            <div
+              className="absolute left-1/2 -translate-x-1/2 w-1 h-32 rounded-full bg-gradient-to-b from-transparent via-accent-tint to-transparent blur-[0.5px]"
+              style={{
+                animation: 'photonGlide 4s cubic-bezier(0.45, 0, 0.55, 1) infinite',
+              }}
+            />
+          </div>
+
+          {/* Mobile Left Spine */}
+          <div
+            aria-hidden="true"
+            className="md:hidden absolute left-6 top-0 bottom-0 w-[2px] bg-gradient-to-b from-transparent via-white/15 to-transparent"
           />
 
           <ol className="space-y-10 md:space-y-0">
             {STEPS.map((step, idx) => {
               const isEven = idx % 2 === 0;
-              const isActive = hoveredIdx === idx;
+              const isHovered = hoveredIdx === idx;
+              const isSelected = selectedIdx === idx;
+              const active = isHovered || isSelected;
+              const pos = cursorPos[idx] || { x: 150, y: 80 };
 
               return (
                 <li
                   key={step.number}
                   onMouseEnter={() => setHoveredIdx(idx)}
                   onMouseLeave={() => setHoveredIdx(null)}
-                  className={`reveal relative flex flex-col md:flex-row md:items-center md:gap-10 ${
+                  onClick={() => setSelectedIdx(idx)}
+                  className={`relative flex flex-col md:flex-row md:items-center md:gap-12 ${
                     isEven ? 'md:flex-row' : 'md:flex-row-reverse'
-                  } py-4 md:py-8`}
-                  style={{ transitionDelay: `${idx * 0.08}s` }}
+                  } py-4 md:py-8 cursor-pointer select-none`}
                 >
-                  {/* Step Card */}
+                  {/* Step Card — Apple Optical Glass Lens Slab */}
                   <div
-                    className={`pl-12 md:pl-0 md:w-[calc(50%-2.5rem)] ${
+                    className={`pl-14 md:pl-0 md:w-[calc(50%-3rem)] ${
                       isEven ? 'md:text-right' : 'md:text-left'
                     }`}
                   >
                     <div
-                      className={`group relative overflow-hidden rounded-2xl border p-6 md:p-7 backdrop-blur-md transition-all duration-500 ease-editorial ${
-                        isActive
-                          ? 'border-accent/60 bg-white/[0.08] shadow-[0_20px_50px_-15px_rgba(20,36,51,0.7)] -translate-y-1'
-                          : 'border-white/10 bg-white/[0.035] hover:border-white/20 hover:bg-white/[0.06]'
+                      ref={(el) => {
+                        cardRefs.current[idx] = el;
+                      }}
+                      onMouseMove={(e) => handleMouseMove(e, idx)}
+                      className={`group relative overflow-hidden rounded-[1.8rem] border p-6 sm:p-8 backdrop-blur-[6px] transition-all duration-500 ${
+                        active
+                          ? 'border-white/50 bg-white/[0.12] shadow-[0_24px_60px_rgba(0,0,0,0.6),inset_0_1.5px_2px_rgba(255,255,255,0.7),inset_0_-1px_1.5px_rgba(255,255,255,0.2)] -translate-y-1 scale-[1.02]'
+                          : 'border-white/15 bg-white/[0.05] shadow-[0_12px_32px_rgba(0,0,0,0.4),inset_0_1px_1.5px_rgba(255,255,255,0.35)] hover:border-white/30 hover:bg-white/[0.08]'
                       }`}
                     >
-                      {/* Viewfinder Reticle Framing Brackets (4 Corners) */}
+                      {/* Dynamic Caustic Spotlight tracking cursor inside card */}
+                      <div
+                        className="pointer-events-none absolute -inset-px transition-opacity duration-300"
+                        style={{
+                          background: `radial-gradient(350px circle at ${pos.x}px ${pos.y}px, rgba(255, 255, 255, 0.18), transparent 70%)`,
+                          opacity: active ? 1 : 0,
+                        }}
+                        aria-hidden="true"
+                      />
+
+                      {/* Viewfinder Camera Reticle Brackets (4 corners) */}
                       <div
                         aria-hidden="true"
-                        className={`pointer-events-none absolute inset-2.5 transition-opacity duration-400 ease-editorial motion-reduce:hidden ${
-                          isActive ? 'opacity-100' : 'opacity-0'
+                        className={`pointer-events-none absolute inset-3 transition-opacity duration-400 ${
+                          active ? 'opacity-100' : 'opacity-0'
                         }`}
                       >
-                        <span className="absolute left-0 top-0 h-2 w-2 border-l border-t border-accent" />
-                        <span className="absolute right-0 top-0 h-2 w-2 border-r border-t border-accent" />
-                        <span className="absolute bottom-0 left-0 h-2 w-2 border-b border-l border-accent" />
-                        <span className="absolute bottom-0 right-0 h-2 w-2 border-b border-r border-accent" />
+                        <span className="absolute left-0 top-0 h-2.5 w-2.5 border-l-2 border-t-2 border-accent-tint" />
+                        <span className="absolute right-0 top-0 h-2.5 w-2.5 border-r-2 border-t-2 border-accent-tint" />
+                        <span className="absolute bottom-0 left-0 h-2.5 w-2.5 border-b-2 border-l-2 border-accent-tint" />
+                        <span className="absolute bottom-0 right-0 h-2.5 w-2.5 border-b-2 border-r-2 border-accent-tint" />
                       </div>
 
-                      {/* Phase Header */}
+                      {/* Step Phase & Technical Aperture Tag */}
                       <div
-                        className={`flex items-center gap-2 mb-2.5 ${
+                        className={`relative z-10 flex items-center gap-2 mb-3 ${
                           isEven ? 'md:justify-end' : 'md:justify-start'
                         }`}
                       >
-                        <span className="font-mono text-[10px] uppercase tracking-[0.24em] text-accent-soft font-medium">
+                        <span className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/[0.08] px-2.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.2em] text-accent-soft backdrop-blur-[4px]">
+                          <span className="h-1 w-1 rounded-full bg-accent-tint" />
                           STEP {step.number} · {step.phase}
+                        </span>
+                        <span className="font-mono text-[9px] text-white/40 tracking-wider">
+                          {step.aperture}
                         </span>
                       </div>
 
                       {/* Step Title */}
                       <h3
-                        className={`font-display text-xl sm:text-2xl font-light mb-2.5 transition-colors duration-300 ${
-                          isActive ? 'text-accent-tint' : 'text-white'
+                        className={`relative z-10 font-display text-xl sm:text-2xl font-light mb-2.5 transition-colors duration-300 ${
+                          active ? 'text-accent-tint' : 'text-white'
                         }`}
                       >
                         {step.title}
                       </h3>
 
                       {/* Step Description */}
-                      <p className="font-body text-sm leading-relaxed text-white/70">
+                      <p className="relative z-10 font-body text-xs sm:text-sm leading-relaxed text-white/70">
                         {step.description}
                       </p>
 
                       {/* Technical Meta HUD Strip */}
                       <div
-                        className={`mt-4 pt-3 border-t border-white/10 flex items-center gap-2 font-mono text-[9px] uppercase tracking-wider text-white/45 ${
+                        className={`relative z-10 mt-5 pt-3 border-t border-white/10 flex items-center gap-2 font-mono text-[9px] uppercase tracking-wider text-white/45 ${
                           isEven ? 'md:justify-end' : 'md:justify-start'
                         }`}
                       >
-                        <span className="h-1 w-1 rounded-full bg-accent/60" />
+                        <span className="h-1 w-1 rounded-full bg-accent-soft" />
                         <span>{step.techMeta}</span>
                       </div>
                     </div>
                   </div>
 
-                  {/* Desktop Center Lens Node */}
+                  {/* ── Desktop Center Leica Optical Glass Lens Node ── */}
                   <div
                     aria-hidden="true"
-                    className={`hidden md:flex absolute left-1/2 -translate-x-1/2 h-13 w-13 rounded-full items-center justify-center z-10 transition-all duration-500 ease-editorial ${
-                      isActive
-                        ? 'border-2 border-accent bg-ink-soft text-white shadow-[0_0_28px_rgba(118,159,205,0.55)] scale-115'
-                        : 'border-2 border-white/20 bg-ink text-accent-soft shadow-[0_4px_16px_rgba(0,0,0,0.5)] hover:border-white/40'
+                    className={`hidden md:flex absolute left-1/2 -translate-x-1/2 h-14 w-14 rounded-full items-center justify-center z-20 backdrop-blur-[8px] transition-all duration-500 ${
+                      active
+                        ? 'border border-accent-tint bg-white/[0.18] text-white shadow-[0_0_32px_rgba(118,159,205,0.65),inset_0_1.5px_2px_rgba(255,255,255,0.9)] scale-110 animate-water-wobble'
+                        : 'border border-white/25 bg-black/40 text-accent-soft shadow-[0_6px_20px_rgba(0,0,0,0.6),inset_0_1px_1.5px_rgba(255,255,255,0.4)] hover:border-white/50'
                     }`}
                   >
-                    {/* Aperture ring indicator */}
+                    {/* Concentric Optical Glass Aperture Ring */}
                     <div
-                      className={`absolute inset-0 rounded-full border border-accent/30 transition-transform duration-700 ease-editorial ${
-                        isActive ? 'scale-125 opacity-100' : 'scale-100 opacity-0'
+                      className={`absolute inset-0 rounded-full border border-accent-tint/40 transition-transform duration-700 ${
+                        active ? 'scale-125 opacity-100' : 'scale-100 opacity-0'
                       }`}
                     />
-                    {step.icon(isActive)}
+                    {step.icon(active)}
                   </div>
 
-                  {/* Mobile Left Lens Node */}
+                  {/* ── Mobile Left Lens Node ── */}
                   <div
                     aria-hidden="true"
-                    className={`md:hidden absolute left-5 -translate-x-1/2 top-8 h-10 w-10 rounded-full flex items-center justify-center z-10 border transition-all duration-300 ${
-                      isActive
-                        ? 'border-accent bg-ink-soft text-white shadow-[0_0_16px_rgba(118,159,205,0.4)]'
-                        : 'border-white/20 bg-ink text-accent-soft'
+                    className={`md:hidden absolute left-6 -translate-x-1/2 top-6 h-11 w-11 rounded-full flex items-center justify-center z-20 border backdrop-blur-[6px] transition-all duration-300 ${
+                      active
+                        ? 'border-accent-tint bg-white/[0.18] text-white shadow-[0_0_20px_rgba(118,159,205,0.5),inset_0_1.5px_2px_rgba(255,255,255,0.85)]'
+                        : 'border-white/25 bg-black/50 text-accent-soft'
                     }`}
                   >
-                    {step.icon(isActive)}
+                    {step.icon(active)}
                   </div>
 
                   {/* Desktop Layout Counter-weight Spacer */}
-                  <div className="hidden md:block md:w-[calc(50%-2.5rem)]" />
+                  <div className="hidden md:block md:w-[calc(50%-3rem)]" />
                 </li>
               );
             })}
           </ol>
         </div>
       </div>
+
+      {/* ── Keyframe Animations for Spine Photon & Liquid Wobble ── */}
+      <style jsx>{`
+        @keyframes photonGlide {
+          0% {
+            top: -10%;
+            opacity: 0;
+          }
+          15% {
+            opacity: 1;
+          }
+          85% {
+            opacity: 1;
+          }
+          100% {
+            top: 105%;
+            opacity: 0;
+          }
+        }
+        @keyframes waterWobble {
+          0% {
+            transform: translate(-50%, 0) scale(1.15, 0.88);
+          }
+          30% {
+            transform: translate(-50%, 0) scale(0.92, 1.12);
+          }
+          55% {
+            transform: translate(-50%, 0) scale(1.06, 0.96);
+          }
+          75% {
+            transform: translate(-50%, 0) scale(0.98, 1.02);
+          }
+          100% {
+            transform: translate(-50%, 0) scale(1.1, 1.1);
+          }
+        }
+        .animate-water-wobble {
+          animation: waterWobble 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+      `}</style>
     </section>
   );
 }
