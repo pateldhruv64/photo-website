@@ -21,22 +21,26 @@ export default function FAQSection() {
   const toggle = (idx: number) => setOpenIndex(openIndex === idx ? null : idx);
 
   return (
-    <section className="relative overflow-hidden bg-surface py-12 md:py-20" id="faq-section">
+    <section
+      className="relative overflow-hidden bg-surface py-8 md:py-10"
+      id="faq-section"
+    >
       <div className="mx-auto max-w-3xl px-5 sm:px-6 lg:px-8">
         {/* Section header */}
-        <div className="mb-10 flex flex-col items-center text-center">
+        <div className="mb-6 flex flex-col items-center text-center">
           <p className="eyebrow justify-center">Common Questions</p>
           <h2 className="font-display text-3xl font-light text-ink sm:text-4xl md:text-5xl">
-            Frequently asked <span className="italic text-ink-soft">questions</span>
+            Frequently asked{' '}
+            <span className="italic text-ink-soft">questions</span>
           </h2>
           <p className="mt-3 max-w-md font-body text-sm leading-relaxed text-ink-muted">
-            Everything you need to know before booking. Can&apos;t find your answer? Reach out on
-            WhatsApp.
+            Everything you need to know before booking. Can&apos;t find your
+            answer? Reach out on WhatsApp.
           </p>
         </div>
 
         {/* Items */}
-        <div className="space-y-2.5">
+        <div className="space-y-2">
           {FAQ_DATA.map((item, idx) => {
             const isOpen = openIndex === idx;
             const panelId = `faq-panel-${idx}`;
@@ -62,7 +66,9 @@ export default function FAQSection() {
                   >
                     <span
                       className={`font-display text-base font-medium transition-colors sm:text-lg ${
-                        isOpen ? 'text-ink' : 'text-ink-soft group-hover:text-ink'
+                        isOpen
+                          ? 'text-ink'
+                          : 'text-ink-soft group-hover:text-ink'
                       }`}
                     >
                       {item.question}
@@ -76,8 +82,18 @@ export default function FAQSection() {
                           : 'bg-surface-alt text-ink-muted group-hover:bg-line-strong'
                       }`}
                     >
-                      <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
-                        <path d="M7 1v12M1 7h12" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                      <svg
+                        width="13"
+                        height="13"
+                        viewBox="0 0 14 14"
+                        fill="none"
+                      >
+                        <path
+                          d="M7 1v12M1 7h12"
+                          stroke="currentColor"
+                          strokeWidth="1.8"
+                          strokeLinecap="round"
+                        />
                       </svg>
                     </span>
                   </button>
