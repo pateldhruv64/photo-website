@@ -1,61 +1,31 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import BorderBeam from '@/components/ui/BorderBeam';
 
 interface Stat {
   value: number;
   suffix: string;
   label: string;
-  icon: JSX.Element;
 }
 
+/* Numbers yahan hardcoded hain — sirf wahi rakhna jo sach me sahi ho.
+   Agar admin panel se badalne ho to inhe config se lena chahiye. */
 const STATS: Stat[] = [
-  {
-    value: 5,
-    suffix: '+',
-    label: 'Years Experience',
-    icon: (
-      <svg className="w-5 h-5 text-accent-soft" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-    ),
-  },
-  {
-    value: 500,
-    suffix: '+',
-    label: 'Photos Delivered',
-    icon: (
-      <svg className="w-5 h-5 text-accent-soft" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-      </svg>
-    ),
-  },
-  {
-    value: 150,
-    suffix: '+',
-    label: 'Happy Clients',
-    icon: (
-      <svg className="w-5 h-5 text-accent-soft" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-      </svg>
-    ),
-  },
-  {
-    value: 10,
-    suffix: '+',
-    label: 'Cities Covered',
-    icon: (
-      <svg className="w-5 h-5 text-accent-soft" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-      </svg>
-    ),
-  },
+  { value: 5, suffix: '+', label: 'Years Experience' },
+  { value: 500, suffix: '+', label: 'Photos Delivered' },
+  { value: 150, suffix: '+', label: 'Happy Clients' },
+  { value: 10, suffix: '+', label: 'Cities Covered' },
 ];
 
-function CountUp({ target, suffix, start }: { target: number; suffix: string; start: boolean }) {
+function CountUp({
+  target,
+  suffix,
+  start,
+}: {
+  target: number;
+  suffix: string;
+  start: boolean;
+}) {
   const [count, setCount] = useState(0);
   const frameRef = useRef<number>(0);
 
@@ -70,10 +40,8 @@ function CountUp({ target, suffix, start }: { target: number; suffix: string; st
     const startTime = performance.now();
     const duration = 2000;
     const animate = (currentTime: number) => {
-      const elapsed = currentTime - startTime;
-      const progress = Math.min(elapsed / duration, 1);
-      // Editorial cubic bezier ease-out
-      const eased = 1 - Math.pow(1 - progress, 3);
+      const progress = Math.min((currentTime - startTime) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
       setCount(Math.floor(eased * target));
       if (progress < 1) frameRef.current = requestAnimationFrame(animate);
       else setCount(target);
@@ -82,76 +50,77 @@ function CountUp({ target, suffix, start }: { target: number; suffix: string; st
     return () => cancelAnimationFrame(frameRef.current);
   }, [start, target]);
 
-  // Split digits for individual styling
-  const digits = count.toString().split('');
-
   return (
-    <span className="inline-flex items-baseline tabular">
-      {digits.map((digit, i) => (
-        <span
-          key={i}
-          className="inline-block transition-all duration-150"
-          style={{
-            transform: start ? 'translateY(0)' : 'translateY(12px)',
-            opacity: start ? 1 : 0,
-            transitionDelay: `${i * 40}ms`,
-          }}
-        >
-          {digit}
-        </span>
-      ))}
-      <span className="text-accent-soft/75">{suffix}</span>
-    </span>
+    <>
+      {/* Screen reader ko sirf final value mile, 0 se 500 tak ginti nahi */}
+      <span className="sr-only">
+        {target}
+        {suffix}
+      </span>
+      {/* lining-nums: is font me default numerals "oldstyle" hain, jisse 1 aisa
+          dikhta tha jaise capital I aur 0 jaise chhota o. */}
+      <span aria-hidden className="lining-nums tabular-nums">
+        {count}
+        <span className="text-accent-soft/80">{suffix}</span>
+      </span>
+    </>
   );
 }
 
 export default function StatsSection() {
-  const ref = useRef<HTMLDivElement>(null);
+  const ref = useRef<HTMLElement>(null);
   const [started, setStarted] = useState(false);
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    const el = ref.current;
+    if (!el) return;
+
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting && !started) setStarted(true);
+        if (entry.isIntersecting) {
+          setStarted(true);
+          observer.disconnect(); // ek hi baar chalana hai
+        }
       },
-      { threshold: 0.2, rootMargin: '0px 0px -50px 0px' }
+      { threshold: 0.2, rootMargin: '0px 0px -50px 0px' },
     );
-    const current = ref.current;
-    if (current) observer.observe(current);
-    return () => { if (current) observer.unobserve(current); };
-  }, [started]);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   return (
-    <section ref={ref} className="py-16 md:py-24 bg-ink relative overflow-hidden my-6">
-      {/* Background Ambient Radial Glow */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[300px] bg-accent-deep/10 blur-[120px] rounded-full pointer-events-none" />
-
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        <div className="relative rounded-3xl bg-white/5 border border-white/10 p-8 md:p-12 backdrop-blur-xl shadow-2xl overflow-hidden">
-          {/* Moving Inspira Border Beam */}
-          <BorderBeam size={220} duration={8} colorFrom="#769FCD" colorTo="#F7FBFC" />
-
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-6">
-            {STATS.map((stat, idx) => (
-              <div
-                key={stat.label}
-                style={{ transitionDelay: `${idx * 0.1}s` }}
-                className="reveal flex flex-col items-center text-center group"
-              >
-                <div className="w-10 h-10 rounded-full bg-white/10 border border-white/15 flex items-center justify-center mb-3 group-hover:scale-110 group-hover:bg-accent/20 transition-all duration-300 shadow-md">
-                  {stat.icon}
-                </div>
-                <p className="font-display text-4xl sm:text-5xl md:text-6xl font-light text-white tracking-tight mb-2">
-                  <CountUp target={stat.value} suffix={stat.suffix} start={started} />
-                </p>
-                <p className="font-body text-[10px] md:text-xs tracking-[0.25em] uppercase text-white/60 font-medium">
+    <section ref={ref} className="my-6 bg-ink py-8 md:py-12">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+        {/* Hairlines yahan decoration nahi, grouping dikhati hain:
+            mobile par 2x2, desktop par 4 columns ek row me. */}
+        <dl className="grid grid-cols-2 border-y border-white/15 md:grid-cols-4">
+          {STATS.map((stat, idx) => (
+            <div
+              key={stat.label}
+              style={{ transitionDelay: `${idx * 0.1}s` }}
+              className={`reveal border-white/15 px-5 py-6 md:px-8 md:py-8 ${
+                idx % 2 === 1 ? 'border-l' : ''
+              } ${idx < 2 ? 'border-b' : ''} md:border-b-0 ${
+                idx > 0 ? 'md:border-l' : 'md:border-l-0'
+              }`}
+            >
+              {/* dl semantic: <dt> label, <dd> value — isliye label DOM me pehle,
+                  visually neeche (flex-col-reverse) */}
+              <div className="flex flex-col-reverse">
+                <dt className="mt-3 font-body text-sm text-white/60 md:text-base">
                   {stat.label}
-                </p>
+                </dt>
+                <dd className="font-display text-5xl font-light leading-none tracking-tight text-white sm:text-6xl md:text-7xl">
+                  <CountUp
+                    target={stat.value}
+                    suffix={stat.suffix}
+                    start={started}
+                  />
+                </dd>
               </div>
-            ))}
-          </div>
-        </div>
+            </div>
+          ))}
+        </dl>
       </div>
     </section>
   );

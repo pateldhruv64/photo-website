@@ -405,7 +405,7 @@ function ApertureLens({
     <>
       <div
         aria-hidden="true"
-        className="relative h-32 w-32 flex-shrink-0 rounded-full shadow-[0_20px_50px_rgba(0,0,0,0.65),0_0_70px_rgba(118,159,205,0.12)] sm:h-36 sm:w-36 md:h-80 md:w-80"
+        className="relative h-32 w-32 flex-shrink-0 rounded-full shadow-[0_20px_50px_rgba(0,0,0,0.65),0_0_70px_rgba(118,159,205,0.12)] sm:h-36 sm:w-36 md:h-64 md:w-64 lg:h-72 lg:w-72"
       >
         <BarrelSvg ring={ring} />
 
@@ -538,7 +538,7 @@ export default function ProcessTimeline({
       ref={sectionRef}
       id="process-section"
       aria-labelledby="process-heading"
-      className="relative overflow-hidden bg-[#0A121A] py-16 text-white md:py-24"
+      className="relative overflow-hidden bg-[#0A121A] py-10 text-white md:py-14"
     >
       {/* Ambient glow */}
       <div
@@ -548,7 +548,7 @@ export default function ProcessTimeline({
 
       <div className="relative z-10 mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
         {/* ── Header ── */}
-        <div className="mb-10 flex flex-col items-center text-center md:mb-14">
+        <div className="mb-6 flex flex-col items-center text-center md:mb-8">
           <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/[0.06] px-4 py-1.5 backdrop-blur-[6px]">
             <span className="h-1.5 w-1.5 rounded-full bg-accent-tint" />
             <span className="font-body text-[11px] font-semibold uppercase tracking-[0.24em] text-accent-soft">
@@ -672,11 +672,11 @@ export default function ProcessTimeline({
           }
           onTouchStart={onTouchStart}
           onTouchEnd={onTouchEnd}
-          className="mt-8 grid items-center gap-6 md:mt-12 md:grid-cols-12 md:gap-12"
+          className="mt-6 grid items-center gap-5 md:mt-8 md:grid-cols-12 md:gap-10"
           style={{ touchAction: 'pan-y' }}
         >
           {/* Left: asli lens. Iris khulta hai, f-ring ghoomti hai, photo focus + grade hota hai */}
-          <div className="flex items-center gap-5 md:col-span-5 md:flex-col md:gap-8">
+          <div className="flex items-center gap-5 md:col-span-5 md:flex-col md:gap-4">
             <ApertureLens
               stage={active}
               metas={STEPS.map((s) => s.meta)}
