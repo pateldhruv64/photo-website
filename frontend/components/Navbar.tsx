@@ -24,17 +24,27 @@ const SOCIALS = {
   },
   facebook: {
     label: 'Facebook',
-    path: <path d="M9 8h-3v4h3v12h5v-12h3.642l.358-4h-4v-1.667c0-.955.192-1.333 1.115-1.333h2.885v-5h-3.808c-3.596 0-5.192 1.583-5.192 4.615v3.385z" />,
+    path: (
+      <path d="M9 8h-3v4h3v12h5v-12h3.642l.358-4h-4v-1.667c0-.955.192-1.333 1.115-1.333h2.885v-5h-3.808c-3.596 0-5.192 1.583-5.192 4.615v3.385z" />
+    ),
     stroke: false,
   },
   youtube: {
     label: 'YouTube',
-    path: <path d="M23.498 6.163c-.272-1.016-1.071-1.815-2.087-2.087C19.565 3.5 12 3.5 12 3.5s-7.565 0-9.411.576c-1.016.272-1.815 1.071-2.087 2.087C0 8.01 0 12 0 12s0 3.99.502 5.837c.272 1.016 1.071 1.815 2.087 2.087C4.435 20.5 12 20.5 12 20.5s7.565 0 9.411-.576c1.016-.272 1.815-1.071 2.087-2.087C24 15.99 24 12 24 12s0-3.99-.502-5.837zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />,
+    path: (
+      <path d="M23.498 6.163c-.272-1.016-1.071-1.815-2.087-2.087C19.565 3.5 12 3.5 12 3.5s-7.565 0-9.411.576c-1.016.272-1.815 1.071-2.087 2.087C0 8.01 0 12 0 12s0 3.99.502 5.837c.272 1.016 1.071 1.815 2.087 2.087C4.435 20.5 12 20.5 12 20.5s7.565 0 9.411-.576c1.016-.272 1.815-1.071 2.087-2.087C24 15.99 24 12 24 12s0-3.99-.502-5.837zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+    ),
     stroke: false,
   },
 } as const;
 
-function SocialIcon({ type, size = 16 }: { type: keyof typeof SOCIALS; size?: number }) {
+function SocialIcon({
+  type,
+  size = 16,
+}: {
+  type: keyof typeof SOCIALS;
+  size?: number;
+}) {
   const s = SOCIALS[type];
   return (
     <svg
@@ -61,7 +71,10 @@ interface NavbarProps {
   categories?: Category[];
 }
 
-export default function Navbar({ config: initialConfig, categories: initialCategories }: NavbarProps = {}) {
+export default function Navbar({
+  config: initialConfig,
+  categories: initialCategories,
+}: NavbarProps = {}) {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
@@ -109,7 +122,8 @@ export default function Navbar({ config: initialConfig, categories: initialCateg
   // Escape se menu band ho
   useEffect(() => {
     if (!mobileOpen) return;
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setMobileOpen(false);
+    const onKey = (e: KeyboardEvent) =>
+      e.key === 'Escape' && setMobileOpen(false);
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [mobileOpen]);
@@ -117,7 +131,9 @@ export default function Navbar({ config: initialConfig, categories: initialCateg
   const scrollToBooking = (e: React.MouseEvent) => {
     if (!isHome) return;
     e.preventDefault();
-    document.getElementById('booking-section')?.scrollIntoView({ behavior: 'smooth' });
+    document
+      .getElementById('booking-section')
+      ?.scrollIntoView({ behavior: 'smooth' });
   };
 
   const brand = config?.photographer_name || 'Photography';
@@ -142,17 +158,40 @@ export default function Navbar({ config: initialConfig, categories: initialCateg
           >
             {logo ? (
               <span className="relative h-9 w-9 flex-shrink-0 overflow-hidden rounded-full ring-1 ring-line">
-                <Image src={logo} alt="" fill sizes="36px" className="object-cover" unoptimized />
+                <Image
+                  src={logo}
+                  alt=""
+                  fill
+                  sizes="36px"
+                  className="object-cover"
+                  unoptimized
+                />
               </span>
             ) : (
               <span
                 className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full border transition-colors duration-500 ${
-                  solid ? 'border-line text-accent-deep' : 'border-white/30 text-white'
+                  solid
+                    ? 'border-line text-accent-deep'
+                    : 'border-white/30 text-white'
                 }`}
               >
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.4}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                <svg
+                  className="h-4 w-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={1.4}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
                 </svg>
               </span>
             )}
@@ -160,7 +199,9 @@ export default function Navbar({ config: initialConfig, categories: initialCateg
             <span className="min-w-0">
               <span
                 className={`block truncate font-display text-xl font-light leading-none tracking-[0.01em] transition-colors duration-500 sm:text-2xl ${
-                  solid ? 'text-ink' : 'text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.4)]'
+                  solid
+                    ? 'text-ink'
+                    : 'text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.4)]'
                 }`}
               >
                 {brand}
@@ -176,7 +217,10 @@ export default function Navbar({ config: initialConfig, categories: initialCateg
           </Link>
 
           {/* ── Center nav ── */}
-          <nav aria-label="Primary" className="hidden items-center gap-1 lg:flex">
+          <nav
+            aria-label="Primary"
+            className="hidden items-center gap-1 lg:flex"
+          >
             {links.map((link) => {
               const active = pathname === link.href;
               return (
@@ -190,8 +234,8 @@ export default function Navbar({ config: initialConfig, categories: initialCateg
                         ? 'text-ink'
                         : 'text-ink-muted hover:text-ink'
                       : active
-                      ? 'text-white'
-                      : 'text-white/70 hover:text-white'
+                        ? 'text-white'
+                        : 'text-white/70 hover:text-white'
                   }`}
                 >
                   {link.label}
@@ -224,12 +268,14 @@ export default function Navbar({ config: initialConfig, categories: initialCateg
                     rel="noopener noreferrer"
                     aria-label={SOCIALS[key].label}
                     className={`transition-all duration-300 hover:-translate-y-0.5 ${
-                      solid ? 'text-ink-muted hover:text-accent-deep' : 'text-white/70 hover:text-white'
+                      solid
+                        ? 'text-ink-muted hover:text-accent-deep'
+                        : 'text-white/70 hover:text-white'
                     }`}
                   >
                     <SocialIcon type={key} />
                   </a>
-                ) : null
+                ) : null,
               )}
             </div>
 
@@ -269,71 +315,96 @@ export default function Navbar({ config: initialConfig, categories: initialCateg
       </header>
 
       {/* ═══ Mobile overlay ═══
-          Yahan pehle framer-motion tha. Navbar har page par load hota hai,
-          to uska import framer-motion (~35KB gz) ko MAIN bundle me le
-          aata tha — sirf ek mobile menu ke fade + stagger ke liye.
-          Ab wahi effect pure CSS se: koi JS nahi, aur animation
-          compositor thread par chalta hai (main thread free). */}
+          Pure CSS animation (framer-motion hataya gaya — bundle chhota rakhne ke liye).
+
+          Is version me kya badla:
+          • 01/02/03 numbers hataye — links koi sequence nahi hain, sirf noise the.
+          • Har row ka → arrow hataya — poori row tappable hai, arrow ki zarurat nahi.
+            Ab active page ko ek chhota dot dikhata hai.
+          • Links bade kiye (2.25rem) aur neeche, thumb ke paas rakhe — pehle 3 links
+            beech me chhote dikhte the aur upar-neeche khaali jagah bahut thi.
+          • Upar brand ke niche "Photography Studio" (desktop jaisa) — identity poori.
+          • Footer text ka contrast badhaya (pehle white/25 — padhne layak nahi tha).
+          • h-[100dvh] — mobile browser ke address bar ke saath bhi poori screen. */}
       {mobileOpen && (
         <div
-          className="menu-overlay fixed inset-0 z-[60] flex flex-col bg-obsidian md:hidden"
+          className="menu-overlay fixed inset-0 z-[60] flex h-[100dvh] flex-col bg-obsidian md:hidden"
           role="dialog"
           aria-modal="true"
           aria-label="Navigation menu"
         >
-          {/* Ambient glow — flat black se zyada alive lagta hai.
-              Static hai, animated nahi, to koi per-frame cost nahi. */}
+          {/* Ambient glow — static, animated nahi, to koi per-frame cost nahi. */}
           <div className="pointer-events-none absolute -right-16 top-16 h-64 w-64 rounded-full bg-accent/15 blur-[110px]" />
           <div className="pointer-events-none absolute -left-10 bottom-32 h-48 w-48 rounded-full bg-accent-deep/12 blur-[90px]" />
 
-          <div className="flex items-center justify-between px-5 py-5">
-            <span className="font-display text-xl font-light text-white/90">{brand}</span>
+          {/* ── Top bar: brand + close ── */}
+          <div className="relative flex items-center justify-between px-6 pt-5">
+            <div className="min-w-0">
+              <span className="block truncate font-display text-xl font-light leading-none text-white/90">
+                {brand}
+              </span>
+              <span className="mt-1.5 block text-[9px] uppercase tracking-[0.3em] text-white/40">
+                Photography Studio
+              </span>
+            </div>
             <button
               onClick={() => setMobileOpen(false)}
               aria-label="Close menu"
-              className="flex h-11 w-11 items-center justify-center rounded-full border border-white/15 text-white/70 transition-colors hover:text-white"
+              className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full border border-white/15 text-white/70 transition-colors hover:text-white"
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.6"
+              >
                 <line x1="18" y1="6" x2="6" y2="18" />
                 <line x1="6" y1="6" x2="18" y2="18" />
               </svg>
             </button>
           </div>
 
-          <nav aria-label="Mobile" className="flex flex-1 flex-col justify-center px-6 pb-6">
-            {links.map((link, idx) => {
-              const active = pathname === link.href;
-              return (
-                <div
-                  key={`${link.href}-${link.label}`}
-                  className="menu-item"
-                  // Stagger — CSS animation-delay se, JS orchestration ke bina
-                  style={{ animationDelay: `${0.05 + idx * 0.05}s` }}
-                >
-                  <Link
-                    href={link.href}
-                    onClick={() => setMobileOpen(false)}
-                    className="group flex items-baseline justify-between border-b border-white/8 py-4"
+          {/* ── Links + CTA (neeche, thumb ke paas) ── */}
+          <nav
+            aria-label="Mobile"
+            className="relative flex flex-1 flex-col justify-end px-6 pb-8"
+          >
+            <div>
+              {links.map((link, idx) => {
+                const active = pathname === link.href;
+                return (
+                  <div
+                    key={`${link.href}-${link.label}`}
+                    className="menu-item border-b border-white/10 first:border-t"
+                    // Stagger — CSS animation-delay se, JS orchestration ke bina
+                    style={{ animationDelay: `${0.05 + idx * 0.05}s` }}
                   >
-                    <span className="flex items-baseline gap-3">
-                      <span className="font-body text-[10px] tabular text-white/25">
-                        {String(idx + 1).padStart(2, '0')}
-                      </span>
+                    <Link
+                      href={link.href}
+                      onClick={() => setMobileOpen(false)}
+                      aria-current={active ? 'page' : undefined}
+                      className="group flex items-center justify-between py-5"
+                    >
                       <span
-                        className={`font-display text-[1.75rem] font-light leading-none transition-transform duration-500 ease-editorial group-active:translate-x-1.5 ${
+                        className={`font-display text-[2.25rem] font-light leading-none transition-transform duration-500 ease-editorial group-active:translate-x-1.5 ${
                           active ? 'text-accent-soft italic' : 'text-white/90'
                         }`}
                       >
                         {link.label}
                       </span>
-                    </span>
-                    <span aria-hidden className={active ? 'text-accent-soft' : 'text-white/25'}>
-                      →
-                    </span>
-                  </Link>
-                </div>
-              );
-            })}
+                      {active && (
+                        <span
+                          aria-hidden
+                          className="h-1.5 w-1.5 rounded-full bg-accent-soft"
+                        />
+                      )}
+                    </Link>
+                  </div>
+                );
+              })}
+            </div>
 
             <div
               className="menu-item mt-8"
@@ -345,46 +416,46 @@ export default function Navbar({ config: initialConfig, categories: initialCateg
                   setMobileOpen(false);
                   scrollToBooking(e);
                 }}
-                className="flex w-full items-center justify-center gap-2 rounded-full bg-white py-4 font-body text-[12px] uppercase tracking-[0.2em] text-ink"
+                className="flex w-full items-center justify-center rounded-full bg-white py-[18px] font-body text-[13px] uppercase tracking-[0.18em] text-ink transition-transform active:scale-[0.97]"
               >
                 Book a Session
               </Link>
             </div>
           </nav>
 
-          {/* Bottom: quick contact */}
+          {/* ── Bottom: socials + copyright ── */}
           <div
-            className="menu-item px-6 pb-[calc(env(safe-area-inset-bottom,0px)+1.5rem)]"
+            className="menu-item relative px-6 pb-[calc(env(safe-area-inset-bottom,0px)+1.5rem)]"
             style={{ animationDelay: `${0.14 + links.length * 0.05}s` }}
           >
-              <div className="mb-5 flex items-center justify-center gap-3">
-                {(['instagram', 'facebook', 'youtube'] as const).map((key) =>
-                  config?.social_links?.[key] ? (
-                    <a
-                      key={key}
-                      href={config.social_links[key]}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      aria-label={SOCIALS[key].label}
-                      className="flex h-11 w-11 items-center justify-center rounded-full border border-white/12 bg-white/5 text-white/65 transition-colors hover:text-white"
-                    >
-                      <SocialIcon type={key} size={17} />
-                    </a>
-                  ) : null
-                )}
-                {whatsappUrl && (
+            <div className="mb-5 flex items-center justify-center gap-3">
+              {(['instagram', 'facebook', 'youtube'] as const).map((key) =>
+                config?.social_links?.[key] ? (
                   <a
-                    href={whatsappUrl}
+                    key={key}
+                    href={config.social_links[key]}
                     target="_blank"
                     rel="noopener noreferrer"
-                    aria-label="WhatsApp"
-                    className="flex h-11 w-11 items-center justify-center rounded-full bg-[#25D366] text-white"
+                    aria-label={SOCIALS[key].label}
+                    className="flex h-11 w-11 items-center justify-center rounded-full border border-white/12 bg-white/5 text-white/65 transition-colors hover:text-white"
                   >
-                    <WhatsAppIcon size={17} />
+                    <SocialIcon type={key} size={17} />
                   </a>
-                )}
-              </div>
-            <p className="text-center font-body text-[9px] uppercase tracking-[0.3em] text-white/25">
+                ) : null,
+              )}
+              {whatsappUrl && (
+                <a
+                  href={whatsappUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="WhatsApp"
+                  className="flex h-11 w-11 items-center justify-center rounded-full bg-[#25D366] text-white"
+                >
+                  <WhatsAppIcon size={17} />
+                </a>
+              )}
+            </div>
+            <p className="text-center font-body text-[10px] uppercase tracking-[0.25em] text-white/40">
               © {new Date().getFullYear()} {brand}
             </p>
           </div>
