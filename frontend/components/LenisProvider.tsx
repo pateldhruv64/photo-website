@@ -29,6 +29,19 @@ interface LenisProviderProps {
 export default function LenisProvider({ children }: LenisProviderProps) {
   const pathname = usePathname();
 
+  // ── Scroll Restoration Fix ──────────────────────────────────────────
+  // Browser refresh par pichli scroll position restore karta hai.
+  // Sticky hero ke saath yeh hero skip kar deta hai — page seedha
+  // "Featured Work" par land karta hai. Manual control se hum always
+  // top par start karte hain.
+  useEffect(() => {
+    if ('scrollRestoration' in history) {
+      history.scrollRestoration = 'manual';
+    }
+    // Page load par top pe le jao (refresh/link dono ke liye)
+    window.scrollTo(0, 0);
+  }, []);
+
   useEffect(() => {
     const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     // `pointer: coarse` = ungli/stylus. In devices par native scroll hi best hai.
