@@ -123,17 +123,18 @@ export default function HeroSection({ config, seo }: HeroSectionProps) {
           }`}
         />
 
-        {/* ── Scrims & vignette ── */}
-        <div className="absolute inset-0 bg-ink/30" />
-        <div className="absolute inset-0 bg-gradient-to-b from-ink/60 via-ink/20 to-ink/80" />
-        <div className="absolute inset-0 bg-accent mix-blend-soft-light opacity-[0.14]" />
-
+        {/* ── Scrims & subtle light blue photo tint ── */}
+        {/* Light gradient so white typography is crisp while photo details stay bright */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/10 to-black/55" />
+        {/* Very light, fresh blue tint — delicate soft light without making it dark */}
+        <div className="absolute inset-0 bg-[#769FCD] mix-blend-soft-light opacity-[0.07]" />
+        {/* Soft natural vignette */}
         <div
           aria-hidden
           className="absolute inset-0 pointer-events-none"
           style={{
             background:
-              'radial-gradient(ellipse at center, transparent 42%, rgba(8,16,24,0.52) 100%)',
+              'radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.32) 100%)',
           }}
         />
 
