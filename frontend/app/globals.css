@@ -1283,7 +1283,26 @@ html::after {
 }
 
 /* ═══════════════════════════════════════════════════════════════════
-   SHUTTER INTRO (Cinematic Editorial Reveal)
+   SHUTTER INTRO — "Niks Photos" title card, phir shutter upar uthta hai
+   ───────────────────────────────────────────────────────────────────
+   Ye CSS-keyframe animation NAHI hai. Poori state <html> ki classes me rehti
+   hai (Intro.tsx ka script unhe lagata hai):
+
+     (koi class nahi)  → dark shutter, text chhupa hua (blur + neeche)
+     html.intro-go     → text blur se sharp hota hua upar aata hai
+     html.intro-out    → text upar uthke blur hota hai, shutter upar jaata hai
+     html.intro-done   → shutter hat gaya (display: none)
+     html.no-intro     → is session me pehle dikh chuka / reduced-motion
+
+   Pehle (keyframes) wale version me 2 problem the:
+   1. Animation HTML parse hote hi shuru ho jaati thi, jabki Cormorant
+      (font-display: block) abhi download ho raha hota tha. Text tab dikhta tha
+      jab font file aati — "Niks" (normal) aur "Photos" (italic) alag files
+      hain, isliye dono alag-alag waqt par achanak "pop" hote the = 2 blink.
+      Ab `intro-go` tabhi lagta hai jab dono fonts load ho jayein.
+   2. DOM dobara ban jaaye (hydration/re-render) to keyframe animation
+      shuru se chal padti thi. Ab state <html> par hai — naya element bhi
+      seedha current state le leta hai, dobara "play" nahi hota.
    ═══════════════════════════════════════════════════════════════════ */
 .intro-shutter {
   position: fixed;
@@ -1297,25 +1316,33 @@ html::after {
   color: #F7FBFC;
   pointer-events: all;
   will-change: transform;
+  transform: translate3d(0, 0, 0);
+  /* Failsafe: script kisi wajah se na chale (client-side navigation me
+     inline script run nahi hoti) to bhi shutter 4.2s baad apne aap hat jaye,
+     screen kabhi atke nahi. */
+  animation: intro-failsafe 0.01s linear 4.2s forwards;
 }
 
-/* Shutter wipe up begins as text finishes its upward exit */
-.intro-shutter.intro-shutter--active {
-  animation: shutter-wipe-up 0.85s cubic-bezier(0.16, 1, 0.3, 1) 1.25s forwards;
+@keyframes intro-failsafe {
+
+  /* visibility/display keyframe me bharosemand nahi — transform se screen ke
+     bahar bhej dete hain (na dikhta hai, na click rokta hai) */
+  to {
+    transform: translate3d(0, -100%, 0);
+    opacity: 0;
+  }
 }
 
-html.no-intro .intro-shutter {
+html:not(.js) .intro-shutter,
+html.no-intro .intro-shutter,
+html.intro-done .intro-shutter {
   display: none !important;
 }
 
-@keyframes shutter-wipe-up {
-  0% {
-    transform: translate3d(0, 0, 0);
-  }
-  100% {
-    transform: translate3d(0, -100%, 0);
-    visibility: hidden;
-  }
+/* Shutter upar uthta hai — text ke ghulne ke thoda hi baad shuru */
+html.intro-out .intro-shutter {
+  transform: translate3d(0, -100%, 0);
+  transition: transform 760ms cubic-bezier(0.76, 0, 0.24, 1) 120ms;
 }
 
 .intro-text {
@@ -1324,37 +1351,49 @@ html.no-intro .intro-shutter {
   font-weight: 300;
   line-height: 1.05;
   letter-spacing: -0.015em;
-  color: #F7FBFC;
-  transform: translate3d(0, 110%, 0);
+  white-space: nowrap;
+  /* overflow: hidden jaan-bujh kar nahi — blur ka glow kat jaata hai */
+  padding: 1rem 1.5rem;
+  user-select: none;
+}
+
+.intro-word {
+  display: inline-block;
   opacity: 0;
-  will-change: transform, opacity;
+  transform: translate3d(0, 0.32em, 0) scale(1.06);
+  filter: blur(18px);
+  will-change: transform, opacity, filter;
 }
 
-/* Choreographed Motion: Entrance (Open) -> Hold -> Exit (Close) */
-.intro-text.intro-text--active {
-  animation: intro-text-flow 1.55s cubic-bezier(0.16, 1, 0.3, 1) 0.05s forwards;
+/* Enter: neeche se aata hai, blur → sharp (reference video jaisa) */
+html.intro-go .intro-word {
+  opacity: 1;
+  transform: translate3d(0, 0, 0) scale(1);
+  filter: blur(0);
+  transition:
+    opacity 800ms cubic-bezier(0.33, 0, 0.2, 1),
+    transform 1300ms cubic-bezier(0.16, 1, 0.3, 1),
+    filter 1000ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-@keyframes intro-text-flow {
-  /* 0% to 38%: Smooth Entrance (Open) - glides up from below */
-  0% {
-    transform: translate3d(0, 110%, 0);
-    opacity: 0;
-  }
-  38% {
-    transform: translate3d(0, 0, 0);
-    opacity: 1;
-  }
-  /* 38% to 70%: Steady Hold in center */
-  70% {
-    transform: translate3d(0, 0, 0);
-    opacity: 1;
-  }
-  /* 70% to 100%: Smooth Exit (Close) - glides up and vanishes through top */
-  100% {
-    transform: translate3d(0, -110%, 0);
-    opacity: 0;
-  }
+html.intro-go .intro-word-2 {
+  transition-delay: 140ms;
+}
+
+/* Exit: upar uthta hai, blur hota hai, ghul jaata hai (ye rules upar wale
+   se baad me hain — dono class ek saath hon to exit jeetta hai) */
+html.intro-out .intro-word {
+  opacity: 0;
+  transform: translate3d(0, -0.24em, 0) scale(1.03);
+  filter: blur(14px);
+  transition:
+    opacity 520ms cubic-bezier(0.4, 0, 0.6, 1),
+    transform 800ms cubic-bezier(0.4, 0, 0.2, 1),
+    filter 700ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+html.intro-out .intro-word-2 {
+  transition-delay: 0ms;
 }
 
 @media (prefers-reduced-motion: reduce) {

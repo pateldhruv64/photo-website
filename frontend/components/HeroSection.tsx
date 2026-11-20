@@ -29,11 +29,40 @@ export default function HeroSection({ config, seo }: HeroSectionProps) {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    // Mount trigger for the opening un-clip animation
-    const timer = setTimeout(() => setMounted(true), 60);
+    // Mount trigger for the opening un-clip animation.
+    // Agar shutter intro chal raha hai to hero ka zoom/un-clip tab shuru hota hai
+    // jab shutter upar uthna shuru kare ('niks:intro-out' event, Intro.tsx se) —
+    // taaki intro ke neeche animation chhup ke khatam na ho jaye.
+    const root = document.documentElement;
+    const introPending =
+      !!document.querySelector('.intro-shutter') &&
+      !['no-intro', 'intro-out', 'intro-done'].some((c) =>
+        root.classList.contains(c),
+      );
+
+    let timer: ReturnType<typeof setTimeout>;
+    let fallback: ReturnType<typeof setTimeout> | undefined;
+    const reveal = () => {
+      if (fallback) clearTimeout(fallback);
+      window.removeEventListener('niks:intro-out', reveal);
+      timer = setTimeout(() => setMounted(true), 60);
+    };
+
+    if (introPending) {
+      window.addEventListener('niks:intro-out', reveal);
+      fallback = setTimeout(reveal, 4600); // safety: kuch bhi ho, hero chhupa na rahe
+    } else {
+      reveal();
+    }
+
+    const cleanup = () => {
+      clearTimeout(timer);
+      if (fallback) clearTimeout(fallback);
+      window.removeEventListener('niks:intro-out', reveal);
+    };
 
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      return () => clearTimeout(timer);
+      return cleanup;
     }
 
     let frame = 0;
@@ -60,7 +89,7 @@ export default function HeroSection({ config, seo }: HeroSectionProps) {
 
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => {
-      clearTimeout(timer);
+      cleanup();
       window.removeEventListener('scroll', onScroll);
       if (frame) cancelAnimationFrame(frame);
     };
@@ -82,7 +111,7 @@ export default function HeroSection({ config, seo }: HeroSectionProps) {
     <div className="sticky top-0 z-0 overflow-hidden">
       <section
         aria-label="Introduction"
-        className="relative flex h-[92dvh] w-full items-center justify-center overflow-hidden md:h-screen"
+        className="relative flex h-[92dvh] w-full items-center justify-center overflow-hidden bg-[#0b131a] md:h-screen"
       >
         {/* ── Background ──
             Outer div: moves with scroll only (no transition, so it follows the scroll exactly).
@@ -123,18 +152,20 @@ export default function HeroSection({ config, seo }: HeroSectionProps) {
           }`}
         />
 
-        {/* ── Scrims & subtle light blue photo tint ── */}
-        {/* Light gradient so white typography is crisp while photo details stay bright */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/10 to-black/55" />
-        {/* Very light, fresh blue tint — delicate soft light without making it dark */}
-        <div className="absolute inset-0 bg-[#769FCD] mix-blend-soft-light opacity-[0.07]" />
-        {/* Soft natural vignette */}
+        {/* ── Scrims & vignette ──
+            Pehle navy `ink` (#142433) scrims + ek blue soft-light layer thi: photo ke
+            warm tones (cream backdrop, lamp) dab ke poori image cold-blue ho jaati thi.
+            Ab scrims neutral dark hain — darkness same (text readable), photo apne
+            asli rang me. Site ka blue UI accents me rehta hai. */}
+        <div className="absolute inset-0 bg-[#070d13]/30" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#070d13]/60 via-[#070d13]/20 to-[#070d13]/80" />
+
         <div
           aria-hidden
           className="absolute inset-0 pointer-events-none"
           style={{
             background:
-              'radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.32) 100%)',
+              'radial-gradient(ellipse at center, transparent 42%, rgba(8,16,24,0.52) 100%)',
           }}
         />
 
@@ -166,8 +197,10 @@ export default function HeroSection({ config, seo }: HeroSectionProps) {
             </p>
           </div>
 
-          {/* H1 title. pb-3 / -mb-3 stop the drop-shadow from being cut off by overflow-hidden */}
-          <div className="overflow-hidden pb-3 -mb-3">
+          {/* H1 title. overflow-hidden wrapper drop-shadow ko kaat deta hai — neeche pb-3/-mb-3
+              tha, par left/right me nahi, isliye title ke peeche halka rectangle (shadow ka
+              hard edge) dikhta tha. px-14/-mx-14 se shadow poori aati hai. */}
+          <div className="overflow-hidden px-14 -mx-14 pb-3 -mb-3">
             <h1
               className={`font-display text-[2.6rem] font-light leading-[1.02] tracking-[-0.02em] text-white drop-shadow-[0_4px_28px_rgba(0,0,0,0.55)] transition-all duration-1000 delay-150 ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:transition-none sm:text-6xl md:text-7xl lg:text-[5.5rem] ${
                 mounted

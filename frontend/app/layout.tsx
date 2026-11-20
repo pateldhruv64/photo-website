@@ -34,7 +34,7 @@ const cormorant = Cormorant_Garamond({
   weight: ['300', '400', '500', '600', '700'],
   style: ['normal', 'italic'],
   variable: '--font-cormorant',
-  display: 'swap',
+  display: 'block',
 });
 
 export const viewport: Viewport = {
@@ -94,18 +94,31 @@ export default async function RootLayout({
   const schema = buildSchemaGraph(seo);
 
   return (
-    <html lang="en-IN" className={`${raleway.variable} ${cormorant.variable}`} suppressHydrationWarning>
+    <html
+      lang="en-IN"
+      className={`js ${raleway.variable} ${cormorant.variable}`}
+      suppressHydrationWarning
+    >
       <head>
         {/* Cloudinary CDN se pehle connect karo — images fast load hongi */}
-        <link rel="preconnect" href="https://res.cloudinary.com" crossOrigin="anonymous" />
+        <link
+          rel="preconnect"
+          href="https://res.cloudinary.com"
+          crossOrigin="anonymous"
+        />
         <link rel="dns-prefetch" href="https://res.cloudinary.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        {/* Paint se PEHLE `js` class lagti hai. Scroll-reveal CSS isi par
-            depend karti hai — matlab JS block/fail ho to content bina
-            animation ke dikhega, gayab nahi hoga. Ek line, koi flash nahi. */}
+        <link
+          rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossOrigin="anonymous"
+        />
+        {/* Paint se PEHLE `js` aur `no-intro` guard lagti hai.
+            Agar user ne is session me pehle intro dekh liya ho, to
+            `no-intro` paint se pehle lag jata hai jisse shutter
+            1 frame ke liye bhi black blink nahi karta. */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `document.documentElement.classList.add('js');if('scrollRestoration' in history){history.scrollRestoration='manual';}try{if(sessionStorage.getItem('niks_intro_played')){document.documentElement.classList.add('no-intro');}}catch(e){}window.scrollTo(0,0);window.addEventListener('beforeunload',function(){try{sessionStorage.removeItem('niks_intro_played');}catch(e){}window.scrollTo(0,0);});window.addEventListener('pagehide',function(){try{sessionStorage.removeItem('niks_intro_played');}catch(e){}window.scrollTo(0,0);});`,
+            __html: `if('scrollRestoration' in history){history.scrollRestoration='manual';}try{if(sessionStorage.getItem('niks_intro_played')==='1'||window.matchMedia('(prefers-reduced-motion: reduce)').matches){document.documentElement.classList.add('no-intro');}}catch(e){}window.scrollTo(0,0);window.addEventListener('beforeunload',function(){try{sessionStorage.removeItem('niks_intro_played');}catch(e){}});window.addEventListener('pagehide',function(){try{sessionStorage.removeItem('niks_intro_played');}catch(e){}});`,
           }}
         />
       </head>

@@ -1,82 +1,152 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 /**
  * ─────────────────────────────────────────────────────────────────────
- *  SHUTTER INTRO (Cinematic Editorial Reveal)
+ *  SHUTTER INTRO ("Niks Photos" title card → shutter upar uthta hai)
  * ─────────────────────────────────────────────────────────────────────
- *  - Fixed dark curtain (#0b131a) from frame 0 -> zero white flash on refresh
- *  - Text Entrance (Open): "Niks Photos" glides up from masked bottom
- *  - Text Hold: Sits crystal clear in center
- *  - Text Exit (Close): Glides up and vanishes through top mask
- *  - Shutter Wipe: Curtain wipes up right behind the text to reveal Hero section
- *  - Zero double-blink on hydration: Controlled via initiated ref
- *  - No progress bar
+ *  - Head guard: Pehle session me chal chuka ho to <head> me hi `no-intro`
+ *    lag jata hai — zero flash / zero black blink.
+ *  - Font ready check: Cormorant font load hone ka wait karta hai, taaki
+ *    text achanak jump na kare (pop-in band).
+ *  - Smooth CSS Transitions: enter (blur→sharp) → hold → exit (wipe up).
+ *  - Sync with Hero: 'niks:intro-out' event bhejta hai taaki HeroSection
+ *    apna opening un-clip shutter ke saath hi shuru kare.
+ *  - Tap / Click / Key press par turant skip.
  */
+const KEY = 'niks_intro_played';
+
 export default function Intro() {
-  const [visible, setVisible] = useState(true);
-  const [active, setActive] = useState(false);
-  const initiatedRef = useRef(false);
+  const [phase, setPhase] = useState<'waiting' | 'go' | 'out' | 'done'>('waiting');
 
   useEffect(() => {
+    const root = document.documentElement;
+
+    // Check if reduced-motion or already played in this tab session
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const seen =
-      typeof window !== 'undefined' &&
-      sessionStorage.getItem('niks_intro_played') === '1';
+    let seen = false;
+    try {
+      seen = sessionStorage.getItem(KEY) === '1';
+    } catch {
+      seen = false;
+    }
 
     if (reduced || seen) {
-      setVisible(false);
+      root.classList.add('no-intro');
+      setPhase('done');
       return;
     }
 
-    if (initiatedRef.current) return;
-    initiatedRef.current = true;
-
-    // Ensure scroll starts exactly at top
+    // Lock scrolling while intro is running
     window.scrollTo(0, 0);
+    const lock = (e: Event) => e.preventDefault();
+    window.addEventListener('wheel', lock, { passive: false });
+    window.addEventListener('touchmove', lock, { passive: false });
 
-    // Start choreographed motion once on client
-    setActive(true);
+    let timerStart: ReturnType<typeof setTimeout>;
+    let timerWipe: ReturnType<typeof setTimeout>;
+    let finished = false;
+    let started = false;
+    let leaving = false;
 
-    // Prevent wheel and touch scrolling during the shutter sequence
-    const prevent = (e: Event) => e.preventDefault();
-    window.addEventListener('wheel', prevent, { passive: false });
-    window.addEventListener('touchmove', prevent, { passive: false });
+    const finish = () => {
+      if (finished) return;
+      finished = true;
+      root.classList.add('intro-done');
+      setPhase('done');
 
-    // Complete shutter sequence after wipe finishes (1.25s delay + 0.85s wipe = 2.10s)
-    const timer = setTimeout(() => {
-      window.removeEventListener('wheel', prevent);
-      window.removeEventListener('touchmove', prevent);
-      window.scrollTo(0, 0);
-      setVisible(false);
+      window.removeEventListener('wheel', lock);
+      window.removeEventListener('touchmove', lock);
+      window.removeEventListener('keydown', skip);
+
       try {
-        sessionStorage.setItem('niks_intro_played', '1');
+        window.scrollTo(0, 0);
+        sessionStorage.setItem(KEY, '1');
       } catch {}
-    }, 2150);
+    };
+
+    const leave = () => {
+      if (leaving) return;
+      leaving = true;
+      clearTimeout(timerStart);
+      root.classList.add('intro-out');
+      setPhase('out');
+      try {
+        window.dispatchEvent(new CustomEvent('niks:intro-out'));
+      } catch {}
+      timerWipe = setTimeout(finish, 880);
+    };
+
+    const skip = () => {
+      leave();
+    };
+
+    const start = () => {
+      if (started) return;
+      started = true;
+      clearTimeout(timerWait);
+      root.classList.add('intro-go');
+      setPhase('go');
+      timerStart = setTimeout(leave, 1350);
+    };
+
+    window.addEventListener('keydown', skip);
+
+    // Wait for Cormorant Garamond font to be ready before revealing text
+    // Safety fallback: max 500ms
+    const timerWait = setTimeout(start, 500);
+
+    if (document.fonts) {
+      document.fonts.ready
+        .then(() => {
+          start();
+        })
+        .catch(() => {
+          start();
+        });
+    } else {
+      start();
+    }
 
     return () => {
-      clearTimeout(timer);
-      window.removeEventListener('wheel', prevent);
-      window.removeEventListener('touchmove', prevent);
+      clearTimeout(timerStart);
+      clearTimeout(timerWipe);
+      clearTimeout(timerWait);
+      window.removeEventListener('wheel', lock);
+      window.removeEventListener('touchmove', lock);
+      window.removeEventListener('keydown', skip);
     };
   }, []);
 
-  if (!visible) return null;
+  if (phase === 'done') return null;
 
   return (
     <div
       aria-hidden="true"
-      className={`intro-shutter ${active ? 'intro-shutter--active' : ''}`}
+      className="intro-shutter"
+      onClick={() => {
+        const root = document.documentElement;
+        if (!root.classList.contains('intro-out')) {
+          root.classList.add('intro-out');
+          try {
+            window.dispatchEvent(new CustomEvent('niks:intro-out'));
+          } catch {}
+          setTimeout(() => {
+            root.classList.add('intro-done');
+            try {
+              sessionStorage.setItem(KEY, '1');
+            } catch {}
+          }, 880);
+        }
+      }}
     >
-      <div className="overflow-hidden px-6 py-3">
-        <p
-          className={`intro-text ${active ? 'intro-text--active' : ''}`}
-          suppressHydrationWarning
-        >
-          Niks <span className="italic text-[#769FCD]">Photos</span>
-        </p>
-      </div>
+      <p className="intro-text">
+        <span className="intro-word">Niks</span>{' '}
+        <span className="intro-word intro-word-2 italic text-[#769FCD]">
+          Photos
+        </span>
+      </p>
     </div>
   );
 }
