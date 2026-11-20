@@ -11,6 +11,7 @@ import InfiniteScroll from '@/components/InfiniteScroll';
 import VideoCard from '@/components/VideoCard';
 import VideoLightbox from '@/components/VideoLightbox';
 import Footer from '@/components/Footer';
+import StickyRevealFooter from '@/components/ui/StickyRevealFooter';
 import { fetcher } from '@/lib/fetcher';
 import { useSiteConfig } from '@/lib/hooks';
 import type { Photo, Category, PaginatedPhotos, VideoItem, SiteConfig } from '@/lib/types';
@@ -88,7 +89,8 @@ export default function CategoryPageClient({
 
   return (
     <main className="min-h-screen bg-background text-ink">
-      <Navbar config={initialConfig} />
+      <div className="relative z-10 bg-background shadow-[0_25px_60px_-15px_rgba(0,0,0,0.25)]">
+        <Navbar config={initialConfig} />
 
       {/* ── Category header (server-rendered — Google isko padhta hai) ── */}
       <header className="pt-28 md:pt-36 pb-10 md:pb-14">
@@ -170,8 +172,11 @@ export default function CategoryPageClient({
           </section>
         )}
       </section>
+      </div>
 
-      <Footer config={config} />
+      <StickyRevealFooter>
+        <Footer config={config} />
+      </StickyRevealFooter>
 
       {lightboxOpen && (
         <Lightbox

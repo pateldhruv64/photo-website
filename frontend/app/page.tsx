@@ -3,6 +3,7 @@ import HeroSection from '@/components/HeroSection';
 import HomeGallery from '@/components/HomeGallery';
 import Marquee from '@/components/Marquee';
 import Footer from '@/components/Footer';
+import StickyRevealFooter from '@/components/ui/StickyRevealFooter';
 import dynamic from 'next/dynamic';
 
 /* ─── Below-the-fold sections ────────────────────────────────────────
@@ -134,8 +135,8 @@ export default async function HomePage() {
       {/* Hero — sticky, content scrolls over it */}
       <HeroSection config={config || defaultConfig} seo={seo} />
 
-      {/* Content that scrolls over the hero */}
-      <div className="relative z-10 bg-[#F7FBFC]">
+      {/* Content that scrolls over the hero and over the revealed footer */}
+      <div className="relative z-10 bg-[#F7FBFC] shadow-[0_25px_60px_-15px_rgba(0,0,0,0.25)]">
         {/* Marquee of featured photos */}
         {featuredPhotos.length > 0 && (
           <div className="py-6 md:py-8 bg-surface reveal">
@@ -185,10 +186,12 @@ export default async function HomePage() {
 
         {/* Instagram Feed — photos server se hi mil jaati hain */}
         <InstagramFeed photos={initialPhotos} />
-
-        {/* Footer */}
-        <Footer config={config} categories={categories} />
       </div>
+
+      {/* Sticky Reveal Footer — Zero Dependency, 120fps motion */}
+      <StickyRevealFooter>
+        <Footer config={config} categories={categories} />
+      </StickyRevealFooter>
     </main>
   );
 }
