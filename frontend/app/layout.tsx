@@ -105,7 +105,7 @@ export default async function RootLayout({
             animation ke dikhega, gayab nahi hoga. Ek line, koi flash nahi. */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `document.documentElement.classList.add('js')`,
+            __html: `document.documentElement.classList.add('js');if('scrollRestoration' in history){history.scrollRestoration='manual';}try{if(sessionStorage.getItem('niks_intro_played')){document.documentElement.classList.add('no-intro');}}catch(e){}window.scrollTo(0,0);window.addEventListener('beforeunload',function(){try{sessionStorage.removeItem('niks_intro_played');}catch(e){}window.scrollTo(0,0);});window.addEventListener('pagehide',function(){try{sessionStorage.removeItem('niks_intro_played');}catch(e){}window.scrollTo(0,0);});`,
           }}
         />
       </head>

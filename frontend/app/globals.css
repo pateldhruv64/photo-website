@@ -1281,3 +1281,84 @@ html::after {
     transform: none;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   SHUTTER INTRO (Cinematic Editorial Reveal)
+   ═══════════════════════════════════════════════════════════════════ */
+.intro-shutter {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: #0b131a;
+  color: #F7FBFC;
+  pointer-events: all;
+  will-change: transform;
+}
+
+/* Shutter wipe up begins as text finishes its upward exit */
+.intro-shutter.intro-shutter--active {
+  animation: shutter-wipe-up 0.85s cubic-bezier(0.16, 1, 0.3, 1) 1.25s forwards;
+}
+
+html.no-intro .intro-shutter {
+  display: none !important;
+}
+
+@keyframes shutter-wipe-up {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(0, -100%, 0);
+    visibility: hidden;
+  }
+}
+
+.intro-text {
+  font-family: var(--font-cormorant), Georgia, serif;
+  font-size: clamp(3.2rem, 14vw, 7.5rem);
+  font-weight: 300;
+  line-height: 1.05;
+  letter-spacing: -0.015em;
+  color: #F7FBFC;
+  transform: translate3d(0, 110%, 0);
+  opacity: 0;
+  will-change: transform, opacity;
+}
+
+/* Choreographed Motion: Entrance (Open) -> Hold -> Exit (Close) */
+.intro-text.intro-text--active {
+  animation: intro-text-flow 1.55s cubic-bezier(0.16, 1, 0.3, 1) 0.05s forwards;
+}
+
+@keyframes intro-text-flow {
+  /* 0% to 38%: Smooth Entrance (Open) - glides up from below */
+  0% {
+    transform: translate3d(0, 110%, 0);
+    opacity: 0;
+  }
+  38% {
+    transform: translate3d(0, 0, 0);
+    opacity: 1;
+  }
+  /* 38% to 70%: Steady Hold in center */
+  70% {
+    transform: translate3d(0, 0, 0);
+    opacity: 1;
+  }
+  /* 70% to 100%: Smooth Exit (Close) - glides up and vanishes through top */
+  100% {
+    transform: translate3d(0, -110%, 0);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .intro-shutter {
+    display: none !important;
+  }
+}

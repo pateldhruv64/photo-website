@@ -24,6 +24,7 @@ type CursorMode = 'default' | 'photo' | 'action';
 export default function CameraCursor() {
   const cursorRef = useRef<HTMLDivElement>(null);
   const [enabled, setEnabled] = useState(false);
+  const [moved, setMoved] = useState(false);
   const [mode, setMode] = useState<CursorMode>('default');
   const [active, setActive] = useState(false);
   const pathname = usePathname();
@@ -60,6 +61,7 @@ export default function CameraCursor() {
       // Center the 36x36 reticle directly under the mouse tip
       x = e.clientX - 18;
       y = e.clientY - 18;
+      if (!moved) setMoved(true);
       if (!frame) frame = requestAnimationFrame(paint);
     };
 
@@ -102,7 +104,9 @@ export default function CameraCursor() {
     <div
       ref={cursorRef}
       aria-hidden="true"
-      className="pointer-events-none fixed left-0 top-0 z-[9999] select-none"
+      className={`pointer-events-none fixed left-0 top-0 z-[9999] select-none transition-opacity duration-200 ${
+        moved ? 'opacity-100' : 'opacity-0'
+      }`}
       style={{ willChange: 'transform' }}
     >
       <div

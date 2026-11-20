@@ -1,4 +1,5 @@
 import Navbar from '@/components/Navbar';
+import Intro from '@/components/Intro';
 import HeroSection from '@/components/HeroSection';
 import HomeGallery from '@/components/HomeGallery';
 import Marquee from '@/components/Marquee';
@@ -130,6 +131,7 @@ export default async function HomePage() {
   return (
     <main>
       <JsonLd id="home-schema" data={pageSchema} />
+      <Intro />
       <Navbar config={config} categories={categories} />
 
       {/* Hero — sticky, content scrolls over it */}

@@ -74,6 +74,7 @@ export default function LenisProvider({ children }: LenisProviderProps) {
       });
 
       lenis = instance;
+      instance.scrollTo(0, { immediate: true });
 
       // CSS smooth-scroll aur Lenis dono chalein to ek doosre se ladte
       // hain — Lenis active hone par CSS wala band kar dete hain.
