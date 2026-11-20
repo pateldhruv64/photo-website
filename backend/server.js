@@ -95,7 +95,14 @@ const adminLimiter = rateLimit({
   message: { error: 'Too many requests. Please try again later.' }
 });
 
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10,
+  message: { error: 'Too many login attempts. Please try again after 15 minutes.' }
+});
+
 // ─── Routes ──────────────────────────────────────────────────────────
+app.use('/api/admin/login', loginLimiter);
 app.use('/api/client-gallery/unlock', galleryUnlockLimiter);
 app.use('/api/client-gallery', galleryLimiter);
 app.use('/api', publicLimiter, publicRoutes);

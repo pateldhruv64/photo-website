@@ -246,8 +246,8 @@ exports.getAllPhotos = async (req, res) => {
     const skip = (pageNum - 1) * limitNum;
 
     let filter = {};
-    if (category) {
-      filter.category = category;
+    if (typeof category === 'string' && category.trim()) {
+      filter.category = category.trim();
     }
 
     const [photos, total] = await Promise.all([

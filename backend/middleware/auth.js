@@ -13,7 +13,7 @@ const auth = async (req, res, next) => {
       return res.status(401).json({ error: 'Authentication required. Please login.' });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET, { algorithms: ['HS256'] });
     const admin = await Admin.findById(decoded.id);
     
     if (!admin) {

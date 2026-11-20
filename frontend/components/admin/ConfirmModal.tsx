@@ -44,7 +44,15 @@ export default function ConfirmModal({
           )}
           <div>
             <h3 className="font-display text-base font-medium text-text-primary mb-1">{title}</h3>
-            <p className="font-body text-xs text-text-muted leading-relaxed" dangerouslySetInnerHTML={{ __html: message }} />
+            <p className="font-body text-xs text-text-muted leading-relaxed">
+              {message.split(/(<strong>.*?<\/strong>)/gi).map((part, index) => {
+                if (part.toLowerCase().startsWith('<strong>') && part.toLowerCase().endsWith('</strong>')) {
+                  const content = part.replace(/<\/?strong>/gi, '');
+                  return <strong key={index} className="font-medium text-text-primary">{content}</strong>;
+                }
+                return part;
+              })}
+            </p>
           </div>
         </div>
 

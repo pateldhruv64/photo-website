@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
     const { secret } = body;
 
     // Verify secret token
-    if (secret !== process.env.REVALIDATE_SECRET) {
+    if (!process.env.REVALIDATE_SECRET || secret !== process.env.REVALIDATE_SECRET) {
       return NextResponse.json(
         { error: 'Invalid revalidation token.' },
         { status: 401 }

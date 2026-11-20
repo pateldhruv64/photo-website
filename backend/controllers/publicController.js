@@ -22,7 +22,7 @@ const verifyClientToken = (req) => {
     throw new Error('No token');
   }
   const token = authHeader.split(' ')[1];
-  return jwt.verify(token, process.env.JWT_SECRET + '_client');
+  return jwt.verify(token, process.env.JWT_SECRET + '_client', { algorithms: ['HS256'] });
 };
 
 /**
@@ -70,8 +70,8 @@ exports.getPhotos = async (req, res) => {
 
     let filter = {};
 
-    if (category) {
-      const cat = await Category.findOne({ slug: category, is_active: true }).lean();
+    if (typeof category === 'string' && category.trim()) {
+      const cat = await Category.findOne({ slug: category.trim(), is_active: true }).lean();
       if (!cat) {
         return res.status(404).json({ error: 'Category not found.' });
       }
@@ -415,8 +415,8 @@ exports.getPublicVideos = async (req, res) => {
     const { category } = req.query;
     let filter = { is_active: true };
 
-    if (category) {
-      const cat = await Category.findOne({ slug: category, is_active: true }).lean();
+    if (typeof category === 'string' && category.trim()) {
+      const cat = await Category.findOne({ slug: category.trim(), is_active: true }).lean();
       if (!cat) {
         return res.status(404).json({ error: 'Category not found.' });
       }

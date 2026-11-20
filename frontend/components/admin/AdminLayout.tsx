@@ -126,6 +126,7 @@ export default function AdminLayoutClient({ children }: AdminLayoutProps) {
           <Link
             href="/"
             target="_blank"
+            rel="noopener noreferrer"
             className="admin-nav-item"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
